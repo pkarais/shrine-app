@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>National Landmark Operations - Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#fed65b",
+              "inverse-primary": "#a9c7ff",
+              "on-tertiary-container": "#ff9382",
+              "surface-container-highest": "#e1e3e4",
+              "tertiary-fixed-dim": "#ffb4a8",
+              "on-primary-fixed-variant": "#02468c",
+              "error": "#ba1a1a",
+              "on-background": "#191c1d",
+              "on-tertiary-fixed": "#410000",
+              "primary-container": "#004286",
+              "surface": "#f8f9fa",
+              "on-primary-container": "#84b1fe",
+              "surface-bright": "#f8f9fa",
+              "on-surface": "#191c1d",
+              "tertiary": "#630000",
+              "on-secondary": "#ffffff",
+              "background": "#f8f9fa",
+              "on-secondary-fixed-variant": "#574500",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#444653",
+              "surface-container": "#edeeef",
+              "on-secondary-container": "#745c00",
+              "primary": "#002c5e",
+              "surface-container-low": "#f3f4f5",
+              "tertiary-container": "#8d0201",
+              "primary-fixed": "#d6e3ff",
+              "on-tertiary-fixed-variant": "#920703",
+              "outline": "#747685",
+              "surface-variant": "#e1e3e4",
+              "outline-variant": "#c4c5d5",
+              "secondary": "#735c00",
+              "inverse-surface": "#2e3132",
+              "primary-fixed-dim": "#a9c7ff",
+              "surface-dim": "#d9dadb",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "inverse-on-surface": "#f0f1f2",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffdad4",
+              "on-primary-fixed": "#001b3d",
+              "surface-container-high": "#e7e8e9",
+              "surface-tint": "#2b5ea5",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#e9c349",
+              "secondary-fixed": "#ffe088"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .byzantine-gradient {
+            background: linear-gradient(135deg, #002c5e 0%, #004286 100%);
+        }
+        .gold-accents {
+            background: linear-gradient(135deg, #735c00 0%, #fed65b 100%);
+        }
+        .glass-panel {
+            background: rgba(248, 249, 250, 0.75);
+            backdrop-filter: blur(24px);
+        }
+        .hero-mask {
+            mask-image: linear-gradient(to right, black 60%, transparent 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary-container selection:text-on-secondary-container">
+<main class="relative min-h-screen flex items-center justify-center overflow-hidden">
+<!-- Background Hero Image -->
+<div class="absolute inset-0 z-0">
+<img alt="" class="w-full h-full object-cover" data-alt="cinematic wide shot of a majestic byzantine dome at sunrise with soft golden light hitting the historic stonework and intricate mosaics" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDfpURkutE6VbNNOXXp5aciIzwozYvfE8joVgw-ark0ENpAdbA6hVw7mGTOmTi0BXBC_pN7T3LUk0muo2oPUy0vCUA8vIJk8vy330t8DVbOxNpdp-mcER1QRorpsPAnp8CUkzWzFdIDOCrYnS5Ae5bAHhqPbAm06sbRt-5F1UTReTxzgwGbB1OHHXoT8_aCPTBdzay-LLkDksWHapUzqmEtowYQVWzbufmOphpPjie5RaGzOA1yRTctSAxgMfASaWRedW9MYULTXo"/>
+<div class="absolute inset-0 bg-primary/40 mix-blend-multiply"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-primary via-primary/60 to-transparent"></div>
+</div>
+<!-- Layout Container -->
+<div class="relative z-10 w-full max-w-7xl px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<!-- Left Side: Editorial Branding -->
+<div class="max-w-xl">
+<div class="inline-flex items-center gap-3 mb-8">
+<div class="w-12 h-12 flex items-center justify-center rounded-xl byzantine-gradient shadow-lg">
+<span class="material-symbols-outlined text-white text-2xl" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<span class="font-headline font-extrabold text-2xl tracking-tight text-white">LandmarkOps</span>
+</div>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold text-white leading-[1.1] mb-6 -tracking-[0.03em]">
+                    Preserve the <span class="text-secondary-fixed">Sacred</span> Heritage.
+                </h1>
+<p class="font-body text-xl text-surface-container-high leading-relaxed mb-10 max-w-lg">
+                    The modern operational core for national landmarks. Manage daily liturgy, staff logistics, and site security with reverent precision.
+                </p>
+<div class="flex flex-wrap gap-4 items-center">
+<div class="px-6 py-3 bg-surface-container-lowest/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+<span class="font-label text-sm font-medium text-white tracking-wide uppercase">System Status: Optimal</span>
+</div>
+</div>
+</div>
+<!-- Right Side: Login Panel -->
+<div class="flex justify-center lg:justify-end">
+<div class="glass-panel w-full max-w-md p-8 md:p-10 rounded-[2rem] shadow-2xl border border-white/20">
+<div class="mb-10">
+<h2 class="font-headline text-3xl font-bold text-primary mb-2">Sign In</h2>
+<p class="text-on-surface-variant">Access your administrative workstation.</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="font-label text-xs font-bold text-primary tracking-widest uppercase ml-1">Work Email</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">alternate_email</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-highest transition-all outline-none font-body text-on-surface" placeholder="name@landmark.org" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-xs font-bold text-primary tracking-widest uppercase ml-1">Secure Password</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-highest transition-all outline-none font-body text-on-surface" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<div class="flex items-center justify-between py-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-5 h-5 rounded bg-surface-container border-none text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-on-surface-variant group-hover:text-primary transition-colors">Remember station</span>
+</label>
+<a class="text-sm font-semibold text-primary hover:text-primary-container transition-colors" href="#">Forgot credentials?</a>
+</div>
+<button class="w-full py-4 rounded-xl gold-accents text-white font-headline font-bold text-lg shadow-lg shadow-secondary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2" type="submit">
+                            Authorize Access
+                            <span class="material-symbols-outlined">login</span>
+</button>
+</form>
+<div class="mt-10 pt-8 border-t border-outline-variant/30 text-center">
+<p class="text-on-surface-variant text-sm mb-6">Credentialed staff and managers only.</p>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container-highest rounded-xl text-primary font-bold text-sm transition-colors">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+                                Staff ID
+                            </button>
+<button class="flex items-center justify-center gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container-highest rounded-xl text-primary font-bold text-sm transition-colors">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                                Manager SSO
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Legal -->
+<footer class="absolute bottom-8 w-full px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-white/50 text-xs font-medium tracking-widest uppercase">
+<div class="flex items-center gap-6">
+<span>© 2024 National Landmark Authority</span>
+<span class="hidden md:inline w-1 h-1 rounded-full bg-white/20"></span>
+<span>Operational Portal v4.2.0</span>
+</div>
+<div class="flex items-center gap-8">
+<a class="hover:text-white transition-colors" href="#">Privacy Protocol</a>
+<a class="hover:text-white transition-colors" href="#">Security Standards</a>
+<a class="hover:text-white transition-colors" href="#">Support Terminal</a>
+</div>
+</footer>
+</main>
+<!-- Byzantine Decorative Accents -->
+<div class="fixed top-0 left-0 w-full h-1 gold-accents z-50"></div>
+<div class="fixed top-0 right-0 p-12 pointer-events-none opacity-10">
+<div class="w-64 h-64 border-8 border-white rounded-full"></div>
+</div>
+<div class="fixed bottom-0 left-0 p-12 pointer-events-none opacity-5">
+<div class="w-96 h-96 border-[16px] border-secondary rounded-full"></div>
+</div>
+</body></html>
+
+
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Staff Dashboard - Site Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#fed65b",
+              "inverse-primary": "#a9c7ff",
+              "on-tertiary-container": "#ff9382",
+              "surface-container-highest": "#e1e3e4",
+              "tertiary-fixed-dim": "#ffb4a8",
+              "on-primary-fixed-variant": "#02468c",
+              "error": "#ba1a1a",
+              "on-background": "#191c1d",
+              "on-tertiary-fixed": "#410000",
+              "primary-container": "#004286",
+              "surface": "#f8f9fa",
+              "on-primary-container": "#84b1fe",
+              "surface-bright": "#f8f9fa",
+              "on-surface": "#191c1d",
+              "tertiary": "#630000",
+              "on-secondary": "#ffffff",
+              "background": "#f8f9fa",
+              "on-secondary-fixed-variant": "#574500",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#444653",
+              "surface-container": "#edeeef",
+              "on-secondary-container": "#745c00",
+              "primary": "#002c5e",
+              "surface-container-low": "#f3f4f5",
+              "tertiary-container": "#8d0201",
+              "primary-fixed": "#d6e3ff",
+              "on-tertiary-fixed-variant": "#920703",
+              "outline": "#747685",
+              "surface-variant": "#e1e3e4",
+              "outline-variant": "#c4c5d5",
+              "secondary": "#735c00",
+              "inverse-surface": "#2e3132",
+              "primary-fixed-dim": "#a9c7ff",
+              "surface-dim": "#d9dadb",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "inverse-on-surface": "#f0f1f2",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffdad4",
+              "on-primary-fixed": "#001b3d",
+              "surface-container-high": "#e7e8e9",
+              "surface-tint": "#2b5ea5",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#e9c349",
+              "secondary-fixed": "#ffe088"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopAppBar from Shared Components -->
+<header class="flex justify-between items-center px-6 py-4 w-full bg-[#f8f9fa] dark:bg-slate-900 sticky top-0 z-40">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#0038A8] dark:text-blue-400" style="font-size: 24px;">account_balance</span>
+<h1 class="Manrope display-lg -0.02em tracking-tight font-bold text-[#0038A8] dark:text-blue-400">Site Management</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications_active</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-xs">JD</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 pt-8 pb-32">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Welcome Section: Editorial Asymmetry -->
+<section class="md:col-span-8">
+<h2 class="font-headline text-5xl font-extrabold tracking-tight text-primary mb-2 opacity-90">Good morning, John.</h2>
+<p class="font-body text-outline text-lg mb-12">The landmark is currently in Morning Prayer state. Geofence active.</p>
+<!-- Clock-In Bento Grid Component -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Geofenced Action Card -->
+<div class="bg-surface-container-lowest rounded-full p-8 flex flex-col justify-between aspect-square lg:aspect-auto min-h-[320px] relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-container opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+<div class="z-10">
+<div class="flex items-center gap-2 mb-4">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label text-xs uppercase tracking-widest text-secondary font-bold">On-site Detected</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-primary max-w-[200px]">Geofenced Clock-In</h3>
+</div>
+<div class="z-10">
+<button class="w-full py-6 rounded-xl bg-secondary text-on-secondary font-bold text-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined" data-icon="fingerprint">fingerprint</span>
+<span>Clock-In Now</span>
+</button>
+<p class="text-center mt-4 text-outline font-body text-sm">Location verified via GPS: Sector 7A</p>
+</div>
+</div>
+<!-- Break Countdown Card -->
+<div class="bg-surface-container-low rounded-full p-8 flex flex-col justify-between min-h-[320px]">
+<div>
+<span class="font-label text-xs uppercase tracking-widest text-outline mb-4 block">Next Scheduled Break</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline text-6xl font-extrabold text-primary">02:14</span>
+<span class="font-headline text-xl text-outline">remaining</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant font-medium">Progress to 5.5hr Break</span>
+<span class="text-primary font-bold">65%</span>
+</div>
+<div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 65%"></div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold rounded-full uppercase tracking-tighter">2.5H Done</span>
+<span class="px-3 py-1 bg-surface-container-highest text-outline text-[10px] font-bold rounded-full uppercase tracking-tighter">5.5H Next</span>
+<span class="px-3 py-1 bg-surface-container-highest text-outline text-[10px] font-bold rounded-full uppercase tracking-tighter">8.5H Final</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Today's Service Card -->
+<div class="mt-8 bg-surface-container-low rounded-full overflow-hidden flex flex-col md:flex-row group cursor-pointer transition-all hover:bg-surface-container">
+<div class="md:w-1/3 h-48 md:h-auto relative">
+<img alt="Orthodox liturgy" class="absolute inset-0 w-full h-full object-cover" data-alt="dramatic interior of a Byzantine church with golden mosaics lit by candles and sunlight beams through incense" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjHdrWufgRVftvYCpeiaxHCFjtY_F2qMuqHASA2mkZaODwst4Wox294tmV_dTNqdE9FZOtnoVR_UeA86ApdwwZma26JL57EcPbSHNlqATkinGe3Srn2X740S827o7SBp4cX_ONuorspi0ma_xQpW4FC8z4v2cTXk0qIfXG0pZ5qFO7shIB7p3Jqz07drUh6sT_ZuMRl_ywYozsTddWhkE9UT3hH55AJ8xIFL-N_-ErtBQHFeLJ2glUwhJJWt-mvWlwo2CNM3Ce-u8"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
+</div>
+<div class="p-8 md:w-2/3 flex flex-col justify-center">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs uppercase tracking-widest text-on-tertiary-fixed-variant bg-tertiary-fixed px-3 py-1 rounded-full">GOA Archdiocese</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">open_in_new</span>
+</div>
+<h4 class="font-headline text-2xl font-bold text-primary mb-2">Today's Digital Chant Stand</h4>
+<p class="text-on-surface-variant font-body mb-4">Daily Service for Monday of the Holy Spirit. Access rubrics, prayers, and hymnal summaries for the 10:00 AM Liturgy.</p>
+<div class="flex gap-4">
+<button class="text-primary font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">description</span> Read PDF
+                            </button>
+<button class="text-primary font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">volume_up</span> Audio Summary
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar Contextual Area -->
+<aside class="md:col-span-4 space-y-8">
+<!-- Messaging Inbox Preview -->
+<div class="bg-surface-container-low rounded-full p-8">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline text-xl font-bold text-primary">Messaging</h3>
+<span class="bg-tertiary-container text-on-tertiary px-2 py-0.5 rounded-full text-xs font-bold">2 New</span>
+</div>
+<div class="space-y-6">
+<div class="flex gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<p class="text-sm font-bold text-on-surface truncate">Elias P.</p>
+<span class="text-[10px] text-outline">08:42 AM</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Security rotation update for the West portal...</p>
+</div>
+</div>
+<div class="flex gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">support_agent</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<p class="text-sm font-bold text-on-surface truncate">Maintenance</p>
+<span class="text-[10px] text-outline">Yesterday</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Lighting rig calibration complete in the Dome.</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 rounded-lg border border-outline-variant/30 text-primary font-bold text-xs hover:bg-surface-container transition-colors">
+                        View All Messages
+                    </button>
+</div>
+<!-- File Upload Shortcut (Glassmorphism inspired) -->
+<div class="relative rounded-full overflow-hidden bg-white/40 backdrop-blur-md border border-white/20 p-8 shadow-sm">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl"></div>
+<h3 class="font-headline text-xl font-bold text-primary mb-4">Quick Submit</h3>
+<p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Upload daily site logs, incident reports, or media captures directly to the registry.</p>
+<label class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-outline-variant/50 rounded-xl cursor-pointer hover:bg-white/60 transition-all">
+<div class="flex flex-col items-center justify-center pt-5 pb-6">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="cloud_upload">cloud_upload</span>
+<p class="text-xs font-bold text-primary">Drop files or Browse</p>
+</div>
+<input class="hidden" type="file"/>
+</label>
+</div>
+<!-- Map Context -->
+<div class="bg-surface-container-low rounded-full h-48 overflow-hidden relative">
+<img alt="Satellite map" class="absolute inset-0 w-full h-full object-cover opacity-80" data-alt="stylized architectural site plan map with minimalist blue and grey tones showing pathways and building footprints" data-location="Landmark Site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCE7YpA26AdOcyqn9RQQ1kuAabGaft73g6cCDm80v-V5XdalvU6ukuBRDksypzANFr7JjQdMz_Ou_PTymVkVQelHz2pzObxxx4FiFQYA0X4y6M6PVZ12kbWvDiuejG3r2fi7RjcdCvEDnYcIeWwvoLFSAwEsx0rpHyMD8or-S3T1zd7LyQ3XjsZh9oDkKrVYozlKSAtaszadFpX9o5Ove_lRlD89QfSP8s9yMWbRfCjCaFUAG8cjkeEFOJz6TYxXF5ZZwP7lK_GthQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+<div class="absolute bottom-4 left-6 flex items-center gap-2">
+<div class="p-1.5 bg-primary rounded-full shadow-lg">
+<div class="w-2 h-2 bg-white rounded-full animate-ping"></div>
+</div>
+<span class="text-xs font-bold text-primary">You are here: Nave East</span>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar from Shared Components -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-t border-slate-200/15 dark:border-slate-700/15 shadow-[0px_0px_24px_rgba(25,28,29,0.06)]">
+<!-- Dashboard (Active) -->
+<a class="flex flex-col items-center justify-center bg-[#0038A8] text-white rounded-xl p-2 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Dashboard</span>
+</a>
+<!-- Calendar (Inactive) -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Calendar</span>
+</a>
+<!-- Chat (Inactive) -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Chat</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
+
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#fed65b",
+              "inverse-primary": "#a9c7ff",
+              "on-tertiary-container": "#ff9382",
+              "surface-container-highest": "#e1e3e4",
+              "tertiary-fixed-dim": "#ffb4a8",
+              "on-primary-fixed-variant": "#02468c",
+              "error": "#ba1a1a",
+              "on-background": "#191c1d",
+              "on-tertiary-fixed": "#410000",
+              "primary-container": "#004286",
+              "surface": "#f8f9fa",
+              "on-primary-container": "#84b1fe",
+              "surface-bright": "#f8f9fa",
+              "on-surface": "#191c1d",
+              "tertiary": "#630000",
+              "on-secondary": "#ffffff",
+              "background": "#f8f9fa",
+              "on-secondary-fixed-variant": "#574500",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#444653",
+              "surface-container": "#edeeef",
+              "on-secondary-container": "#745c00",
+              "primary": "#002c5e",
+              "surface-container-low": "#f3f4f5",
+              "tertiary-container": "#8d0201",
+              "primary-fixed": "#d6e3ff",
+              "on-tertiary-fixed-variant": "#920703",
+              "outline": "#747685",
+              "surface-variant": "#e1e3e4",
+              "outline-variant": "#c4c5d5",
+              "secondary": "#735c00",
+              "inverse-surface": "#2e3132",
+              "primary-fixed-dim": "#a9c7ff",
+              "surface-dim": "#d9dadb",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "inverse-on-surface": "#f0f1f2",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffdad4",
+              "on-primary-fixed": "#001b3d",
+              "surface-container-high": "#e7e8e9",
+              "surface-tint": "#2b5ea5",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#e9c349",
+              "secondary-fixed": "#ffe088"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .sacred-gradient {
+            background: linear-gradient(135deg, #002c5e 0%, #004286 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen">
+<!-- TopAppBar Shell -->
+<header class="bg-[#f8f9fa] dark:bg-slate-900 flex justify-between items-center px-6 py-4 w-full fixed top-0 z-40">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#0038A8] dark:text-blue-400" data-icon="account_balance">account_balance</span>
+<h1 class="Manrope display-lg -0.02em tracking-tight text-lg font-bold text-[#0038A8] dark:text-blue-400">Site Management</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined text-slate-500" data-icon="notifications_active">notifications_active</span>
+</button>
+<div class="hidden md:flex gap-6 items-center px-4">
+<span class="text-slate-500 dark:text-slate-400 font-medium">Dashboard</span>
+<span class="text-[#0038A8] dark:text-blue-300 font-bold">Calendar</span>
+<span class="text-slate-500 dark:text-slate-400 font-medium">Chat</span>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Editorial Header Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="font-label text-xs uppercase tracking-widest text-secondary mb-2 block">Operational Overview</span>
+<h2 class="font-headline text-5xl font-extrabold text-primary -ml-1">Operations Calendar</h2>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="bg-surface-container-low px-4 py-2 rounded-xl text-primary font-semibold hover:bg-surface-container-highest transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                        Role: All Staff
+                    </button>
+<button class="sacred-gradient text-white px-6 py-2 rounded-xl font-bold shadow-lg flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        New Assignment
+                    </button>
+</div>
+</div>
+</section>
+<!-- Calendar Bento Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Sidebar: Liturgy Highlights -->
+<div class="lg:col-span-3 space-y-6">
+<div class="bg-surface-container-low rounded-full p-6">
+<h3 class="font-headline text-lg font-bold mb-4 text-primary flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="church">church</span>
+                        GOA Liturgical
+                    </h3>
+<div class="space-y-4">
+<div class="p-4 bg-surface-container-lowest rounded-xl">
+<p class="text-xs font-bold text-secondary mb-1">NOV 14</p>
+<h4 class="font-bold text-sm">St. Philip the Apostle</h4>
+<p class="text-xs text-on-surface-variant mt-2">Beginning of Nativity Fast. Morning Liturgy 08:30.</p>
+</div>
+<div class="p-4 bg-tertiary-container rounded-xl text-white">
+<p class="text-xs font-bold opacity-80 mb-1">NOV 21</p>
+<h4 class="font-bold text-sm">Entrance of the Theotokos</h4>
+<div class="mt-3 flex items-center gap-1">
+<div class="w-2 h-2 rounded-full bg-secondary-container"></div>
+<span class="text-[10px] font-bold">FEAST DAY - HIGH TRAFFIC</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-full p-6">
+<h3 class="font-headline text-sm font-bold mb-4 text-primary">Requirement Legend</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 text-xs">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span>Evening Special Event</span>
+</div>
+<div class="flex items-center gap-3 text-xs">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span>Standard Operation</span>
+</div>
+<div class="flex items-center gap-3 text-xs bg-error-container/30 p-2 rounded-lg">
+<span class="material-symbols-outlined text-sm text-error" data-icon="warning">warning</span>
+<span class="text-error font-medium">Critical Staffing Gap</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Calendar View -->
+<div class="lg:col-span-9">
+<div class="bg-surface-container-low rounded-full overflow-hidden">
+<!-- Weekly Header -->
+<div class="grid grid-cols-7 border-b border-outline-variant/15">
+<div class="p-4 text-center border-r border-outline-variant/15"><span class="block text-[10px] uppercase tracking-tighter text-on-surface-variant">Mon</span><span class="font-headline font-bold text-xl">13</span></div>
+<div class="p-4 text-center border-r border-outline-variant/15 bg-primary text-white"><span class="block text-[10px] uppercase tracking-tighter opacity-70">Tue</span><span class="font-headline font-bold text-xl">14</span></div>
+<div class="p-4 text-center border-r border-outline-variant/15"><span class="block text-[10px] uppercase tracking-tighter text-on-surface-variant">Wed</span><span class="font-headline font-bold text-xl">15</span></div>
+<div class="p-4 text-center border-r border-outline-variant/15"><span class="block text-[10px] uppercase tracking-tighter text-on-surface-variant">Thu</span><span class="font-headline font-bold text-xl">16</span></div>
+<div class="p-4 text-center border-r border-outline-variant/15"><span class="block text-[10px] uppercase tracking-tighter text-on-surface-variant">Fri</span><span class="font-headline font-bold text-xl">17</span></div>
+<div class="p-4 text-center border-r border-outline-variant/15"><span class="block text-[10px] uppercase tracking-tighter text-on-surface-variant">Sat</span><span class="font-headline font-bold text-xl">18</span></div>
+<div class="p-4 text-center"><span class="block text-[10px] uppercase tracking-tighter text-on-surface-variant">Sun</span><span class="font-headline font-bold text-xl text-secondary">19</span></div>
+</div>
+<!-- Calendar Body (Vertical List View for clarity in assignment) -->
+<div class="p-1 space-y-2">
+<!-- Time Block: 08:00 - 12:00 -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-1">
+<div class="md:col-span-2 flex items-center justify-center py-4 bg-surface-container">
+<span class="font-label text-xs font-bold text-on-surface-variant">08:00 AM</span>
+</div>
+<div class="md:col-span-10 grid grid-cols-1 sm:grid-cols-3 gap-2 p-2">
+<div class="bg-surface-container-lowest p-3 rounded-xl border-l-4 border-primary">
+<span class="text-[10px] font-bold text-primary block mb-1">GREETERS</span>
+<p class="text-xs font-semibold">Petros G., Maria L.</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl border-l-4 border-secondary">
+<span class="text-[10px] font-bold text-secondary block mb-1">OPS</span>
+<p class="text-xs font-semibold">Constantine K.</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl border-l-4 border-on-surface">
+<span class="text-[10px] font-bold text-on-surface block mb-1">SECURITY</span>
+<p class="text-xs font-semibold">John D. (Rover)</p>
+</div>
+</div>
+</div>
+<!-- Time Block: 12:00 - 17:00 -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-1">
+<div class="md:col-span-2 flex items-center justify-center py-4 bg-surface-container">
+<span class="font-label text-xs font-bold text-on-surface-variant">12:00 PM</span>
+</div>
+<div class="md:col-span-10 grid grid-cols-1 sm:grid-cols-3 gap-2 p-2">
+<div class="bg-surface-container-lowest p-3 rounded-xl border-l-4 border-primary">
+<span class="text-[10px] font-bold text-primary block mb-1">GREETERS</span>
+<p class="text-xs font-semibold">Eleni S., Thanos V.</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl border-l-4 border-secondary">
+<span class="text-[10px] font-bold text-secondary block mb-1">OPS</span>
+<p class="text-xs font-semibold">Alexandros P.</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-xl border-l-4 border-on-surface">
+<span class="text-[10px] font-bold text-on-surface block mb-1">SECURITY</span>
+<p class="text-xs font-semibold">Dimitri M.</p>
+</div>
+</div>
+</div>
+<!-- Time Block: 17:00 - Close (Special Event) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-1 relative overflow-hidden group">
+<div class="absolute inset-y-0 right-0 w-1 bg-secondary"></div>
+<div class="md:col-span-2 flex items-center justify-center py-4 bg-secondary-fixed/20 backdrop-blur-sm">
+<div class="text-center">
+<span class="font-label text-xs font-bold text-on-secondary-fixed">05:00 PM</span>
+<div class="flex justify-center mt-1">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+</div>
+</div>
+</div>
+<div class="md:col-span-10 bg-secondary-fixed/10 p-4">
+<div class="flex flex-col sm:flex-row justify-between items-start mb-4">
+<div>
+<h4 class="font-headline font-extrabold text-primary uppercase text-sm tracking-tight">Archdiocese Donor Gala</h4>
+<p class="text-xs text-secondary-fixed-variant font-medium">Req: Min 1 Ops + 1 Security (Met)</p>
+</div>
+<div class="mt-2 sm:mt-0 flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+<img alt="Security Head" data-alt="professional portrait of head of security looking vigilant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5Ekg7X5RoWTvoJagtD2CNbxwh6sJSueWFBffdxBIENdLF_WYNIYsykc0QQL4tuHEcMJSkEjAtbjwkDrfDmHcxr8ZvBaumLdIXFvvHm9rFgeqTFHtq71KlB7y-M7jMiy4_hOtiS9n7b5LC5PHQ0Td81Je_0UHgkDnMAO5bjWXg296XWxBSpCZ9fdDibHEOiKysRCyc9Vi3MpJHntTQAkOxei8oLZdfoIEA9yHbKrMGQ7foocBERfW7fBGMZSpo6MtOxgOg-Pr-_9U"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+<img alt="Ops Manager" data-alt="portrait of female operations manager in professional setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCuo7gdL6b9_45_4f0gS68SAzaQMWXyFZBpUiPfc4zbKh7ezMkmNspYq_hPi17tJYsi-Fr-6OL5JXpLDxJuYULvOHEdzYJBG4PyvJDBayIeRpbqSfPkYX4ahfHTAkxYccIVbJrrt1_9NTo4rKUKYcJvEA3rSR9v8Jsn88yt_cmqLQsFrKaTpeNf2ef6EPbEkPhHeLriAPpJPHKXshtrhC5y8oJrZ9Xy32PcfE8TZTtXfEHAjdnTc-ajoIOqVJd9-nmdbnUdLQr_OM"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-slate-300 flex items-center justify-center text-[10px] font-bold">+2</div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div class="bg-white/60 p-3 rounded-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="manage_accounts" data-weight="fill">manage_accounts</span>
+<div>
+<p class="text-[10px] font-bold opacity-70">OPS ASSIGNED</p>
+<p class="text-xs font-bold">Sophia Castas</p>
+</div>
+</div>
+<div class="bg-white/60 p-3 rounded-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="shield" data-weight="fill">shield</span>
+<div>
+<p class="text-[10px] font-bold opacity-70">SECURITY ASSIGNED</p>
+<p class="text-xs font-bold">Leonidas Sparros</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Time Block: Gap Alert -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-1 border-2 border-dashed border-error/20 rounded-xl">
+<div class="md:col-span-2 flex items-center justify-center py-4 bg-error-container/10">
+<span class="font-label text-xs font-bold text-error">09:00 PM</span>
+</div>
+<div class="md:col-span-10 p-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-error text-3xl" data-icon="error_outline">error_outline</span>
+<div>
+<h4 class="font-bold text-sm text-on-surface">Evening Perimeter Sweep</h4>
+<p class="text-xs text-error font-medium">Unfilled Security Shift (1 Required)</p>
+</div>
+</div>
+<button class="text-xs font-bold underline text-primary hover:text-secondary transition-colors">Assign Now</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar Shell -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-[0px_0px_24px_rgba(25,28,29,0.06)] border-t border-slate-200/15 dark:border-slate-700/15">
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="Inter body-md tracking-normal text-[10px]">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#0038A8] text-white rounded-xl p-2 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_today" data-weight="fill">calendar_today</span>
+<span class="Inter body-md tracking-normal text-[10px]">Calendar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="chat_bubble">chat_bubble</span>
+<span class="Inter body-md tracking-normal text-[10px]">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="Inter body-md tracking-normal text-[10px]">Profile</span>
+</a>
+</nav>
+</body></html>
+
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manager's Command Center | Site Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#fed65b",
+              "inverse-primary": "#a9c7ff",
+              "on-tertiary-container": "#ff9382",
+              "surface-container-highest": "#e1e3e4",
+              "tertiary-fixed-dim": "#ffb4a8",
+              "on-primary-fixed-variant": "#02468c",
+              "error": "#ba1a1a",
+              "on-background": "#191c1d",
+              "on-tertiary-fixed": "#410000",
+              "primary-container": "#004286",
+              "surface": "#f8f9fa",
+              "on-primary-container": "#84b1fe",
+              "surface-bright": "#f8f9fa",
+              "on-surface": "#191c1d",
+              "tertiary": "#630000",
+              "on-secondary": "#ffffff",
+              "background": "#f8f9fa",
+              "on-secondary-fixed-variant": "#574500",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#444653",
+              "surface-container": "#edeeef",
+              "on-secondary-container": "#745c00",
+              "primary": "#002c5e",
+              "surface-container-low": "#f3f4f5",
+              "tertiary-container": "#8d0201",
+              "primary-fixed": "#d6e3ff",
+              "on-tertiary-fixed-variant": "#920703",
+              "outline": "#747685",
+              "surface-variant": "#e1e3e4",
+              "outline-variant": "#c4c5d5",
+              "secondary": "#735c00",
+              "inverse-surface": "#2e3132",
+              "primary-fixed-dim": "#a9c7ff",
+              "surface-dim": "#d9dadb",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "inverse-on-surface": "#f0f1f2",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffdad4",
+              "on-primary-fixed": "#001b3d",
+              "surface-container-high": "#e7e8e9",
+              "surface-tint": "#2b5ea5",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#e9c349",
+              "secondary-fixed": "#ffe088"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .text-display-lg { font-family: 'Manrope'; font-size: 2.25rem; line-height: 2.5rem; letter-spacing: -0.02em; font-weight: 700; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f8f9fa] dark:bg-slate-900 flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#0038A8] dark:text-blue-400" data-icon="account_balance">account_balance</span>
+<h1 class="Manrope text-lg font-bold text-[#0038A8] dark:text-blue-400 tracking-tight">Site Management</h1>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<nav class="flex gap-6">
+<a class="text-[#0038A8] dark:text-blue-300 font-bold transition-all duration-200 active:scale-95" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0038A8] transition-colors" href="#">Calendar</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0038A8] transition-colors" href="#">Chat</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0038A8] transition-colors" href="#">Profile</a>
+</nav>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+<span class="material-symbols-outlined text-slate-500" data-icon="notifications_active">notifications_active</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-tertiary-container rounded-full"></span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-12">
+<!-- Hero Section: Operational Overview -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+<div class="lg:col-span-8 space-y-2">
+<p class="font-label text-xs uppercase tracking-[0.05em] text-outline">Sacred Blueprint / Operations</p>
+<h2 class="text-display-lg text-on-surface">Manager's Command Center</h2>
+</div>
+<div class="lg:col-span-4 flex justify-end gap-3">
+<button class="bg-surface-container-highest px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-dim transition-colors">
+<span class="material-symbols-outlined" data-icon="ios_share">ios_share</span>
+                    Export Data
+                </button>
+<button class="bg-secondary text-on-secondary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-sm transition-transform active:scale-95 bg-gradient-to-br from-primary to-primary-container">
+<span class="material-symbols-outlined" data-icon="add_task">add_task</span>
+                    Adjust Shifts
+                </button>
+</div>
+</section>
+<!-- Bento Grid Dashboard -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Live Visitor Volume (Asymmetric Large Card) -->
+<div class="md:col-span-2 lg:col-span-3 bg-surface-container-low rounded-xl p-8 space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline font-bold text-xl">Visitor Volume vs. Staffing</h3>
+<p class="text-on-surface-variant text-sm">Real-time occupancy tracking across sectors</p>
+</div>
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full text-xs font-bold font-label tracking-wider uppercase">Live Tracking</span>
+</div>
+<!-- Chart Area Placeholder -->
+<div class="h-64 flex items-end gap-2 pt-4">
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all hover:bg-primary-container/20" style="height: 40%">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-inverse-surface text-inverse-on-surface text-[10px] px-2 py-1 rounded">240/8</div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all hover:bg-primary-container/20" style="height: 65%"></div>
+<div class="flex-1 bg-tertiary-container/30 rounded-t-lg relative group transition-all hover:bg-tertiary-container/50 border-t-2 border-tertiary" style="height: 90%">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-tertiary text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="warning">warning</span>
+                            Critical
+                         </div>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all hover:bg-primary-container/20" style="height: 55%"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all hover:bg-primary-container/20" style="height: 75%"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all hover:bg-primary-container/20" style="height: 45%"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t-lg relative group transition-all hover:bg-primary-container/20" style="height: 30%"></div>
+</div>
+<div class="flex justify-between text-xs text-outline font-label uppercase tracking-widest pt-2">
+<span>08:00</span>
+<span>10:00</span>
+<span class="text-tertiary font-bold">12:00 (Peak)</span>
+<span>14:00</span>
+<span>16:00</span>
+<span>18:00</span>
+</div>
+</div>
+<!-- Red Flags Alerts (High-Focus Vertical Card) -->
+<div class="bg-tertiary-container text-white rounded-xl p-6 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined" data-icon="report_problem">report_problem</span>
+<h3 class="font-headline font-bold text-lg uppercase tracking-tight">Red Flags</h3>
+</div>
+<div class="space-y-4">
+<div class="bg-black/20 p-3 rounded-lg">
+<p class="text-xs font-bold text-on-tertiary-container">WEST CLOISTER</p>
+<p class="text-sm font-medium">Understaffed (3:500 ratio)</p>
+</div>
+<div class="bg-black/20 p-3 rounded-lg">
+<p class="text-xs font-bold text-on-tertiary-container">MUSEUM WING</p>
+<p class="text-sm font-medium">Overtime Alert: 2 Staff @ 12h</p>
+</div>
+</div>
+</div>
+<button class="mt-6 w-full py-3 bg-white text-tertiary font-bold rounded-lg text-sm hover:bg-surface transition-colors">
+                    Address All
+                </button>
+</div>
+</section>
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Staff Media Folders (Glassmorphism Effect) -->
+<div class="lg:col-span-2 space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-headline font-bold text-2xl">Staff Media Folders</h3>
+<div class="flex gap-2">
+<button class="p-2 bg-surface-container hover:bg-surface-dim rounded-lg"><span class="material-symbols-outlined" data-icon="grid_view">grid_view</span></button>
+<button class="p-2 bg-surface-container hover:bg-surface-dim rounded-lg"><span class="material-symbols-outlined" data-icon="list">list</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Media Card 1 -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low p-2">
+<div class="relative aspect-video rounded-lg overflow-hidden bg-surface-container-highest">
+<img class="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="candid office meeting with diverse team members discussing architectural blueprints in a brightly lit modern studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJZlfl9wvn_V2geoMVrxNgJQ8SpaVr_uARMLDG_MX41ArlscitJ_ZjxsJFaXT6nOz6pQAlYFCwlGCrzBZlu3zEIAxKqc_OYqUd7C25GBT5cXulrOnxEttiLL0tAzp-7UX2ZG4Gf1j0EdHJwmgRHZVAR1ElKrt3g2YrkOvmIt7sYNVaHQEPa5WFkO115nYnKlvzsG_FhYuGM9tvpkXsnCilHqLSS4WCn1ZPDYYz61_2vHdFWHyhvf8Xf9jjmN3YJWA2xyBUcoEPp9M"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="play_circle">play_circle</span>
+</div>
+<span class="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded font-bold uppercase tracking-widest">Video . 0:45</span>
+</div>
+<div class="p-3">
+<h4 class="font-headline font-bold text-sm">Main Entrance Briefing</h4>
+<p class="text-outline text-xs mt-1">Uploaded by Maria K. • 2h ago</p>
+</div>
+</div>
+<!-- Media Card 2 -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low p-2">
+<div class="relative aspect-video rounded-lg overflow-hidden bg-surface-container-highest">
+<img class="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="architectural restoration team examining detailed marble carvings with specialized lighting in a historic site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-K69gg6CLCBQnfig1ZzX1s0iVBcTq06zqlK03NFD7wdg7-ODlA_bE3egAz0JuxYcK2FjhMJljkeGw5K1ljV8wmkgNkBp8Ye9Ig8g3md-57kPpqZqZ2XoUKURpXm3QSbcYrjaBqjF7Lsj1qOVv9c0UdDBcnQ4S8lTAFxalWoInLA7oPjJudxx-WPTuM-F3QtRmsQZgbJfo1Xcz_-L8s6AedwUM9Xoy8YObFwucitDXHpomd07KGS4CXvHf2XBgA3eYwjXSG-KFIKI"/>
+<span class="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded font-bold uppercase tracking-widest">Photos (12)</span>
+</div>
+<div class="p-3">
+<h4 class="font-headline font-bold text-sm">Safety Inspection Reports</h4>
+<p class="text-outline text-xs mt-1">Uploaded by David L. • 4h ago</p>
+</div>
+</div>
+</div>
+</div>
+<!-- P2P Message List -->
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline font-bold text-xl">Direct Comms</h3>
+<button class="text-primary hover:bg-primary-fixed p-2 rounded-full transition-colors"><span class="material-symbols-outlined" data-icon="edit_square">edit_square</span></button>
+</div>
+<div class="space-y-4 overflow-y-auto max-h-[400px] no-scrollbar">
+<!-- Message 1 -->
+<div class="flex gap-4 p-3 hover:bg-surface-container-highest rounded-lg transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">AK</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold">Anna Kontos</h4>
+<span class="text-[10px] text-outline">12:42 PM</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-1 group-hover:text-on-surface transition-colors">Confirming shift swap with Leo for the Sunday morning Liturgy...</p>
+</div>
+</div>
+<!-- Message 2 -->
+<div class="flex gap-4 p-3 bg-primary-fixed/20 rounded-lg border-l-4 border-primary">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="professional headshot of a middle-aged man with a friendly expression in a formal business casual shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAru2IUGALwqZkVjvEVuaMCcjMjkHgdQ-Di7CIWhURmuYzdbALvE2nI-WemKka--QVcog_dMCSyq233TgZCiUVXMHGy22ZI1abQDEGtkNwsKD7uP0OKcWz7h7y00fhqK9DBmPINC8GgbYR-t2ljczMfcat5euptxmpqpWZG9x2KXxG0CHR1KhHvKYsf2Rbv3RFFHiJhUEkvZSaGOJoZWsmKpi0X7pj3nhysxnj7BAEjDzxQWcE9L18Q4g-0ooHquDgdV4apJtnRFpc"/>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold">Father Nicholas</h4>
+<span class="text-[10px] text-primary font-bold">Active</span>
+</div>
+<p class="text-xs text-on-surface font-medium line-clamp-1">The procession path needs clearing by 15:00. Please adjust staff.</p>
+</div>
+</div>
+<!-- Message 3 -->
+<div class="flex gap-4 p-3 hover:bg-surface-container-highest rounded-lg transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold">MS</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold">Maintenance Squad</h4>
+<span class="text-[10px] text-outline">Yesterday</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-1">Water leak in the north annex has been contained. Needs check.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Shift Scheduling Optimizer -->
+<section class="bg-primary text-white rounded-2xl p-8 overflow-hidden relative">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-container blur-[100px] opacity-40 -mr-32 -mt-32"></div>
+<div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div class="space-y-6">
+<h3 class="text-3xl font-headline font-extrabold leading-tight">Shift Scheduling <br/>AI Optimizer</h3>
+<p class="text-on-primary-container text-lg">Predictive workload balancing has identified <span class="text-secondary-container font-bold">14 hours</span> of potential overtime that can be avoided today.</p>
+<div class="flex gap-4">
+<button class="bg-secondary text-on-secondary px-8 py-3 rounded-xl font-bold hover:scale-105 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+                            Optimize Shifts
+                        </button>
+<button class="border border-white/20 px-8 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors">
+                            Manual Overhaul
+                        </button>
+</div>
+</div>
+<div class="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl space-y-4">
+<div class="flex items-center justify-between border-b border-white/10 pb-4">
+<span class="text-sm font-bold">Potential Savings</span>
+<span class="text-secondary-container font-headline font-bold">$1,240.00</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-4 text-xs">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="flex-1">Overtime: Marcus Aurelius (Section C)</span>
+<span class="font-bold">+3.5h</span>
+</div>
+<div class="flex items-center gap-4 text-xs">
+<div class="w-2 h-2 rounded-full bg-secondary-container"></div>
+<span class="flex-1">Idle: Helena Troy (Section A)</span>
+<span class="font-bold">-2.0h</span>
+</div>
+</div>
+<div class="pt-4 flex justify-center">
+<span class="text-[10px] text-white/50 uppercase tracking-[0.2em] font-bold">Auto-Adjustment Ready</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md flex justify-around items-center px-4 pb-6 pt-2 shadow-[0px_0px_24px_rgba(25,28,29,0.06)] border-t border-slate-200/15">
+<button class="flex flex-col items-center justify-center bg-[#0038A8] text-white rounded-xl p-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] Inter mt-1 font-medium">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] transition-all">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="text-[10px] Inter mt-1">Calendar</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] transition-all">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="text-[10px] Inter mt-1">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] transition-all">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] Inter mt-1">Profile</span>
+</button>
+</nav>
+</body></html>
+
+# Product Requirements Document: Landmark Operations & Staffing App
+
+## 1. Project Overview
+A specialized application designed for a National Landmark operating 7 days a week, integrated with the Greek Orthodox Archdiocese of America (GOA) calendar. The app manages staffing, scheduling, clock-ins, and operational communication for staff, managers, and directors.
+
+## 2. Core Operational Logic
+### Operating Hours
+*   **Site Open:** 9:00 AM – 5:00 PM
+*   **Public Hours:** 10:00 AM – 5:00 PM
+*   **Service Days:** Guided by the GOA Archdiocese calendar.
+
+### Staffing Rules
+*   **Daily Base (Mon-Sat):** 1 Greeter, 2 Operations Personnel,1 Security Guards.
+*   **Director of Operations:** Assigned to all major church services/holidays.
+*   **After-Hours Events (Post 5 PM):** Minimum 1 Operations + 1 Security Guard.
+
+### Shift & Break Management
+*   **Shift Length:** 7.5 hours total.
+*   **Break Schedule:**
+    *   2.5 hours in: 15-minute break.
+    *   5.5 hours in (3 hours after 1st): 30-minute break.
+    *   8.5 hours in? *(Note: User specified 15 min after another 3 hours before clock out at 7.5 hrs. Logic needs alignment: 2.5h + 15m + 3h + 30m + 1.75h = 7.5h shift total)*.
+*   **Clock-in:** Geofenced to site location.
+*   **Alerts:** Push notification 30 minutes before scheduled start.
+
+## 3. Key Functional Features
+*   **Calendar Integration:** Sync with GOA Archdiocese calendar (names, descriptions, services).
+*   **Digital Chant Stand Links:** Direct access to service summaries and liturgical texts.
+*   **Backend Analysis:** 
+    *   Overtime reduction logic.
+    *   Scheduling optimization based on visitor volume.
+*   **Communication:** P2P texting/messaging within the app.
+*   **Media Upload:** Staff folders for text, video, and image submissions.
+
+## 4. Proposed Screen Map
+
+1.  **Landing & Auth:** Splash screen, Sign Up/In with role selection (Staff vs. Manager).
+2.  **Staff Dashboard (The "Show"):** Current shift status, countdown to next break, geofenced clock-in button, and today's service summary from the Digital Chant Stand.
+3.  **Operations Calendar:** Monthly/Weekly view integrating GOA liturgical dates with staffing assignments.
+4.  **Manager's Command Center:** Scheduling analysis, visitor-to-staff ratios, overtime alerts, and staff folder management.
+5.  **P2P Messaging:** Internal chat interface for staff coordination.
+6.  **Profile & Media:** Personal schedule history and file upload area.
+
+## 5. Technical Recommendations
+*   **Frontend:** React Native.
+*   **Backend:** Node.js/Python with a robust relational database (PostgreSQL) for complex scheduling logic.
+*   **Integrations:** Google Calendar API, GOA Digital Chant Stand RSS/API, Google Maps/CoreLocation for geofencing.
+

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Staff Dashboard - Site Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#fed65b",
+              "inverse-primary": "#a9c7ff",
+              "on-tertiary-container": "#ff9382",
+              "surface-container-highest": "#e1e3e4",
+              "tertiary-fixed-dim": "#ffb4a8",
+              "on-primary-fixed-variant": "#02468c",
+              "error": "#ba1a1a",
+              "on-background": "#191c1d",
+              "on-tertiary-fixed": "#410000",
+              "primary-container": "#004286",
+              "surface": "#f8f9fa",
+              "on-primary-container": "#84b1fe",
+              "surface-bright": "#f8f9fa",
+              "on-surface": "#191c1d",
+              "tertiary": "#630000",
+              "on-secondary": "#ffffff",
+              "background": "#f8f9fa",
+              "on-secondary-fixed-variant": "#574500",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#444653",
+              "surface-container": "#edeeef",
+              "on-secondary-container": "#745c00",
+              "primary": "#002c5e",
+              "surface-container-low": "#f3f4f5",
+              "tertiary-container": "#8d0201",
+              "primary-fixed": "#d6e3ff",
+              "on-tertiary-fixed-variant": "#920703",
+              "outline": "#747685",
+              "surface-variant": "#e1e3e4",
+              "outline-variant": "#c4c5d5",
+              "secondary": "#735c00",
+              "inverse-surface": "#2e3132",
+              "primary-fixed-dim": "#a9c7ff",
+              "surface-dim": "#d9dadb",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#241a00",
+              "inverse-on-surface": "#f0f1f2",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffdad4",
+              "on-primary-fixed": "#001b3d",
+              "surface-container-high": "#e7e8e9",
+              "surface-tint": "#2b5ea5",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#e9c349",
+              "secondary-fixed": "#ffe088"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopAppBar from Shared Components -->
+<header class="flex justify-between items-center px-6 py-4 w-full bg-[#f8f9fa] dark:bg-slate-900 sticky top-0 z-40">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#0038A8] dark:text-blue-400" style="font-size: 24px;">account_balance</span>
+<h1 class="Manrope display-lg -0.02em tracking-tight font-bold text-[#0038A8] dark:text-blue-400">Site Management</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications_active</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-xs">JD</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 pt-8 pb-32">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Welcome Section: Editorial Asymmetry -->
+<section class="md:col-span-8">
+<h2 class="font-headline text-5xl font-extrabold tracking-tight text-primary mb-2 opacity-90">Good morning, John.</h2>
+<p class="font-body text-outline text-lg mb-12">The landmark is currently in Morning Prayer state. Geofence active.</p>
+<!-- Clock-In Bento Grid Component -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Geofenced Action Card -->
+<div class="bg-surface-container-lowest rounded-full p-8 flex flex-col justify-between aspect-square lg:aspect-auto min-h-[320px] relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-container opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+<div class="z-10">
+<div class="flex items-center gap-2 mb-4">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label text-xs uppercase tracking-widest text-secondary font-bold">On-site Detected</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-primary max-w-[200px]">Geofenced Clock-In</h3>
+</div>
+<div class="z-10">
+<button class="w-full py-6 rounded-xl bg-secondary text-on-secondary font-bold text-lg flex items-center justify-center gap-3 transition-transform active:scale-[0.98] shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined" data-icon="fingerprint">fingerprint</span>
+<span>Clock-In Now</span>
+</button>
+<p class="text-center mt-4 text-outline font-body text-sm">Location verified via GPS: Sector 7A</p>
+</div>
+</div>
+<!-- Break Countdown Card -->
+<div class="bg-surface-container-low rounded-full p-8 flex flex-col justify-between min-h-[320px]">
+<div>
+<span class="font-label text-xs uppercase tracking-widest text-outline mb-4 block">Next Scheduled Break</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline text-6xl font-extrabold text-primary">02:14</span>
+<span class="font-headline text-xl text-outline">remaining</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant font-medium">Progress to 5.5hr Break</span>
+<span class="text-primary font-bold">65%</span>
+</div>
+<div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 65%"></div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold rounded-full uppercase tracking-tighter">2.5H Done</span>
+<span class="px-3 py-1 bg-surface-container-highest text-outline text-[10px] font-bold rounded-full uppercase tracking-tighter">5.5H Next</span>
+<span class="px-3 py-1 bg-surface-container-highest text-outline text-[10px] font-bold rounded-full uppercase tracking-tighter">8.5H Final</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Today's Service Card -->
+<div class="mt-8 bg-surface-container-low rounded-full overflow-hidden flex flex-col md:flex-row group cursor-pointer transition-all hover:bg-surface-container">
+<div class="md:w-1/3 h-48 md:h-auto relative">
+<img alt="Orthodox liturgy" class="absolute inset-0 w-full h-full object-cover" data-alt="dramatic interior of a Byzantine church with golden mosaics lit by candles and sunlight beams through incense" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjHdrWufgRVftvYCpeiaxHCFjtY_F2qMuqHASA2mkZaODwst4Wox294tmV_dTNqdE9FZOtnoVR_UeA86ApdwwZma26JL57EcPbSHNlqATkinGe3Srn2X740S827o7SBp4cX_ONuorspi0ma_xQpW4FC8z4v2cTXk0qIfXG0pZ5qFO7shIB7p3Jqz07drUh6sT_ZuMRl_ywYozsTddWhkE9UT3hH55AJ8xIFL-N_-ErtBQHFeLJ2glUwhJJWt-mvWlwo2CNM3Ce-u8"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
+</div>
+<div class="p-8 md:w-2/3 flex flex-col justify-center">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label text-xs uppercase tracking-widest text-on-tertiary-fixed-variant bg-tertiary-fixed px-3 py-1 rounded-full">GOA Archdiocese</span>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">open_in_new</span>
+</div>
+<h4 class="font-headline text-2xl font-bold text-primary mb-2">Today's Digital Chant Stand</h4>
+<p class="text-on-surface-variant font-body mb-4">Daily Service for Monday of the Holy Spirit. Access rubrics, prayers, and hymnal summaries for the 10:00 AM Liturgy.</p>
+<div class="flex gap-4">
+<button class="text-primary font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">description</span> Read PDF
+                            </button>
+<button class="text-primary font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">volume_up</span> Audio Summary
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar Contextual Area -->
+<aside class="md:col-span-4 space-y-8">
+<!-- Messaging Inbox Preview -->
+<div class="bg-surface-container-low rounded-full p-8">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline text-xl font-bold text-primary">Messaging</h3>
+<span class="bg-tertiary-container text-on-tertiary px-2 py-0.5 rounded-full text-xs font-bold">2 New</span>
+</div>
+<div class="space-y-6">
+<div class="flex gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<p class="text-sm font-bold text-on-surface truncate">Elias P.</p>
+<span class="text-[10px] text-outline">08:42 AM</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Security rotation update for the West portal...</p>
+</div>
+</div>
+<div class="flex gap-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">support_agent</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<p class="text-sm font-bold text-on-surface truncate">Maintenance</p>
+<span class="text-[10px] text-outline">Yesterday</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Lighting rig calibration complete in the Dome.</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 rounded-lg border border-outline-variant/30 text-primary font-bold text-xs hover:bg-surface-container transition-colors">
+                        View All Messages
+                    </button>
+</div>
+<!-- File Upload Shortcut (Glassmorphism inspired) -->
+<div class="relative rounded-full overflow-hidden bg-white/40 backdrop-blur-md border border-white/20 p-8 shadow-sm">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl"></div>
+<h3 class="font-headline text-xl font-bold text-primary mb-4">Quick Submit</h3>
+<p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Upload daily site logs, incident reports, or media captures directly to the registry.</p>
+<label class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-outline-variant/50 rounded-xl cursor-pointer hover:bg-white/60 transition-all">
+<div class="flex flex-col items-center justify-center pt-5 pb-6">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="cloud_upload">cloud_upload</span>
+<p class="text-xs font-bold text-primary">Drop files or Browse</p>
+</div>
+<input class="hidden" type="file"/>
+</label>
+</div>
+<!-- Map Context -->
+<div class="bg-surface-container-low rounded-full h-48 overflow-hidden relative">
+<img alt="Satellite map" class="absolute inset-0 w-full h-full object-cover opacity-80" data-alt="stylized architectural site plan map with minimalist blue and grey tones showing pathways and building footprints" data-location="Landmark Site" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCE7YpA26AdOcyqn9RQQ1kuAabGaft73g6cCDm80v-V5XdalvU6ukuBRDksypzANFr7JjQdMz_Ou_PTymVkVQelHz2pzObxxx4FiFQYA0X4y6M6PVZ12kbWvDiuejG3r2fi7RjcdCvEDnYcIeWwvoLFSAwEsx0rpHyMD8or-S3T1zd7LyQ3XjsZh9oDkKrVYozlKSAtaszadFpX9o5Ove_lRlD89QfSP8s9yMWbRfCjCaFUAG8cjkeEFOJz6TYxXF5ZZwP7lK_GthQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+<div class="absolute bottom-4 left-6 flex items-center gap-2">
+<div class="p-1.5 bg-primary rounded-full shadow-lg">
+<div class="w-2 h-2 bg-white rounded-full animate-ping"></div>
+</div>
+<span class="text-xs font-bold text-primary">You are here: Nave East</span>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar from Shared Components -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-t border-slate-200/15 dark:border-slate-700/15 shadow-[0px_0px_24px_rgba(25,28,29,0.06)]">
+<!-- Dashboard (Active) -->
+<a class="flex flex-col items-center justify-center bg-[#0038A8] text-white rounded-xl p-2 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Dashboard</span>
+</a>
+<!-- Calendar (Inactive) -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Calendar</span>
+</a>
+<!-- Chat (Inactive) -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Chat</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-2 hover:text-[#0038A8] dark:hover:text-blue-300 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="Inter body-md tracking-normal text-[10px] mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
