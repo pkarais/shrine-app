@@ -310,13 +310,26 @@ export const getAssignedTickets = async () => {
 
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, events(title), profiles:user_id(full_name, email), assigned_profile:assigned_to(full_name, email)")
+    .select("*, events(title)")
     .eq("assigned_to", user.id)
     .in("status", ["open", "in_progress"])
     .order("created_at", { ascending: false })
 
   if (error) throw new Error(error.message)
-  return data
+  if (!data || data.length === 0) return []
+
+  const userIds = Array.from(new Set(data.map(t => t.user_id).filter(Boolean)))
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds)
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  return data.map(t => ({
+    ...t,
+    profiles: profileMap.get(t.user_id) || null,
+    assigned_profile: t.assigned_to ? profileMap.get(t.assigned_to) || null : null,
+  }))
 }
 
 export const getUnassignedTickets = async () => {
@@ -334,13 +347,22 @@ export const getUnassignedTickets = async () => {
 
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, events(title), profiles:user_id(full_name, email)")
+    .select("*, events(title)")
     .is("assigned_to", null)
     .in("status", ["open"])
     .order("created_at", { ascending: false })
 
   if (error) throw new Error(error.message)
-  return data
+  if (!data || data.length === 0) return []
+
+  const userIds = Array.from(new Set(data.map(t => t.user_id).filter(Boolean)))
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds)
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  return data.map(t => ({ ...t, profiles: profileMap.get(t.user_id) || null }))
 }
 
 export const getTicketCounts = async () => {
@@ -389,14 +411,30 @@ export const getManagerTickets = async (limit = 50) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, events(title), profiles:user_id(full_name, email), assigned_profile:assigned_to(full_name, email)")
+    .select("*, events(title)")
     .order("created_at", { ascending: false })
     .limit(limit)
 
   if (error) throw new Error(error.message)
-  return data
+  if (!data || data.length === 0) return []
+
+  const userIds = Array.from(new Set(data.flatMap(t => [t.user_id, t.assigned_to]).filter(Boolean)))
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds)
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  return data.map(t => ({
+    ...t,
+    profiles: profileMap.get(t.user_id) || null,
+    assigned_profile: t.assigned_to ? profileMap.get(t.assigned_to) || null : null,
+  }))
 }
 
 export const getOperationsStaff = async () => {
@@ -415,7 +453,7 @@ export const getOperationsStaff = async () => {
   const { data, error } = await supabase
     .from("profiles")
     .select("id, full_name, email, role")
-    .eq("role", "operations")
+    .in("role", ["operations", "security"])
     .order("full_name", { ascending: true })
 
   if (error) throw new Error(error.message)

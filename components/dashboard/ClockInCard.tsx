@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button"
 import { clockIn, clockOut } from "@/lib/actions/clock-in"
 import { createClient } from "@/utils/supabase/client"
 
-export function ClockInCard() {
+export function ClockInCard({ eventId }: { eventId?: number | null }) {
   const [activeShift, setActiveShift] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -48,7 +48,7 @@ export function ClockInCard() {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             try {
-              await clockIn(1, pos.coords.latitude, pos.coords.longitude)
+              await clockIn(eventId ?? 1, pos.coords.latitude, pos.coords.longitude)
               await loadShift()
             } catch (err: any) {
               setError(err.message)

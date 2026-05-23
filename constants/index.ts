@@ -24,8 +24,8 @@ export const BREAKS = {
 
 export const GEOFENCE = {
   LIBERTY_PARK: {
-    LAT: parseFloat(process.env.NEXT_PUBLIC_SITE_LAT || "40.7081"),
-    LON: parseFloat(process.env.NEXT_PUBLIC_SITE_LON || "-74.0173"),
+    LAT: parseFloat(process.env.NEXT_PUBLIC_SITE_LAT || "40.7101341"),
+    LON: parseFloat(process.env.NEXT_PUBLIC_SITE_LON || "-74.0132028"),
     RADIUS_METERS: parseInt(process.env.NEXT_PUBLIC_GEOFENCE_RADIUS || "100", 10),
   },
 } as const

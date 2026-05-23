@@ -3,6 +3,7 @@ import { cookies } from "next/headers" // Add this
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import { CalendarControls } from "@/components/calendar/CalendarControls"
 import { CalendarEventTimeline } from "@/components/calendar/CalendarEventTimeline"
+import { injectSundayOrthros } from "@/lib/calendar-defaults"
 
 type AssignmentRow = {
   event_id: number
@@ -77,7 +78,10 @@ export default async function CalendarPage({
     .lt("start_time", queryEnd)
     .order("start_time", { ascending: true })
 
-  const events = (eventsRaw || []).filter((event: any) => localDateKey(event.start_time) === selectedDateStr)
+  let events = (eventsRaw || []).filter((event: any) => localDateKey(event.start_time) === selectedDateStr)
+  events = events.filter((event: any) => event.title !== "Staff Operational Window" && event.title !== "Open for Tourism")
+  events = injectSundayOrthros(selectedDateStr, events)
+  events.sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
 
   console.log(`[CALENDAR DEBUG] Selected: ${selectedDateStr}, Found: ${events?.length || 0}`)
   if (error) console.error(`[CALENDAR DEBUG] Error:`, error)
@@ -91,7 +95,7 @@ export default async function CalendarPage({
   const { data: staffProfiles } = await supabase
     .from("profiles")
     .select("id, full_name, email, role")
-    .not("id", "is", null)
+    .in("role", ["operations", "security"])
     .order("full_name", { ascending: true })
 
   const { data: staffDirectory } = await supabase
@@ -176,7 +180,9 @@ export default async function CalendarPage({
       acc.push(item)
     }
     return acc
-  }, [])
+  }, []).filter((item: any) =>
+    item.role === "operations" || item.role === "security"
+  )
 
   const filteredEventsRaw = (events || []).filter((event) => {
     if (roleFilter === "all") return true
@@ -189,12 +195,22 @@ export default async function CalendarPage({
   const filteredEvents = filteredEventsRaw.length > 0 ? filteredEventsRaw : (events || [])
 
   const eventIds = (events || []).map((event: any) => event.id)
-  const { data: assignmentRows } = eventIds.length
+  const { data: assignmentRowsRaw } = eventIds.length
     ? await supabase
         .from("staff_assignments")
-        .select("event_id, role_assigned, user_id, profiles!staff_assignments_user_id_fkey(full_name, email, role)")
+        .select("event_id, role_assigned, user_id")
         .in("event_id", eventIds)
-    : { data: [] as AssignmentRow[] }
+    : { data: [] as any[] }
+
+  const userIds = Array.from(new Set((assignmentRowsRaw || []).map(r => r.user_id).filter(Boolean)))
+  const { data: assignProfiles } = userIds.length
+    ? await supabase.from("profiles").select("id, full_name, email, role").in("id", userIds)
+    : { data: [] }
+  const assignProfileMap = new Map((assignProfiles || []).map(p => [p.id, p]))
+  const assignmentRows = (assignmentRowsRaw || []).map(r => ({
+    ...r,
+    profiles: assignProfileMap.get(r.user_id) || null,
+  }))
 
   const assignmentLookupByEvent = new Map<number, Record<string, { id: string; name: string; email: string | null }[]>>()
   const roleRosterByDate: Record<string, { id: string; name: string; email: string | null; assignments: number }[]> = {

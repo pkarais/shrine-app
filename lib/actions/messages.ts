@@ -24,11 +24,19 @@ export async function getConversations() {
   if (hasRestrictedInbox) {
     const { data: inboundMessages, error: inboundError } = await supabase
       .from("messages")
-      .select("*, profiles!messages_sender_id_fkey(full_name, email, role)")
+      .select("*")
       .eq("recipient_id", user.id)
       .order("created_at", { ascending: false })
 
     if (inboundError) throw new Error(inboundError.message)
+
+    const senderIds = Array.from(new Set((inboundMessages || []).map(m => m.sender_id).filter(Boolean)))
+    const { data: senderProfiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role")
+      .in("id", senderIds)
+
+    const profileMap = new Map((senderProfiles || []).map(p => [p.id, p]))
 
     const securityConversations = new Map<string, any>()
     inboundMessages?.forEach((message: any) => {
@@ -38,7 +46,7 @@ export async function getConversations() {
           partnerId,
           lastMessage: message,
           unreadCount: 0,
-          profile: message.profiles,
+          profile: profileMap.get(partnerId) || null,
         })
       }
       if (!message.read_at) {
@@ -53,14 +61,21 @@ export async function getConversations() {
   if (error) {
     const { data: messages } = await supabase
       .from("messages")
-      .select("*, profiles!messages_sender_id_fkey(full_name, email, role)")
+      .select("*")
       .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
       .order("created_at", { ascending: false })
+    const allIds = (messages || []).reduce((acc, m) => { if (m.sender_id) acc.push(m.sender_id); if (m.recipient_id) acc.push(m.recipient_id); return acc; }, [] as string[])
+    const userIds = Array.from(new Set(allIds))
+    const { data: msgProfiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role")
+      .in("id", userIds)
+    const profileMap = new Map((msgProfiles || []).map(p => [p.id, p]))
     const conversations = new Map()
     messages?.forEach((m: any) => {
       const partnerId = m.sender_id === user.id ? m.recipient_id : m.sender_id
       if (!conversations.has(partnerId)) {
-        conversations.set(partnerId, { partnerId, lastMessage: m, unreadCount: 0, profile: m.profiles })
+        conversations.set(partnerId, { partnerId, lastMessage: m, unreadCount: 0, profile: profileMap.get(partnerId) || null })
       }
       if (m.recipient_id === user.id && !m.read_at) {
         conversations.get(partnerId).unreadCount++
@@ -77,12 +92,20 @@ export async function getMessagesWithUser(userId: string, limit = 50) {
   if (!user) return []
   const { data, error } = await supabase
     .from("messages")
-    .select("*, profiles!messages_sender_id_fkey(full_name, email)")
+    .select("*")
     .or(`and(sender_id.eq.${user.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${user.id})`)
     .order("created_at", { ascending: true })
     .limit(limit)
   if (error) throw new Error(error.message)
-  return data
+  if (!data || data.length === 0) return []
+
+  const profilesToFetch = Array.from(new Set(data.map(m => m.sender_id).filter(Boolean)))
+  const { data: msgProfiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", profilesToFetch)
+  const profileMap = new Map((msgProfiles || []).map(p => [p.id, p]))
+  return data.map(m => ({ ...m, profiles: profileMap.get(m.sender_id) || null }))
 }
 
 export async function markMessagesAsRead(partnerId: string) {
@@ -104,7 +127,7 @@ export async function getOperationsStaff() {
   const { data, error } = await supabase
     .from("profiles")
     .select("id, full_name, email, role")
-    .eq("role", "operations")
+    .in("role", ["operations", "security"])
     .order("full_name", { ascending: true })
   if (error) throw new Error(error.message)
   return data

@@ -6,8 +6,8 @@ export function MapContext() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
 
-  const shrineLat = 40.7081
-  const shrineLng = -74.0173
+  const shrineLat = 40.7101341
+  const shrineLng = -74.0132028
 
   useEffect(() => {
     if (!navigator.geolocation) {

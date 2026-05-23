@@ -5,7 +5,10 @@ import { VisitorVolumeChart } from "@/components/manager/VisitorVolumeChart"
 import { MediaFolders } from "@/components/manager/MediaFolders"
 import { DirectComms } from "@/components/manager/DirectComms"
 import { ShiftOptimizerPanel } from "@/components/manager/ShiftOptimizerPanel"
+import StaffingGaps from "@/components/manager/StaffingGaps"
+import { AIConfigPanel } from "@/components/manager/AIConfigPanel"
 import { analyzeOvertime } from "@/lib/actions/overtime-analysis"
+import { getManagerIncidents } from "@/lib/actions/incidents"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 
 export default async function ManagerPage() {
@@ -60,7 +63,8 @@ export default async function ManagerPage() {
   const nowIso = new Date().toISOString()
   const nextDayIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
-  const [{ data: shifts }, { data: profiles }, { data: visitorVolume }, { data: recentMessages }, { data: upcomingEvents }] = await Promise.all([
+  const [incidentsData, { data: shifts }, { data: profiles }, { data: visitorVolume }, { data: recentMessages }, { data: upcomingEvents }] = await Promise.all([
+    getManagerIncidents(20),
     supabase.from("shifts").select("*, user_id, clock_in, clock_out, events(title)").order("clock_in", { ascending: false }).limit(50),
     supabase.from("profiles").select("id, full_name, email, role"),
     supabase.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
@@ -73,6 +77,8 @@ export default async function ManagerPage() {
       .order("start_time", { ascending: true })
       .limit(5),
   ])
+
+  const managerIncidents = Array.isArray(incidentsData) ? incidentsData : []
 
   const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]))
   const shiftsWithProfiles = (shifts ?? []).map((s: any) => ({
@@ -243,6 +249,55 @@ export default async function ManagerPage() {
       {/* Ticket Command */}
       <section className="bg-white rounded-2xl p-8 shadow-sm">
         <ManagerTicketCommand />
+      </section>
+
+      {/* Staffing Gaps */}
+      <section>
+        <StaffingGaps />
+      </section>
+
+      {/* Recent Incidents */}
+      <section className="bg-surface-container-low rounded-2xl p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="material-symbols-outlined text-tertiary">report</span>
+          <h2 className="text-display-sm text-on-surface">Incident Reports</h2>
+        </div>
+        {managerIncidents.length > 0 ? (
+          <div className="space-y-4">
+            {managerIncidents.map((incident: any) => (
+              <div key={incident.id} className="bg-surface-container rounded-xl p-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                    incident.severity === "critical" ? "bg-red-900/30 text-red-400" :
+                    incident.severity === "high" ? "bg-orange-900/30 text-orange-400" :
+                    "bg-surface-container-high text-on-surface-variant"
+                  }`}>
+                    {incident.severity || "unknown"}
+                  </span>
+                  <span className="text-xs text-on-surface-variant">
+                    {new Date(incident.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-on-surface">{incident.description?.slice(0, 200)}</p>
+                {incident.description?.length > 200 && (
+                  <p className="text-xs text-on-surface-variant">Click to view full report</p>
+                )}
+                <div className="flex gap-2 text-xs text-on-surface-variant">
+                  <span>Location: {incident.location || "N/A"}</span>
+                  <span>·</span>
+                  <span>Shift: {incident.shift || "N/A"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-on-surface-variant">No incident reports on file.</p>
+        )}
+      </section>
+
+      {/* AI Configuration */}
+      <section>
+        <AIConfigPanel />
       </section>
 
       {/* Staff Media + Direct Comms */}

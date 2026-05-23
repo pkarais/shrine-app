@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   const hasDevBypass = cookieStore.get('shrine_dev_session')?.value === 'true'
   const devRole = cookieStore.get('shrine_dev_role')?.value || 'manager'
   const devName = cookieStore.get('shrine_dev_name')?.value || (devRole === 'security' ? 'Security Staff (Dev)' : devRole === 'operations' ? 'Operations Staff (Dev)' : devRole === 'council' ? 'Council Member (Dev)' : 'Shrine Manager (Dev)')
-  const devEmail = devRole === 'security' ? 'security@shrine.org' : devRole === 'operations' ? 'operations@shrine.org' : devRole === 'council' ? 'user@shrine.org' : 'manager@shrine.org'
+  const devEmail = `dev-${devRole}@shrine.org`
 
   if (!user && !hasDevBypass) {
     return (
@@ -39,15 +39,7 @@ export default async function ProfilePage() {
     ? await supabase.from("profiles").select("role").eq("id", user.id).single()
     : { data: null }
 
-  const inferredRoleFromEmail = String(effectiveUser.email || "").toLowerCase().includes("security")
-    ? "security"
-    : String(effectiveUser.email || "").toLowerCase().includes("operations")
-      ? "operations"
-      : String(effectiveUser.email || "").toLowerCase().includes("user@shrine.org")
-        ? "council"
-        : null
-
-  const currentRole = ((profileForRole?.role || effectiveUser.role || devRole || inferredRoleFromEmail || "") as string).toLowerCase()
+  const currentRole = ((profileForRole?.role || effectiveUser.role || devRole || "") as string).toLowerCase()
 
   const { data: events } = await supabase
     .from("events")

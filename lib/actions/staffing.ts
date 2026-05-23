@@ -91,8 +91,17 @@ export async function getEventAssignments(eventId: number) {
   const supabase = createServerClient()
   const { data, error } = await supabase
     .from("staff_assignments")
-    .select("*, profiles!staff_assignments_user_id_fkey(full_name, email)")
+    .select("*")
     .eq("event_id", eventId)
   if (error) throw new Error(error.message)
-  return data
+  if (!data || data.length === 0) return []
+
+  const userIds = Array.from(new Set(data.map(s => s.user_id).filter(Boolean)))
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", userIds)
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  return data.map(s => ({ ...s, profiles: profileMap.get(s.user_id) || null }))
 }

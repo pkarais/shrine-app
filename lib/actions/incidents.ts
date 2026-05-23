@@ -106,6 +106,9 @@ export const getManagerIncidents = async (limit = 50) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
   const { data, error } = await supabase
     .from("incidents")
     .select("*, events(title)")

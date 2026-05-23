@@ -1,5 +1,5 @@
 import { createServerClient } from "@/utils/supabase/server"
-import { getStaffingGaps } from "@/lib/actions/staffing"
+import { injectSundayOrthros } from "@/lib/calendar-defaults"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -24,18 +24,28 @@ export default async function CalendarDatePage({ params }: Props) {
   const startOfDay = new Date(date + "T00:00:00").toISOString()
   const endOfDay = new Date(date + "T23:59:59").toISOString()
 
-  const { data: events, error } = await supabase
+  let { data: events, error } = await supabase
     .from("events")
     .select("*")
     .gte("start_time", startOfDay)
     .lte("start_time", endOfDay)
     .order("start_time", { ascending: true })
+  events = (events || []).filter((event: any) => event.title !== "Staff Operational Window" && event.title !== "Open for Tourism")
+  events = injectSundayOrthros(date, events)
+  events.sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
 
-  const { data: shifts } = await supabase
+  const { data: shiftsRaw } = await supabase
     .from("shifts")
-    .select("*, profiles(full_name, email, role)")
+    .select("*")
     .gte("clock_in", startOfDay)
     .lte("clock_in", endOfDay)
+
+  const shiftUserIds = Array.from(new Set((shiftsRaw || []).map(s => s.user_id).filter(Boolean)))
+  const { data: shiftProfiles } = shiftUserIds.length
+    ? await supabase.from("profiles").select("id, full_name, email, role").in("id", shiftUserIds)
+    : { data: [] }
+  const shiftProfileMap = new Map((shiftProfiles || []).map(p => [p.id, p]))
+  const shifts = (shiftsRaw || []).map(s => ({ ...s, profiles: shiftProfileMap.get(s.user_id) || null }))
 
   const formattedDate = dateObj.toLocaleDateString("en-US", {
     weekday: "long",

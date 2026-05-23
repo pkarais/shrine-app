@@ -6,11 +6,10 @@ import { createClient } from "@/utils/supabase/client"
 import Image from "next/image"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("manager@shrine.org")
-  const [password, setPassword] = useState("ShrineManager2024!")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isNewUser, setIsNewUser] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -21,221 +20,19 @@ export default function LoginPage() {
     return "/dashboard"
   }
 
-  const setDevBypassCookies = (role: "manager" | "security" | "operations" | "council") => {
-    const roleName =
-      role === "manager"
-        ? "Shrine Manager (Dev)"
-        : role === "security"
-          ? "Security Staff (Dev)"
-          : role === "operations"
-            ? "Operations Staff (Dev)"
-            : "Council Member (Dev)"
-
-    document.cookie = "shrine_dev_session=true; path=/; max-age=3600"
-    document.cookie = `shrine_dev_role=${role}; path=/; max-age=3600`
-    document.cookie = `shrine_dev_name=${roleName}; path=/; max-age=3600`
-  }
-
-  const clearDevBypassCookies = () => {
-    document.cookie = "shrine_dev_session=; path=/; max-age=0"
-    document.cookie = "shrine_dev_role=; path=/; max-age=0"
-    document.cookie = "shrine_dev_name=; path=/; max-age=0"
-  }
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      // 1. Manager shortcut: prefer a real auth session so server actions work without service key.
-      if (email === "manager@shrine.org" && password === "ShrineManager2024!") {
-        const { error: managerSignInError } = await supabase.auth.signInWithPassword({ email, password })
-
-        if (!managerSignInError) {
-          clearDevBypassCookies()
-          router.push("/manager")
-          router.refresh()
-          return
-        }
-
-        // Auto-create dev manager auth user, then sign in.
-        const { error: managerSignUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: "Shrine Manager",
-              role: "manager",
-            },
-          },
-        })
-
-        if (!managerSignUpError) {
-          const { error: secondManagerSignInError } = await supabase.auth.signInWithPassword({ email, password })
-          if (!secondManagerSignInError) {
-            clearDevBypassCookies()
-            router.push("/manager")
-            router.refresh()
-            return
-          }
-        }
-
-        // Fallback to local dev bypass if auth user does not exist yet.
-        setDevBypassCookies("manager")
-        router.push("/manager")
-        router.refresh()
-        return
-      }
-
-      // 1b. Security shortcut: enables testing security dashboard without signup.
-      if (email === "security@shrine.org" && password === "ShrineSecurity2024!") {
-        const { error: securitySignInError } = await supabase.auth.signInWithPassword({ email, password })
-
-        if (!securitySignInError) {
-          clearDevBypassCookies()
-          router.push("/dashboard")
-          router.refresh()
-          return
-        }
-
-        // Auto-create dev security auth user, then sign in.
-        const { error: securitySignUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: "Security Staff",
-              role: "security",
-            },
-          },
-        })
-
-        if (!securitySignUpError) {
-          const { error: secondSecuritySignInError } = await supabase.auth.signInWithPassword({ email, password })
-          if (!secondSecuritySignInError) {
-            clearDevBypassCookies()
-            router.push("/dashboard")
-            router.refresh()
-            return
-          }
-        }
-
-        setDevBypassCookies("security")
-        router.push("/dashboard")
-        router.refresh()
-        return
-      }
-
-      // 1c. Operations shortcut: enables testing operations dashboard without signup.
-      if (email === "operations@shrine.org" && password === "ShrineOps2024!") {
-        const { error: operationsSignInError } = await supabase.auth.signInWithPassword({ email, password })
-
-        if (!operationsSignInError) {
-          clearDevBypassCookies()
-          router.push("/dashboard")
-          router.refresh()
-          return
-        }
-
-        // Auto-create dev operations auth user, then sign in.
-        const { error: operationsSignUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: "Operations Staff",
-              role: "operations",
-            },
-          },
-        })
-
-        if (!operationsSignUpError) {
-          const { error: secondOperationsSignInError } = await supabase.auth.signInWithPassword({ email, password })
-          if (!secondOperationsSignInError) {
-            clearDevBypassCookies()
-            router.push("/dashboard")
-            router.refresh()
-            return
-          }
-        }
-
-        setDevBypassCookies("operations")
-        router.push("/dashboard")
-        router.refresh()
-        return
-      }
-
-      // 1d. Council shortcut: dedicated general user dashboard for oversight users.
-      if (email === "user@shrine.org" && password === "ShrineUser2024!") {
-        const { error: councilSignInError } = await supabase.auth.signInWithPassword({ email, password })
-
-        if (!councilSignInError) {
-          clearDevBypassCookies()
-          router.push("/council")
-          router.refresh()
-          return
-        }
-
-        const { error: councilSignUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: "Council Member",
-              role: "council",
-            },
-          },
-        })
-
-        if (!councilSignUpError) {
-          const { error: secondCouncilSignInError } = await supabase.auth.signInWithPassword({ email, password })
-          if (!secondCouncilSignInError) {
-            clearDevBypassCookies()
-            router.push("/council")
-            router.refresh()
-            return
-          }
-        }
-
-        setDevBypassCookies("council")
-        router.push("/council")
-        router.refresh()
-        return
-      }
-
-      // 2. Standard sign-in
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      // 2. If it fails and it's our dev manager, try to create it
-      if (signInError && email === "manager@shrine.org") {
-        setIsNewUser(true)
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: "Shrine Manager",
-              role: "manager",
-            }
-          }
-        })
-        if (signUpError) throw signUpError
-        
-        // Re-attempt sign in after auto-signup
-        const { error: secondSignInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
-        if (secondSignInError) throw secondSignInError
-      } else if (signInError) {
-        throw signInError
-      }
+      if (signInError) throw signInError
 
-      clearDevBypassCookies()
       const { data: authUser } = await supabase.auth.getUser()
       const currentUserId = authUser.user?.id
       if (currentUserId) {
@@ -378,11 +175,6 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {isNewUser && !error && (
-                <div className="bg-secondary-container/30 text-secondary text-sm p-4 rounded-xl text-center">
-                  ✨ Initializing Manager Profile... Please wait.
-                </div>
-              )}
             </form>
 
             <div className="mt-10 pt-8 border-t border-outline-variant/30 text-center">
@@ -390,19 +182,19 @@ export default function LoginPage() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => router.push("/signup?role=staff")}
+                  onClick={() => router.push("/signup")}
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container-highest rounded-xl text-primary font-bold text-sm transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[20px]">badge</span>
-                  Staff ID
+                  <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
+                  Register
                 </button>
                 <button
                   type="button"
-                  onClick={() => router.push("/signup?role=manager")}
+                  onClick={() => router.push("/signup")}
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-surface-container-low hover:bg-surface-container-highest rounded-xl text-primary font-bold text-sm transition-colors"
                 >
                   <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
-                  Manager SSO
+                  New Account
                 </button>
               </div>
             </div>
@@ -413,14 +205,14 @@ export default function LoginPage() {
       {/* Footer / Legal */}
       <footer className="absolute bottom-8 w-full px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-white/50 text-xs font-medium tracking-widest uppercase">
         <div className="flex items-center gap-6">
-          <span>&copy; 2024 National Shrine Authority</span>
+          <span>Created by: Paul Karaisaridis, Director of Operations 2026 National Shrine.</span>
           <span className="hidden md:inline w-1 h-1 rounded-full bg-white/20" />
           <span>Operational Portal v4.2.0</span>
         </div>
         <div className="flex items-center gap-8">
-          <button className="hover:text-white transition-colors">Privacy Protocol</button>
-          <button className="hover:text-white transition-colors">Security Standards</button>
-          <button className="hover:text-white transition-colors">Support Terminal</button>
+          <button onClick={() => router.push("/privacy")} className="hover:text-white transition-colors">Privacy Protocol</button>
+          <button onClick={() => router.push("/security")} className="hover:text-white transition-colors">Security Standards</button>
+          <button onClick={() => router.push("/support")} className="hover:text-white transition-colors">Support Terminal</button>
         </div>
       </footer>
 

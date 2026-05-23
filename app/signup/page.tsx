@@ -1,21 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import Image from "next/image"
 
-export default function SignupPage() {
+function SignupForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
+  const [role, setRole] = useState<"operations" | "security" | "council">("operations")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -24,24 +24,14 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      // 1. Check Staff Directory for Role Assignment
-      const { data: directoryEntry } = await supabase
-        .from('staff_directory')
-        .select('role')
-        .ilike('name', fullName)
-        .single()
-
-      const assignedRole = directoryEntry?.role || 'operations'
-
-      // 2. Perform Supabase Auth Signup
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
             phone: phone,
-            role: assignedRole,
+            role,
           }
         }
       })
@@ -61,7 +51,6 @@ export default function SignupPage() {
 
   return (
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-surface">
-      {/* Background Hero Image */}
       <div className="absolute inset-0 z-0 text-white">
         <Image
           src="https://images.unsplash.com/photo-1549413970-dcb62a1498b8?w=1920&q=80"
@@ -116,6 +105,20 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-1">
+              <label className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1">Operational Role</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as "operations" | "security" | "council")}
+                required
+                className="w-full px-4 py-3 bg-white/40 border-none rounded-xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
+              >
+                <option value="operations">Operations</option>
+                <option value="security">Security</option>
+                <option value="council">Council</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
               <label className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1">Emergency Contact (Phone)</label>
               <input
                 type="tel"
@@ -154,5 +157,13 @@ export default function SignupPage() {
         )}
       </div>
     </main>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
   )
 }

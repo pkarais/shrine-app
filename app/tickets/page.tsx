@@ -2,10 +2,9 @@
 
 import { useEffect, useState, useTransition } from "react"
 import { createClient } from "@/utils/supabase/client"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { TopAppBar } from "@/components/layout/TopAppBar"
-import { Wrench, Clock, CheckCircle2, RefreshCw, Inbox, User, Plus, ArrowLeft } from "lucide-react"
+import { Wrench, Clock, CheckCircle2, RefreshCw, Inbox, User, Plus } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TicketCard, TicketCardGroup } from "@/components/shared/TicketCard"
 import { MaintenanceTicketForm } from "@/components/forms/MaintenanceTicketForm"

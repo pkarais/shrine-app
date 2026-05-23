@@ -339,7 +339,7 @@ function ManagerTicketRow({
           {assigningId === ticket.id && (
             <div className="p-4 bg-[var(--surface-container-low)] rounded-xl space-y-2">
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--on-surface-variant)]">
-                Select an operations employee to assign:
+                Select an employee to assign:
               </p>
               {staff.length === 0 ? (
                 <p className="text-xs text-[var(--on-surface-variant)]">No operations staff available.</p>

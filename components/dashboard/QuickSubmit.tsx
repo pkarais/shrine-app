@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Button } from "@/components/ui/Button"
 
 export function QuickSubmit() {
   const [dragActive, setDragActive] = useState(false)
-  const [files, setFiles] = useState<string[]>([])
+  const [files, setFiles] = useState<File[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploaded, setUploaded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
@@ -22,13 +24,34 @@ export function QuickSubmit() {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    const droppedFiles = Array.from(e.dataTransfer.files).map((f) => f.name)
+    const droppedFiles = Array.from(e.dataTransfer.files)
     setFiles((prev) => [...prev, ...droppedFiles])
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(e.target.files || []).map((f) => f.name)
+    const selected = Array.from(e.target.files || [])
     setFiles((prev) => [...prev, ...selected])
+  }
+
+  const handleUpload = async () => {
+    if (files.length === 0) return
+    setUploading(true)
+    setError(null)
+    try {
+      const formData = new FormData()
+      files.forEach((f) => formData.append("files", f))
+      const res = await fetch("/api/upload", { method: "POST", body: formData })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Upload failed")
+      }
+      setUploaded(true)
+      setFiles([])
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -60,18 +83,31 @@ export function QuickSubmit() {
           onChange={handleFileChange}
         />
       </div>
-      {files.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {files.map((name, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs bg-surface-container-lowest rounded-lg px-3 py-2">
-              <span className="material-symbols-outlined text-primary text-sm">
-                {name.match(/\.(jpg|jpeg|png|gif)$/i) ? "image" : name.match(/\.(mp4|mov|avi)$/i) ? "videocam" : "description"}
-              </span>
-              <span className="text-on-surface truncate">{name}</span>
-            </div>
-          ))}
+      {uploaded && (
+        <div className="mt-4 bg-primary/10 text-primary text-xs font-bold rounded-xl px-4 py-3 text-center">
+          Files uploaded successfully
         </div>
       )}
+      {files.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {files.map((f, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs bg-surface-container-lowest rounded-lg px-3 py-2">
+              <span className="material-symbols-outlined text-primary text-sm">
+                {f.name.match(/\.(jpg|jpeg|png|gif)$/i) ? "image" : f.name.match(/\.(mp4|mov|avi)$/i) ? "videocam" : "description"}
+              </span>
+              <span className="text-on-surface truncate">{f.name}</span>
+            </div>
+          ))}
+          <button
+            onClick={handleUpload}
+            disabled={uploading}
+            className="w-full mt-2 py-3 rounded-xl gold-accents text-white font-bold text-sm disabled:opacity-50"
+          >
+            {uploading ? "Uploading..." : `Upload ${files.length} file${files.length > 1 ? "s" : ""}`}
+          </button>
+        </div>
+      )}
+      {error && <p className="text-xs text-error mt-2 text-center">{error}</p>}
     </div>
   )
 }

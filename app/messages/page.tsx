@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { ConversationList } from "@/components/messaging/ConversationList"
 import { ChatWindow } from "@/components/messaging/ChatWindow"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 
-export default function MessagesPage() {
+function MessagesContent() {
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null)
   const searchParams = useSearchParams()
   const deptParam = (searchParams.get("dept") || "").toLowerCase()
@@ -49,5 +49,13 @@ export default function MessagesPage() {
       </div>
       </div>
     </>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MessagesContent />
+    </Suspense>
   )
 }

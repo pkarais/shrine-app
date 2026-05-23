@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { getStaffingGaps, assignStaff } from "@/lib/actions/staffing"
+import { createClient } from "@/utils/supabase/client"
 
 export default function StaffingGaps() {
   const [gaps, setGaps] = useState<any[]>([])
@@ -17,12 +18,30 @@ export default function StaffingGaps() {
 
   async function loadGaps() {
     try {
-      const data = await getStaffingGaps()
+      const [data, staff] = await Promise.all([
+        getStaffingGaps(),
+        loadAvailableStaff(),
+      ])
       setGaps(data)
+      setAvailableStaff(staff)
     } catch {
       setError("Failed to load staffing gaps")
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadAvailableStaff() {
+    try {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, role")
+        .in("role", ["operations", "security"])
+        .order("full_name", { ascending: true })
+      return data || []
+    } catch {
+      return []
     }
   }
 
@@ -108,13 +127,20 @@ export default function StaffingGaps() {
                         return (
                           <div key={role}>
                             <p className="text-xs font-bold text-[var(--on-surface-variant)] uppercase px-2 py-1">{role}</p>
-                            <button
-                              onClick={() => handleAssign(gap.eventId, "mock-user-id", role)}
-                              disabled={assigning}
-                              className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-container)] transition-colors text-[var(--on-surface)] disabled:opacity-50"
-                            >
-                              {assigning ? "Assigning..." : `+ Assign ${role}`}
-                            </button>
+                            <div className="space-y-1">
+                              {availableStaff
+                                .filter((s) => s.role === role)
+                                .map((member) => (
+                                  <button
+                                    key={member.id}
+                                    onClick={() => handleAssign(gap.eventId, member.id, role)}
+                                    disabled={assigning}
+                                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-container)] transition-colors text-[var(--on-surface)] disabled:opacity-50"
+                                  >
+                                    {member.full_name || member.email}
+                                  </button>
+                                ))}
+                            </div>
                           </div>
                         )
                       })}

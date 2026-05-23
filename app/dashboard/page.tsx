@@ -2,12 +2,14 @@ import { createServerClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers" // Add this
 import { redirect } from "next/navigation"
 import { ClockInCard } from "@/components/dashboard/ClockInCard"
+import { ShiftTimer } from "@/components/dashboard/ShiftTimer"
 import { BreakCountdown } from "@/components/dashboard/BreakCountdown"
 import { DailyBrief } from "@/components/dashboard/DailyBrief"
 import { MessagingPreview } from "@/components/dashboard/MessagingPreview"
 import { QuickSubmit } from "@/components/dashboard/QuickSubmit"
 import { MapContext } from "@/components/dashboard/MapContext"
 import { RoleActionCenter } from "@/components/dashboard/RoleActionCenter"
+import { OperationsActionCards } from "@/components/dashboard/OperationsActionCards"
 import { LiveVisitorCountCard } from "@/components/dashboard/LiveVisitorCountCard"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import { getCurrentOrNextEvent, getOperationsSummary, getStaffForEvent } from "@/lib/actions/event-context"
@@ -85,8 +87,9 @@ export default async function DashboardPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ClockInCard />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <ClockInCard eventId={currentEvent?.id ?? null} />
+                <ShiftTimer currentShift={null} />
                 <BreakCountdown />
               </div>
 
@@ -100,6 +103,11 @@ export default async function DashboardPage() {
                 event={currentEvent}
                 staffAssignments={staffAssignments}
                 summary={summary}
+              />
+              <OperationsActionCards
+                eventId={currentEvent?.id ?? null}
+                recentWalkthroughs={summary?.recentWalkthroughs || []}
+                role={profile?.role || "operations"}
               />
             </section>
 

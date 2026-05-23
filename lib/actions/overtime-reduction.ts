@@ -1,7 +1,7 @@
 "use server"
 import { createServerClient } from "@/utils/supabase/server"
 
-export async function analyzeOvertimeReduction(eventId?: number) {
+export async function analyzeOvertimeReductionByEvent(eventId?: number) {
   const supabase = createServerClient()
   let query = supabase.from("shifts").select("*, events(title)")
   if (eventId) query = query.eq("event_id", eventId)

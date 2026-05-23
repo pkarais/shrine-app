@@ -7,10 +7,11 @@ import { clockIn, clockOut } from "@/lib/actions/clock-in"
 import { startBreak, endBreak, getActiveBreak } from "@/lib/actions/breaks"
 import { checkGeofence } from "@/lib/geofence"
 import { getNextBreakInfo, getShiftProgress } from "@/lib/labor-math"
+import { GEOFENCE } from "@/constants"
 
-const SHRINE_LAT = 40.7081
-const SHRINE_LON = -74.0173
-const GEOFENCE_RADIUS = 100
+const SHRINE_LAT = GEOFENCE.LIBERTY_PARK.LAT
+const SHRINE_LON = GEOFENCE.LIBERTY_PARK.LON
+const GEOFENCE_RADIUS = GEOFENCE.LIBERTY_PARK.RADIUS_METERS
 
 interface Shift {
   id?: string
