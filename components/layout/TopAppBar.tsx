@@ -23,7 +23,9 @@ export function TopAppBar({ showProfile = true }: { showProfile?: boolean }) {
   const navItems = [
     { href: currentRole === "council" ? "/council" : "/dashboard", label: "Dashboard" },
     { href: "/tickets", label: "Tickets" },
-    ...(canAccessManager && !isManagerPage ? [{ href: "/manager", label: "Command Center" }] : []),
+    ...(canAccessManager && !isManagerPage
+      ? [{ href: "/manager", label: "Command Center" }, { href: "/operations-brief", label: "Brief" }]
+      : []),
     { href: "/calendar", label: "Calendar" },
     { href: "/messages", label: "Chat" },
     { href: "/profile", label: "Profile" },
