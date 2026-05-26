@@ -10,7 +10,7 @@ export default function SecurityPage() {
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-surface">
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://images.unsplash.com/photo-1545459720-aacaf5090835?w=1920&q=80"
+          src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1920&q=80"
           alt="Shrine Background"
           fill
           priority

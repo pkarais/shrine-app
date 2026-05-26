@@ -95,6 +95,12 @@ export function CalendarEventTimeline({
       return
     }
 
+    if (selectedEvent.id < 0) {
+      setError("This event is a placeholder and cannot be assigned directly. Use the sidebar to create a shift assignment.")
+      setSaving(false)
+      return
+    }
+
     setSaving(true)
     setError(null)
     setMessage(null)
@@ -225,7 +231,7 @@ export function CalendarEventTimeline({
 
       {selectedEvent ? (
         <div className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-2xl max-h-[90svh] overflow-y-auto bg-white rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
+          <div className="w-full max-w-2xl max-h-[90svh] overflow-y-auto card-surface rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
             <button
               onClick={() => setSelectedEvent(null)}
               className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2 hover:bg-surface rounded-full"
@@ -242,7 +248,7 @@ export function CalendarEventTimeline({
 
             <form onSubmit={onSubmit} className="space-y-4">
               {staffOptions.length === 0 ? (
-                <div className="bg-error-container/40 text-error text-sm rounded-xl p-3">
+                <div className="bg-error-container text-on-error-container text-sm rounded-xl p-3">
                   No staff returned from Supabase. Check `staff_directory` / `profiles` access.
                 </div>
               ) : null}
@@ -322,7 +328,7 @@ export function CalendarEventTimeline({
 
       {rosterEvent ? (
         <div className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-xl max-h-[90svh] overflow-y-auto bg-white rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
+          <div className="w-full max-w-xl max-h-[90svh] overflow-y-auto card-surface rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
             <button
               onClick={() => setRosterEvent(null)}
               className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2 hover:bg-surface rounded-full"

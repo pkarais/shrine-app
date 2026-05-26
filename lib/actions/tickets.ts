@@ -53,10 +53,10 @@ export const createTicket = async (
     description: description.trim(),
     priority,
     media_urls: mediaUrls,
-  }).select("*, events(title)").single()
+  }).select("*").single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: data }
+  return { success: true, ticket: await enrichWithEvents(db, data) }
 }
 
 export const claimTicket = async (ticketId: string) => {
@@ -109,11 +109,11 @@ export const claimTicket = async (ticketId: string) => {
     .from("maintenance_tickets")
     .update({ assigned_to: user.id, status: "in_progress" })
     .eq("id", ticketId)
-    .select("*, events(title)")
+    .select("*")
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: data }
+  return { success: true, ticket: await enrichWithEvents(db, data) }
 }
 
 export const completeTicket = async (ticketId: string) => {
@@ -162,11 +162,11 @@ export const completeTicket = async (ticketId: string) => {
     .from("maintenance_tickets")
     .update({ status: "resolved", resolved_at: new Date().toISOString() })
     .eq("id", ticketId)
-    .select("*, events(title)")
+    .select("*")
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: data }
+  return { success: true, ticket: await enrichWithEvents(db, data) }
 }
 
 export const assignTicket = async (ticketId: string, assigneeId: string) => {
@@ -205,11 +205,11 @@ export const assignTicket = async (ticketId: string, assigneeId: string) => {
     .from("maintenance_tickets")
     .update({ assigned_to: assigneeId, status: "in_progress" })
     .eq("id", ticketId)
-    .select("*, events(title)")
+    .select("*")
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: data }
+  return { success: true, ticket: await enrichWithEvents(db, data) }
 }
 
 export const unassignTicket = async (ticketId: string) => {
@@ -248,11 +248,11 @@ export const unassignTicket = async (ticketId: string) => {
     .from("maintenance_tickets")
     .update({ assigned_to: null, status: "open" })
     .eq("id", ticketId)
-    .select("*, events(title)")
+    .select("*")
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: data }
+  return { success: true, ticket: await enrichWithEvents(db, data) }
 }
 
 export const getUserTickets = async (limit = 20) => {
@@ -266,11 +266,11 @@ export const getUserTickets = async (limit = 20) => {
       const admin = createAdminClient()
       const { data, error } = await admin
         .from("maintenance_tickets")
-                .select("*, events(title)")
+                .select("*")
         .order("created_at", { ascending: false })
         .limit(limit)
       if (error) return []
-      return data || []
+      return enrichTicketsWithEvents(admin, data || [])
     }
     return []
   }
@@ -285,7 +285,7 @@ export const getUserTickets = async (limit = 20) => {
 
   let query = supabase
     .from("maintenance_tickets")
-            .select("*, events(title)")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(limit)
 
@@ -300,7 +300,20 @@ export const getUserTickets = async (limit = 20) => {
   const { data, error } = await query
 
   if (error) throw new Error(error.message)
-  return data
+  if (!data || data.length === 0) return []
+
+  const userIds = Array.from(new Set(data.flatMap(t => [t.user_id, t.assigned_to]).filter(Boolean)))
+  const [{ data: profiles }, enriched] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
+    enrichTicketsWithEvents(supabase, data),
+  ])
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  return enriched.map(t => ({
+    ...t,
+    profiles: profileMap.get(t.user_id) || null,
+    assigned_profile: t.assigned_to ? profileMap.get(t.assigned_to) || null : null,
+  }))
 }
 
 export const getAssignedTickets = async () => {
@@ -310,7 +323,7 @@ export const getAssignedTickets = async () => {
 
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, events(title)")
+    .select("*")
     .eq("assigned_to", user.id)
     .in("status", ["open", "in_progress"])
     .order("created_at", { ascending: false })
@@ -319,14 +332,19 @@ export const getAssignedTickets = async () => {
   if (!data || data.length === 0) return []
 
   const userIds = Array.from(new Set(data.map(t => t.user_id).filter(Boolean)))
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
-    .in("id", userIds)
+  const eventIds = Array.from(new Set(data.map(t => t.event_id).filter(Boolean)))
+  const [{ data: profiles }, { data: events }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
+    eventIds.length > 0
+      ? supabase.from("events").select("id, title").in("id", eventIds)
+      : Promise.resolve({ data: [] }),
+  ])
 
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  const eventMap = new Map((events || []).map(e => [e.id, e]))
   return data.map(t => ({
     ...t,
+    events: eventMap.get(t.event_id) || null,
     profiles: profileMap.get(t.user_id) || null,
     assigned_profile: t.assigned_to ? profileMap.get(t.assigned_to) || null : null,
   }))
@@ -347,7 +365,7 @@ export const getUnassignedTickets = async () => {
 
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, events(title)")
+    .select("*")
     .is("assigned_to", null)
     .in("status", ["open"])
     .order("created_at", { ascending: false })
@@ -356,13 +374,13 @@ export const getUnassignedTickets = async () => {
   if (!data || data.length === 0) return []
 
   const userIds = Array.from(new Set(data.map(t => t.user_id).filter(Boolean)))
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
-    .in("id", userIds)
+  const [{ data: profiles }, enriched] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
+    enrichTicketsWithEvents(supabase, data),
+  ])
 
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))
-  return data.map(t => ({ ...t, profiles: profileMap.get(t.user_id) || null }))
+  return enriched.map(t => ({ ...t, profiles: profileMap.get(t.user_id) || null }))
 }
 
 export const getTicketCounts = async () => {
@@ -416,7 +434,7 @@ export const getManagerTickets = async (limit = 50) => {
 
   const { data, error } = await supabase
     .from("maintenance_tickets")
-    .select("*, events(title)")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(limit)
 
@@ -424,17 +442,31 @@ export const getManagerTickets = async (limit = 50) => {
   if (!data || data.length === 0) return []
 
   const userIds = Array.from(new Set(data.flatMap(t => [t.user_id, t.assigned_to]).filter(Boolean)))
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
-    .in("id", userIds)
+  const [{ data: profiles }, enriched] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
+    enrichTicketsWithEvents(supabase, data),
+  ])
 
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))
-  return data.map(t => ({
+  return enriched.map(t => ({
     ...t,
     profiles: profileMap.get(t.user_id) || null,
     assigned_profile: t.assigned_to ? profileMap.get(t.assigned_to) || null : null,
   }))
+}
+
+const enrichWithEvents = async (supabase: any, ticket: any) => {
+  if (!ticket?.event_id) return ticket
+  const { data: event } = await supabase.from("events").select("title").eq("id", ticket.event_id).single()
+  return { ...ticket, events: event || null }
+}
+
+const enrichTicketsWithEvents = async (supabase: any, tickets: any[]) => {
+  const eventIds: number[] = Array.from(new Set(tickets.map((t: any) => t.event_id).filter(Boolean)))
+  if (eventIds.length === 0) return tickets
+  const { data: events } = await supabase.from("events").select("id, title").in("id", eventIds)
+  const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
+  return tickets.map((t: any) => ({ ...t, events: eventMap.get(t.event_id) || null }))
 }
 
 export const getOperationsStaff = async () => {
@@ -450,12 +482,38 @@ export const getOperationsStaff = async () => {
 
   if (profile?.role !== "manager") return []
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+
+  const { data: staffDir } = await admin
+    .from("staff_directory")
+    .select("*")
+    .limit(500)
+
+  const directoryStaff = (staffDir || []).map((row: any, idx: number) => {
+    const rawRole = row.role || row.department || "operations"
+    const name = row.full_name || row.name || row.staff_name
+    return {
+      id: row.profile_id || row.user_id || row.id || `directory:${name || idx}`,
+      full_name: name,
+      email: row.email || row.staff_email,
+      role: String(rawRole).toLowerCase(),
+    }
+  }).filter((s: any) => s.full_name)
+
+  const { data: dbProfiles, error } = await admin
     .from("profiles")
     .select("id, full_name, email, role")
     .in("role", ["operations", "security"])
     .order("full_name", { ascending: true })
 
   if (error) throw new Error(error.message)
-  return data
+
+  const merged = [...(dbProfiles || []), ...directoryStaff]
+  const seen = new Set()
+  return merged.filter((s: any) => {
+    const key = s.id || s.full_name
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }

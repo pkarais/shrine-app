@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { getNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount } from "@/lib/actions/notifications"
 import { motion, AnimatePresence } from "framer-motion"
+import { playAlertSoundForType } from "@/lib/audio/alert-sounds"
 
 const typeIcons: Record<string, string> = {
   alert: "⚠",
@@ -19,9 +20,19 @@ export default function NotificationPanel() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const prevCountRef = useRef(0)
 
   useEffect(() => {
     loadCount()
+    const interval = setInterval(async () => {
+      const count = await getUnreadCount()
+      if (count > prevCountRef.current) {
+        playAlertSoundForType("info")
+      }
+      prevCountRef.current = count
+      setUnreadCount(count)
+    }, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -40,6 +51,7 @@ export default function NotificationPanel() {
 
   async function loadCount() {
     const count = await getUnreadCount()
+    prevCountRef.current = count
     setUnreadCount(count)
   }
 

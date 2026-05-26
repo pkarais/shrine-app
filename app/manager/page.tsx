@@ -1,4 +1,4 @@
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { ManagerTicketCommand } from "@/components/shared/ManagerTicketCommand"
 import { cookies } from "next/headers"
 import { VisitorVolumeChart } from "@/components/manager/VisitorVolumeChart"
@@ -7,6 +7,9 @@ import { DirectComms } from "@/components/manager/DirectComms"
 import { ShiftOptimizerPanel } from "@/components/manager/ShiftOptimizerPanel"
 import StaffingGaps from "@/components/manager/StaffingGaps"
 import { AIConfigPanel } from "@/components/manager/AIConfigPanel"
+import { StaffTable } from "@/components/manager/StaffTable"
+import { ScheduleOverview } from "@/components/manager/ScheduleOverview"
+import { OvertimeAlerts } from "@/components/manager/OvertimeAlerts"
 import { analyzeOvertime } from "@/lib/actions/overtime-analysis"
 import { getManagerIncidents } from "@/lib/actions/incidents"
 import { TopAppBar } from "@/components/layout/TopAppBar"
@@ -63,10 +66,12 @@ export default async function ManagerPage() {
   const nowIso = new Date().toISOString()
   const nextDayIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
+  const admin = createAdminClient()
+
   const [incidentsData, { data: shifts }, { data: profiles }, { data: visitorVolume }, { data: recentMessages }, { data: upcomingEvents }] = await Promise.all([
     getManagerIncidents(20),
-    supabase.from("shifts").select("*, user_id, clock_in, clock_out, events(title)").order("clock_in", { ascending: false }).limit(50),
-    supabase.from("profiles").select("id, full_name, email, role"),
+    supabase.from("shifts").select("*").order("clock_in", { ascending: false }).limit(50),
+    admin.from("profiles").select("id, full_name, email, role"),
     supabase.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
     supabase.from("messages").select("id, sender_id, content, created_at, read_at").order("created_at", { ascending: false }).limit(10),
     supabase
@@ -211,6 +216,9 @@ export default async function ManagerPage() {
         </div>
       </section>
 
+      {/* Operations Summary */}
+      <ScheduleOverview events={upcomingEvents || []} />
+
       {/* Bento Grid Dashboard */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <VisitorVolumeChart initialRows={visitorRows} />
@@ -247,7 +255,7 @@ export default async function ManagerPage() {
       </section>
 
       {/* Ticket Command */}
-      <section className="bg-white rounded-2xl p-8 shadow-sm">
+      <section className="card-surface rounded-2xl p-8 shadow-sm">
         <ManagerTicketCommand />
       </section>
 
@@ -299,6 +307,12 @@ export default async function ManagerPage() {
       <section>
         <AIConfigPanel />
       </section>
+
+      {/* Staff Activity Table */}
+      <StaffTable shifts={shiftsWithProfiles || []} />
+
+      {/* Overtime Alerts */}
+      <OvertimeAlerts alerts={overtimeAlerts} />
 
       {/* Staff Media + Direct Comms */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -50,7 +50,7 @@ export function ShiftOptimizerPanel({
   }
 
   const openManualOverhaul = () => {
-    router.push("/calendar")
+    window.location.href = "/calendar"
   }
 
   return (

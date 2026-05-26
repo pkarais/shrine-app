@@ -54,7 +54,7 @@ export async function GET() {
 
     // Check open tickets assigned to user
     const { data: openTickets } = await supabase
-      .from("tickets")
+      .from("maintenance_tickets")
       .select("id, title, status, priority")
       .eq("assigned_to", user.id)
       .in("status", ["open", "in_progress"])
@@ -85,9 +85,10 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { data, error } = await supabase.from("notifications").insert({
       user_id: user.id,
-      type: body.type || "general",
-      message: body.message,
-      metadata: body.metadata || {},
+      title: body.title || body.type || "Alert",
+      body: body.message || body.body || "",
+      type: body.type || "info",
+      reference_id: body.reference_id || null,
     }).select().single()
     if (error) throw new Error(error.message)
     return NextResponse.json({ message: "Alert received", data }, { status: 201 })

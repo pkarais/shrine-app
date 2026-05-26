@@ -11,6 +11,23 @@
  */
 
 const https = require('https');
+const path = require('path');
+const fs = require('fs');
+
+// ── Load .env.local ──────────────────────────────────────────────────────
+try {
+  const envPath = path.resolve(__dirname, '..', '.env.local');
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const value = trimmed.slice(eqIdx + 1).trim();
+    if (!process.env[key]) process.env[key] = value;
+  }
+} catch (_) { /* .env.local not found, rely on existing env */ }
 
 // ── Config ──────────────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eqgikumohnvgdkwlzkus.supabase.co';
@@ -152,7 +169,7 @@ async function upsertEvent(event) {
   return { success: false, action: 'failed', status: upsertResult.status, data: upsertResult.data };
 }
 
-async function deletePastMonthEvents(currentMonthIds) {
+async function deletePastMonthEvents(currentMonthIds, timeMin) {
   console.log(`\nCleaning up past month events...`);
   
   const result = await new Promise((resolve, reject) => {
@@ -265,7 +282,7 @@ async function syncCalendar() {
   console.log(`\nDone: ${synced} new, ${updated} updated, ${errors} errors, ${skipped} skipped`);
   
   const currentMonthIds = items.map(item => item.id);
-  await deletePastMonthEvents(currentMonthIds);
+  await deletePastMonthEvents(currentMonthIds, timeMin);
 }
 
 syncCalendar().catch(err => {

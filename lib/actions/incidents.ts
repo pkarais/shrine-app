@@ -85,6 +85,14 @@ export const submitIncident = async (data: IncidentData) => {
   return { success: true, incident: result }
 }
 
+const enrichIncidentsWithEvents = async (supabase: any, incidents: any[]) => {
+  const eventIds: number[] = Array.from(new Set(incidents.map((i: any) => i.event_id).filter(Boolean)))
+  if (eventIds.length === 0) return incidents
+  const { data: events } = await supabase.from("events").select("id, title").in("id", eventIds)
+  const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
+  return incidents.map((i: any) => ({ ...i, events: eventMap.get(i.event_id) || null }))
+}
+
 export const getUserIncidents = async (limit = 20) => {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -92,13 +100,13 @@ export const getUserIncidents = async (limit = 20) => {
 
   const { data, error } = await supabase
     .from("incidents")
-    .select("*, events(title)")
+    .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(limit)
 
   if (error) throw new Error(error.message)
-  return data
+  return enrichIncidentsWithEvents(supabase, data || [])
 }
 
 export const getManagerIncidents = async (limit = 50) => {
@@ -111,10 +119,10 @@ export const getManagerIncidents = async (limit = 50) => {
 
   const { data, error } = await supabase
     .from("incidents")
-    .select("*, events(title)")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(limit)
 
   if (error) throw new Error(error.message)
-  return data
+  return enrichIncidentsWithEvents(supabase, data || [])
 }

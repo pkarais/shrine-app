@@ -4,25 +4,10 @@ let client: ReturnType<typeof createBrowserClient> | null = null
 
 export const createClient = () => {
   if (client) return client
-
   client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          "X-Client-Info": "shrine-ops/1.0",
-        },
-        fetch: async (url, options = {}) => {
-          return fetch(url, {
-            ...options,
-            next: { revalidate: 60 },
-          })
-        },
-      },
-    }
   )
-
   return client
 }
 

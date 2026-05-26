@@ -1,11 +1,23 @@
 # Agent Instructions
 
-## Build & Verify
+## Dev Restart Protocol (MANDATORY)
+Before EVERY `npx next build` or `npm run dev`, run:
+```powershell
+Get-Process -Name "node" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 3
+Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+```
+
+Then start fresh:
 ```bash
-# Kill dev server first to avoid .next cache corruption
 npx next build
-# Restart dev server after build
+# after build succeeds, start dev (auto-syncs Google Calendar then starts):
 npm run dev
+```
+
+Never skip the kill step — stale node processes lock `.next/trace` (EPERM) and hold port 3000. The dev server must be started in a NEW powershell window so it survives the tool timeout:
+```powershell
+Start-Process powershell.exe -ArgumentList "-NoExit -Command &{Set-Location '<project-path>'; npm run dev}" -WindowStyle Normal
 ```
 
 ## Key Conventions

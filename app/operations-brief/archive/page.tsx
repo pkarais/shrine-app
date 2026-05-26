@@ -44,20 +44,20 @@ export default function OperationsBriefArchivePage() {
           </div>
 
           {loading && (
-            <div className="flex items-center gap-3 rounded-2xl bg-white p-5 text-on-surface-variant shadow-sm">
+            <div className="flex items-center gap-3 rounded-2xl card-surface p-5 text-on-surface-variant">
               <Loader2 className="w-5 h-5 animate-spin" /> Loading archive...
             </div>
           )}
 
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800">{error}</div>
+            <div className="rounded-2xl border border-error-container bg-error-container p-4 text-on-error-container">{error}</div>
           )}
 
           <div className="grid gap-4 md:grid-cols-2">
             {issues.map((issue) => (
-              <article key={issue.id} className="rounded-3xl border border-outline-variant/30 bg-white p-5 shadow-sm">
+              <article key={issue.id} className="card-surface rounded-[2rem] p-5 border border-outline-variant/30">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-2xl bg-primary p-3 text-white">
+                   <div className="rounded-2xl bg-primary p-3 text-on-primary">
                     <Newspaper className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -85,7 +85,7 @@ export default function OperationsBriefArchivePage() {
           </div>
 
           {!loading && issues.length === 0 && (
-            <div className="rounded-2xl bg-white p-6 text-on-surface-variant shadow-sm">
+            <div className="rounded-2xl card-surface p-6 text-on-surface-variant">
               No Operations Briefs are published yet.
             </div>
           )}

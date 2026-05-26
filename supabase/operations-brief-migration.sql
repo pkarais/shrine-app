@@ -13,7 +13,7 @@ create table if not exists public.operations_brief_issues (
   title text not null,
   slug text not null unique,
   opening_message text,
-  status text not null default 'draft',
+  status text not null default 'draft' check (status in ('draft', 'review', 'published', 'archived')),
   visibility text not null default 'staff',
   prepared_by uuid references public.profiles(id),
   published_at timestamptz,
@@ -305,6 +305,21 @@ begin
       'Publish the monthly brief to the Operations Website archive.'
     )),
     'Next month’s priorities should focus on open maintenance, event readiness, walkthrough quality, attendance accountability, and staff recognition.'
+  ),
+  (v_issue_id, 'staff_reminders', 'Staff Reminder Settings', 100,
+    jsonb_build_object(
+      'reminder_types', jsonb_build_array(
+        'Wake-up reminder',
+        'Leave-now reminder',
+        'Shift start reminder',
+        'Opening walkthrough reminder',
+        'Closing walkthrough reminder',
+        'Task due soon reminder',
+        'Photo required reminder',
+        'End-of-shift reminder'
+      )
+    ),
+    'Staff are encouraged to set useful reminders in the Operations App to help with punctuality, checklist completion, task deadlines, and event readiness. Use reminders before they become warnings — a good reminder setup helps avoid late arrivals, missed walkthroughs, incomplete tasks, and lost points. Each reminder displays text even when audio plays, so notifications remain visible if the phone is muted or connected to Bluetooth.'
   )
   on conflict (issue_id, section_key)
   do update set

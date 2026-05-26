@@ -1,8 +1,7 @@
 "use server"
 
 import { cookies } from "next/headers"
-import { createServerClient } from "@/utils/supabase/server"
-import { createAdminClient } from "@/utils/supabase/admin"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 
 export async function submitVisitorCount(eventId: number | null, count: number) {
   if (!Number.isFinite(count) || count < 0) {
@@ -21,10 +20,8 @@ export async function submitVisitorCount(eventId: number | null, count: number) 
 
   if (!user && hasDevBypass) {
     const admin = createAdminClient()
-    if (admin) {
-      dbClient = admin
-      recordedBy = null
-    }
+    dbClient = admin
+    recordedBy = null
   }
 
   const { data, error } = await dbClient

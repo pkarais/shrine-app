@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { getStaffingGaps, assignStaff } from "@/lib/actions/staffing"
-import { createClient } from "@/utils/supabase/client"
+import { getOperationsStaff } from "@/lib/actions/tickets"
 
 export default function StaffingGaps() {
   const [gaps, setGaps] = useState<any[]>([])
@@ -14,13 +14,13 @@ export default function StaffingGaps() {
 
   useEffect(() => {
     loadGaps()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadGaps() {
     try {
       const [data, staff] = await Promise.all([
         getStaffingGaps(),
-        loadAvailableStaff(),
+        getOperationsStaff(),
       ])
       setGaps(data)
       setAvailableStaff(staff)
@@ -28,20 +28,6 @@ export default function StaffingGaps() {
       setError("Failed to load staffing gaps")
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function loadAvailableStaff() {
-    try {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, role")
-        .in("role", ["operations", "security"])
-        .order("full_name", { ascending: true })
-      return data || []
-    } catch {
-      return []
     }
   }
 
@@ -60,37 +46,37 @@ export default function StaffingGaps() {
 
   if (loading) {
     return (
-      <div className="bg-[var(--surface-container-low)] rounded-xl p-8">
-        <p className="text-[var(--on-surface-variant)]">Loading staffing gaps...</p>
+      <div className="bg-surface-container-low rounded-xl p-8">
+        <p className="text-on-surface-variant">Loading staffing gaps...</p>
       </div>
     )
   }
 
   if (gaps.length === 0) {
     return (
-      <div className="bg-[var(--surface-container-low)] rounded-xl p-8 space-y-4">
-        <h3 className="font-headline font-bold text-xl text-[var(--on-surface)]">Staffing Gaps</h3>
-        <p className="text-[var(--on-surface-variant)]">All upcoming events are fully staffed.</p>
+      <div className="bg-surface-container-low rounded-xl p-8 space-y-4">
+        <h3 className="font-headline font-bold text-xl text-on-surface">Staffing Gaps</h3>
+        <p className="text-on-surface-variant">All upcoming events are fully staffed.</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-[var(--surface-container-low)] rounded-xl p-8 space-y-6">
-      <h3 className="font-headline font-bold text-xl text-[var(--on-surface)]">Staffing Gaps</h3>
+    <div className="bg-surface-container-low rounded-xl p-8 space-y-6">
+      <h3 className="font-headline font-bold text-xl text-on-surface">Staffing Gaps</h3>
       {error && (
-        <div className="bg-[var(--error-container)] text-[var(--error)] text-sm p-4 rounded-xl">{error}</div>
+        <div className="bg-error-container text-on-error-container text-sm p-4 rounded-xl">{error}</div>
       )}
       <div className="space-y-4">
         {gaps.map((gap: any, idx: number) => (
           <div
             key={gap.eventId}
-            className="p-4 rounded-xl border-2 border-dashed border-[var(--tertiary)] bg-[var(--tertiary-container)]/20"
+            className="p-4 rounded-xl border-2 border-dashed border-tertiary bg-tertiary-container/20"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h4 className="font-headline font-bold text-[var(--on-surface)]">{gap.event}</h4>
-                <p className="text-sm text-[var(--on-surface-variant)] mt-1">
+                <h4 className="font-headline font-bold text-on-surface">{gap.event}</h4>
+                <p className="text-sm text-on-surface-variant mt-1">
                   {new Date(gap.startTime).toLocaleDateString("en-US", {
                     weekday: "short",
                     month: "short",
@@ -118,34 +104,34 @@ export default function StaffingGaps() {
                 >
                   Assign Now
                 </button>
-                {openDropdown === idx && (
-                  <div className="absolute right-0 top-full mt-2 w-64 glass-overlay rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto border border-[var(--outline-variant)]/15">
-                    <div className="p-2 space-y-1">
-                      {["operations", "security", "greeter"].map((role) => {
-                        const gapForRole = gap.gaps.find((g: any) => g.role === role)
-                        if (!gapForRole) return null
-                        return (
-                          <div key={role}>
-                            <p className="text-xs font-bold text-[var(--on-surface-variant)] uppercase px-2 py-1">{role}</p>
-                            <div className="space-y-1">
-                              {availableStaff
-                                .filter((s) => s.role === role)
-                                .map((member) => (
-                                  <button
-                                    key={member.id}
-                                    onClick={() => handleAssign(gap.eventId, member.id, role)}
-                                    disabled={assigning}
-                                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-container)] transition-colors text-[var(--on-surface)] disabled:opacity-50"
-                                  >
-                                    {member.full_name || member.email}
-                                  </button>
-                                ))}
+                  {openDropdown === idx && (
+                    <div className="absolute right-0 top-full mt-2 w-64 glass-overlay rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto ghost-border">
+                      <div className="p-2 space-y-1">
+                        {["operations", "security", "greeter"].map((role) => {
+                          const gapForRole = gap.gaps.find((g: any) => g.role === role)
+                          if (!gapForRole) return null
+                          return (
+                            <div key={role}>
+                              <p className="text-xs font-bold text-on-surface-variant uppercase px-2 py-1">{role}</p>
+                              <div className="space-y-1">
+                                {availableStaff
+                                  .filter((s) => s.role === role)
+                                  .map((member) => (
+                                    <button
+                                      key={member.id}
+                                      onClick={() => handleAssign(gap.eventId, member.id, role)}
+                                      disabled={assigning}
+                                      className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-surface-container transition-colors text-on-surface disabled:opacity-50"
+                                    >
+                                      {member.full_name || member.email}
+                                    </button>
+                                  ))}
+                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
                 )}
               </div>
             </div>

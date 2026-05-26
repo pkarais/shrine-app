@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node -e \"try { require('child_process').execSync('node scripts/sync-google-calendar.js', { stdio: 'inherit', timeout: 20000 }) } catch(e) { console.log('[sync] failed, continuing...') }\" && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -31,6 +31,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "jsdom": "^29.0.2",
+    "pg": "^8.21.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",

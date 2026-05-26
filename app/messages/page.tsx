@@ -17,9 +17,9 @@ function MessagesContent() {
       <TopAppBar />
       <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-20 sm:pt-24 pb-6 sm:pb-10 h-[calc(100svh-5rem)] sm:h-[calc(100vh-6rem)]">
       <div className="card-surface h-full overflow-hidden flex">
-        <div className={`flex flex-col ${selectedUser ? "hidden md:flex" : "w-full md:w-80 lg:w-96"} border-r border-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]`}>
-          <div className="p-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
-            <h1 className="headline-sm text-[var(--on-surface)]">Messages</h1>
+        <div className={`flex flex-col ${selectedUser ? "hidden md:flex" : "w-full md:w-80 lg:w-96"} border-r ghost-border`}>
+          <div className="p-4 border-b ghost-border">
+            <h1 className="headline-sm text-on-surface">Messages</h1>
             {departmentFilter ? (
               <p className="text-xs text-on-surface-variant mt-1">
                 Department filter: {departmentFilter}
@@ -41,7 +41,7 @@ function MessagesContent() {
               onBack={() => setSelectedUser(null)}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center text-[var(--on-surface-variant)] body-md">
+            <div className="flex-1 flex items-center justify-center text-on-surface-variant body-md">
               Select a conversation to start messaging
             </div>
           )}

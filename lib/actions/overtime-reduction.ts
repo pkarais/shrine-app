@@ -3,9 +3,16 @@ import { createServerClient } from "@/utils/supabase/server"
 
 export async function analyzeOvertimeReductionByEvent(eventId?: number) {
   const supabase = createServerClient()
-  let query = supabase.from("shifts").select("*, events(title)")
+  let query = supabase.from("shifts").select("*")
   if (eventId) query = query.eq("event_id", eventId)
   const { data: shifts } = await query
+
+  const eventIds: number[] = Array.from(new Set((shifts || []).map((s: any) => s.event_id).filter(Boolean)))
+  let eventMap = new Map<number, any>()
+  if (eventIds.length > 0) {
+    const { data: events } = await supabase.from("events").select("id, title").in("id", eventIds)
+    eventMap = new Map((events || []).map(e => [e.id, e]))
+  }
 
   const suggestions = []
   const overtimeShifts = shifts?.filter((s: any) => {
@@ -20,7 +27,7 @@ export async function analyzeOvertimeReductionByEvent(eventId?: number) {
     suggestions.push({
       shiftId: shift.id,
       userId: shift.user_id,
-      eventTitle: shift.events?.title,
+      eventTitle: eventMap.get(shift.event_id)?.title,
       overtimeHours: Math.round(otHours * 10) / 10,
       estimatedCost: Math.round(otCost * 100) / 100,
       suggestion: `Split shift: assign second staff for last ${Math.round(otHours * 60)} minutes`,

@@ -1,9 +1,11 @@
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers" // Add this
+import { cookies } from "next/headers"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import { CalendarControls } from "@/components/calendar/CalendarControls"
 import { CalendarEventTimeline } from "@/components/calendar/CalendarEventTimeline"
 import { injectSundayOrthros } from "@/lib/calendar-defaults"
+import { RecurringScheduleCalendar } from "@/components/calendar/RecurringScheduleCalendar"
+import { getScheduleForDateRange } from "@/data/employee-schedules"
 
 type AssignmentRow = {
   event_id: number
@@ -92,13 +94,14 @@ export default async function CalendarPage({
       ? devRole
       : null
 
-  const { data: staffProfiles } = await supabase
+  const admin = createAdminClient()
+  const { data: staffProfiles } = await admin
     .from("profiles")
     .select("id, full_name, email, role")
     .in("role", ["operations", "security"])
     .order("full_name", { ascending: true })
 
-  const { data: staffDirectory } = await supabase
+  const { data: staffDirectory } = await admin
     .from("staff_directory")
     .select("*")
     .limit(500)
@@ -180,9 +183,10 @@ export default async function CalendarPage({
       acc.push(item)
     }
     return acc
-  }, []).filter((item: any) =>
-    item.role === "operations" || item.role === "security"
-  )
+  }, []).filter((item: any) => {
+    const r = String(item.role || "").toLowerCase()
+    return r === "operations" || r === "security" || r === "ops" || !r
+  })
 
   const filteredEventsRaw = (events || []).filter((event) => {
     if (roleFilter === "all") return true
@@ -194,9 +198,9 @@ export default async function CalendarPage({
   })
   const filteredEvents = filteredEventsRaw.length > 0 ? filteredEventsRaw : (events || [])
 
-  const eventIds = (events || []).map((event: any) => event.id)
+  const eventIds = (events || []).map((event: any) => event.id).filter((id: number) => id > 0)
   const { data: assignmentRowsRaw } = eventIds.length
-    ? await supabase
+    ? await admin
         .from("staff_assignments")
         .select("event_id, role_assigned, user_id")
         .in("event_id", eventIds)
@@ -204,7 +208,7 @@ export default async function CalendarPage({
 
   const userIds = Array.from(new Set((assignmentRowsRaw || []).map(r => r.user_id).filter(Boolean)))
   const { data: assignProfiles } = userIds.length
-    ? await supabase.from("profiles").select("id, full_name, email, role").in("id", userIds)
+    ? await admin.from("profiles").select("id, full_name, email, role").in("id", userIds)
     : { data: [] }
   const assignProfileMap = new Map((assignProfiles || []).map(p => [p.id, p]))
   const assignmentRows = (assignmentRowsRaw || []).map(r => ({
@@ -256,6 +260,45 @@ export default async function CalendarPage({
   const assignmentsByEventForTimeline = Object.fromEntries(
     Array.from(assignmentLookupByEvent.entries()).map(([eventId, byRole]) => [String(eventId), byRole]),
   )
+
+  // Cross-reference daily schedule data into event assignments so events show as covered
+  const SCHEDULE_ROLE_MAP: Record<string, string> = {
+    Paul: "director", Fabio: "operations", Josh: "operations", Paulin: "operations",
+    Demetri: "greeter", Marcus: "greeter",
+    Teresa: "security", Ryan: "security", Ken: "security", Jose: "security",
+  }
+  const dailySchedule = getScheduleForDateRange(selectedDateStr, selectedDateStr)
+  if (dailySchedule.length > 0) {
+    for (const event of events) {
+      const eventId = String(event.id)
+      const existingByRole = assignmentsByEventForTimeline[eventId] || {}
+      for (const s of dailySchedule) {
+        if (!s.shiftStart && !s.shiftEnd) continue
+        const mappedRole = SCHEDULE_ROLE_MAP[s.staffName]
+        if (!mappedRole) continue
+        if (!existingByRole[mappedRole]) existingByRole[mappedRole] = []
+        const alreadyListed = existingByRole[mappedRole].some((p: any) => p.name === s.staffName)
+        if (!alreadyListed) {
+          existingByRole[mappedRole].push({
+            id: `sched:${s.staffName}`,
+            name: s.staffName,
+            email: null,
+          })
+        }
+      }
+      assignmentsByEventForTimeline[eventId] = existingByRole
+
+      // Also update roleRosterByDate
+      for (const [role, people] of Object.entries(existingByRole)) {
+        if (!roleRosterByDate[role]) roleRosterByDate[role] = []
+        for (const p of people as { id: string; name: string; email: string | null }[]) {
+          if (!roleRosterByDate[role].some((x: any) => x.id === p.id)) {
+            roleRosterByDate[role].push({ ...p, assignments: 1 })
+          }
+        }
+      }
+    }
+  }
 
   const now = new Date()
   const startOfWeek = new Date(now)
@@ -391,6 +434,11 @@ export default async function CalendarPage({
           </div>
         </div>
       </div>
+
+      <section className="mt-12">
+        <RecurringScheduleCalendar selectedDate={selectedDateStr} />
+      </section>
+
       </main>
     </>
   )

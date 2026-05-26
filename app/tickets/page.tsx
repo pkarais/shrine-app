@@ -40,6 +40,7 @@ export default function TicketsPage() {
   const [isPending, startTransition] = useTransition()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchData = () => {
     setLoading(true)
@@ -77,6 +78,7 @@ export default function TicketsPage() {
         setOperationsStaff(staff || [])
       } catch (err) {
         console.error("Error fetching data:", err)
+        setFetchError("Failed to load tickets. Please try refreshing.")
       } finally {
         setLoading(false)
       }
@@ -138,10 +140,27 @@ export default function TicketsPage() {
     return (
       <>
         <TopAppBar />
-        <main className="min-h-screen flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-on-surface-variant">Loading tickets...</p>
+        <main className="max-w-2xl mx-auto px-4 pt-20 pb-24 min-h-screen">
+          <div className="mb-6">
+            <div className="w-56 h-8 bg-surface-container-high rounded-lg animate-pulse mb-2" />
+            <div className="w-40 h-4 bg-surface-container-high rounded animate-pulse" />
+          </div>
+          <div className="flex gap-2 mb-6">
+            <div className="w-36 h-10 bg-surface-container-high rounded-xl animate-pulse" />
+            <div className="w-32 h-10 bg-surface-container-high rounded-xl animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="card-surface rounded-2xl p-4 animate-pulse">
+                <div className="w-3/4 h-5 bg-surface-container-high rounded mb-3" />
+                <div className="w-full h-3 bg-surface-container-high rounded mb-2" />
+                <div className="w-2/3 h-3 bg-surface-container-high rounded mb-4" />
+                <div className="flex gap-2">
+                  <div className="w-16 h-6 bg-surface-container-high rounded-full" />
+                  <div className="w-20 h-6 bg-surface-container-high rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         </main>
       </>
@@ -152,6 +171,16 @@ export default function TicketsPage() {
     <>
       <TopAppBar />
       <main className="max-w-2xl mx-auto px-4 pt-20 pb-24 min-h-screen">
+        {fetchError && (
+          <div className="mb-4 px-4 py-3 rounded-2xl border border-error-container bg-error-container text-on-error-container text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">error</span>
+            {fetchError}
+            <button onClick={() => setFetchError(null)} className="ml-auto text-on-error-container/60 hover:text-on-error-container">
+              <span className="material-symbols-outlined text-base">close</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-on-surface flex items-center gap-2">
@@ -320,7 +349,7 @@ export default function TicketsPage() {
           className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) { setIsFormOpen(false); setIsCreating(false); } }}
         >
-          <div className="w-full max-w-xl bg-white rounded-[2rem] p-6 shadow-2xl relative">
+          <div className="w-full max-w-xl card-surface rounded-[2rem] p-6 shadow-2xl relative">
             <button 
               onClick={() => { setIsFormOpen(false); setIsCreating(false); }} 
               className="absolute top-4 right-4 p-2 hover:bg-surface rounded-full z-[110]"

@@ -2,6 +2,10 @@
 -- Shrine Ops — Complete Database Schema
 -- Run this file against your Supabase project to set up all
 -- tables, indexes, constraints, and RLS policies.
+--
+-- AFTER running this file, also run (in order):
+--   1. supabase/recognition-gamification-migration.sql
+--   2. supabase/operations-brief-migration.sql
 -- ============================================================
 
 -- ────────────────────────────────────────────────────────────
@@ -190,6 +194,41 @@ CREATE TABLE IF NOT EXISTS visitor_volume (
 );
 CREATE INDEX IF NOT EXISTS idx_visitor_volume_event ON visitor_volume (event_id);
 CREATE INDEX IF NOT EXISTS idx_visitor_volume_recorded ON visitor_volume (recorded_at DESC);
+
+-- Staff Directory (with UUID ID and profile connection for badge awarding)
+CREATE TABLE IF NOT EXISTS staff_directory (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id    UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  name          TEXT NOT NULL,
+  role          TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'off')),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Group Conversations (used by the chat module)
+CREATE TABLE IF NOT EXISTS group_conversations (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name            TEXT NOT NULL,
+  created_by      UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_manager_group BOOLEAN NOT NULL DEFAULT false,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversation_participants (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES group_conversations(id) ON DELETE CASCADE,
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  UNIQUE(conversation_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS group_messages (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES group_conversations(id) ON DELETE CASCADE,
+  sender_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content         TEXT NOT NULL,
+  media_urls      JSONB DEFAULT '[]',
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 -- ────────────────────────────────────────────────────────────
 -- 3. INDEXES

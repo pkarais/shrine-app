@@ -2,12 +2,46 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { createClient } from "@/utils/supabase/client"
 
 export function BottomNav() {
   const pathname = usePathname()
+  const supabase = createClient()
+  const [currentRole, setCurrentRole] = useState<string>("")
+
+  useEffect(() => {
+    const resolveRole = async () => {
+      const cookieRole = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("shrine_dev_role="))
+        ?.split("=")[1]
+
+      if (cookieRole) {
+        setCurrentRole(cookieRole)
+        return
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+        if (profile?.role) setCurrentRole(profile.role)
+      } catch {
+        setCurrentRole("")
+      }
+    }
+    resolveRole()
+  }, [supabase])
+
+  const isManager = currentRole === "manager"
+  const isCouncil = currentRole === "council"
 
   const navItems = [
-    { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+    { href: isCouncil ? "/council" : "/dashboard", icon: "dashboard", label: "Dashboard" },
+    { href: "/tickets", icon: "assignment", label: "Tickets" },
+    { href: "/recognition", icon: "workspace_premium", label: "Recognition" },
+    ...(isManager ? [{ href: "/manager", icon: "admin_panel_settings", label: "Command" }] : []),
     { href: "/calendar", icon: "calendar_today", label: "Calendar" },
     { href: "/messages", icon: "chat_bubble", label: "Chat" },
     { href: "/profile", icon: "person", label: "Profile" },

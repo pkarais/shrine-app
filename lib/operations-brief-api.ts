@@ -1,5 +1,4 @@
 import { createClient } from "@/utils/supabase/client"
-import { createServerClient } from "@/utils/supabase/server"
 
 export type OperationsBriefIssue = {
   id: string
@@ -30,16 +29,13 @@ export async function generateOperationsBriefDraft(
   issueMonth: string,
   preparedBy?: string | null
 ) {
-  const supabase = createClient()
-  const { data, error } = await supabase.functions.invoke("generate-operations-brief", {
-    body: {
-      issueMonth,
-      preparedBy: preparedBy ?? null,
-      action: "draft",
-    },
+  const res = await fetch("/api/generate-operations-brief", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ issueMonth, preparedBy: preparedBy ?? null }),
   })
-  if (error) throw error
-  if (data?.error) throw new Error(data.error)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to generate draft")
   return data as { issue: OperationsBriefIssue; sections: OperationsBriefSection[] }
 }
 

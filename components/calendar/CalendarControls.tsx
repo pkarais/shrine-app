@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { assignStaff } from "@/lib/actions/staffing"
+import { assignStaff, assignDayShift } from "@/lib/actions/staffing"
 
 type EventOption = {
   id: number
@@ -53,7 +53,7 @@ export function CalendarControls({
 }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
-  const [eventId, setEventId] = useState<string>(events[0]?.id ? String(events[0].id) : "")
+  const [eventId, setEventId] = useState<string>("-1")
   const firstAssignableId = staff.find((s) => s.assignable !== false)?.id ?? ""
   const [userId, setUserId] = useState<string>(firstAssignableId)
   const [roleAssigned, setRoleAssigned] = useState<string>("operations")
@@ -64,6 +64,16 @@ export function CalendarControls({
   const [error, setError] = useState<string | null>(null)
   const [isRosterOpen, setIsRosterOpen] = useState(false)
   const [rosterRole, setRosterRole] = useState<string>(role)
+
+  const displayEvents = useMemo(() => {
+    if (!events || events.length === 0) {
+      return [
+        { id: -1, title: "Opening", start_time: "", end_time: "" },
+        { id: -2, title: "Closing", start_time: "", end_time: "" },
+      ]
+    }
+    return events
+  }, [events])
 
   const staffOptions = useMemo(() => {
     return [...staff].sort((a, b) => {
@@ -89,7 +99,7 @@ export function CalendarControls({
     const params = new URLSearchParams()
     params.set("date", date)
     params.set("role", nextRole)
-    router.push(`/calendar?${params.toString()}`)
+    window.location.href = `/calendar?${params.toString()}`
 
     const normalizedViewerRole = String(viewerRole || "").toLowerCase()
     const shouldShowCrossRoleRoster =
@@ -110,11 +120,6 @@ export function CalendarControls({
     const normalizedUserId = userId.trim()
     const normalizedEventId = eventId.trim()
 
-    if (!normalizedEventId || Number.isNaN(Number(normalizedEventId))) {
-      setError("Please choose an event.")
-      return
-    }
-
     if (!normalizedUserId) {
       setError("Please choose a staff member.")
       return
@@ -122,14 +127,25 @@ export function CalendarControls({
 
     setSaving(true)
     try {
-      await assignStaff(
-        Number(normalizedEventId),
-        normalizedUserId,
-        roleAssigned,
-        shiftStart ? new Date(shiftStart).toISOString() : undefined,
-        shiftEnd ? new Date(shiftEnd).toISOString() : undefined,
-      )
-      setMessage("Assignment saved to Supabase.")
+      if (normalizedEventId === "-1" || normalizedEventId === "-2") {
+        const shiftName = normalizedEventId === "-1" ? "Opening" : "Closing"
+        await assignDayShift(date, shiftName, normalizedUserId, roleAssigned,
+          shiftStart ? new Date(shiftStart).toISOString() : undefined,
+          shiftEnd ? new Date(shiftEnd).toISOString() : undefined)
+      } else if (normalizedEventId && !Number.isNaN(Number(normalizedEventId))) {
+        await assignStaff(
+          Number(normalizedEventId),
+          normalizedUserId,
+          roleAssigned,
+          shiftStart ? new Date(shiftStart).toISOString() : undefined,
+          shiftEnd ? new Date(shiftEnd).toISOString() : undefined,
+        )
+      } else {
+        setError("Please choose an event.")
+        setSaving(false)
+        return
+      }
+      setMessage("Assignment saved.")
       router.refresh()
     } catch (err: any) {
       setError(err?.message || "Failed to save assignment.")
@@ -171,7 +187,7 @@ export function CalendarControls({
 
       {isOpen ? (
         <div className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-2xl max-h-[90svh] overflow-y-auto bg-white rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
+          <div className="w-full max-w-2xl max-h-[90svh] overflow-y-auto card-surface rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
             <button
               onClick={() => setIsOpen(false)}
               className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2 hover:bg-surface rounded-full"
@@ -184,7 +200,7 @@ export function CalendarControls({
 
             <form onSubmit={onSubmit} className="space-y-4">
               {staffOptions.length === 0 ? (
-                <div className="bg-error-container/40 text-error text-sm rounded-xl p-3">
+                <div className="bg-error-container text-on-error-container text-sm rounded-xl p-3">
                   No staff returned from Supabase. Check `staff_directory` / `profiles` access and session permissions.
                 </div>
               ) : null}
@@ -197,9 +213,9 @@ export function CalendarControls({
                   className="w-full input-surface px-4 py-3"
                   required
                 >
-                  {events.map((event) => (
+                  {displayEvents.map((event) => (
                     <option key={event.id} value={String(event.id)}>
-                      {event.title} ({new Date(event.start_time).toLocaleString()} - {getEventEndTime(event.start_time, event.end_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})
+                      {event.start_time ? `${event.title} (${new Date(event.start_time).toLocaleString()} - ${getEventEndTime(event.start_time, event.end_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})` : event.title}
                     </option>
                   ))}
                 </select>
@@ -280,7 +296,7 @@ export function CalendarControls({
 
       {isRosterOpen ? (
         <div className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-xl max-h-[90svh] overflow-y-auto bg-white rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
+          <div className="w-full max-w-xl max-h-[90svh] overflow-y-auto card-surface rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 shadow-2xl relative">
             <button
               onClick={() => setIsRosterOpen(false)}
               className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2 hover:bg-surface rounded-full"

@@ -46,10 +46,10 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[var(--surface)]">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-surface">
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[var(--primary)]/40 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)] via-[var(--primary)]/60 to-transparent" />
+        <div className="absolute inset-0 bg-primary/40 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
       </div>
 
       <div className="fixed top-0 left-0 w-full h-1 z-50" style={{ background: "linear-gradient(135deg, #735c00, #ffdf6e)" }} />
@@ -62,15 +62,15 @@ export default function ResetPasswordPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
             </div>
-            <h2 className="font-headline text-3xl font-bold text-[var(--primary)] mb-2">Reset Password</h2>
-            <p className="text-[var(--on-surface-variant)]">Enter your new password below.</p>
+            <h2 className="font-headline text-3xl font-bold text-primary mb-2">Reset Password</h2>
+            <p className="text-on-surface-variant">Enter your new password below.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="font-label text-xs font-bold text-[var(--primary)] tracking-widest uppercase ml-1 block">New Password</label>
+              <label className="font-label text-xs font-bold text-primary tracking-widest uppercase ml-1 block">New Password</label>
               <div className="relative group">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--outline)] group-focus-within:text-[var(--primary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline group-focus-within:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
                 <input
@@ -79,15 +79,15 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-4 bg-[var(--surface-container-low)] border-none rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:bg-[var(--surface-container-highest)] transition-all outline-none font-body text-[var(--on-surface)]"
+                  className="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-highest transition-all outline-none font-body text-on-surface"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="font-label text-xs font-bold text-[var(--primary)] tracking-widest uppercase ml-1 block">Confirm Password</label>
+              <label className="font-label text-xs font-bold text-primary tracking-widest uppercase ml-1 block">Confirm Password</label>
               <div className="relative group">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--outline)] group-focus-within:text-[var(--primary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-outline group-focus-within:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                 </svg>
                 <input
@@ -96,17 +96,17 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-4 py-4 bg-[var(--surface-container-low)] border-none rounded-xl focus:ring-2 focus:ring-[var(--primary)]/20 focus:bg-[var(--surface-container-highest)] transition-all outline-none font-body text-[var(--on-surface)]"
+                  className="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-highest transition-all outline-none font-body text-on-surface"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="bg-[var(--error-container)] text-[var(--error)] text-sm p-4 rounded-xl">{error}</div>
+              <div className="bg-error-container text-error text-sm p-4 rounded-xl">{error}</div>
             )}
 
             {success && (
-              <div className="bg-[var(--secondary-container)] text-[var(--on-secondary-container)] text-sm p-4 rounded-xl">
+              <div className="bg-secondary-container text-on-secondary-container text-sm p-4 rounded-xl">
                 Password updated successfully. Redirecting to login...
               </div>
             )}
@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
           </form>
 
           <div className="mt-8 text-center">
-            <a href="/login" className="text-sm font-semibold text-[var(--primary)] hover:text-[var(--primary-container)] transition-colors">
+            <a href="/login" className="text-sm font-semibold text-primary hover:text-primary-container transition-colors">
               Back to Sign In
             </a>
           </div>

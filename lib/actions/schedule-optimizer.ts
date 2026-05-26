@@ -20,20 +20,28 @@ export async function analyzeOvertimeReduction(): Promise<OptimizationSuggestion
   
   const { data: shifts } = await supabase
     .from("shifts")
-    .select("*, profiles(full_name, email)")
+    .select("*")
     .gte("clock_in", thirtyDaysAgo.toISOString())
     .not("clock_out", "is", null)
   
   if (!shifts) return []
   
+  const userIds: string[] = Array.from(new Set(shifts.map((s: any) => s.user_id).filter(Boolean)))
+  let profileMap = new Map<string, { full_name: string; email: string }>()
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds)
+    profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  }
+  
   const suggestions: OptimizationSuggestion[] = []
   const userHours = new Map<string, { name: string; totalHours: number; shifts: number }>()
   
   shifts.forEach((shift: any) => {
+    const profile = profileMap.get(shift.user_id)
     const hours = (new Date(shift.clock_out).getTime() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60)
     const paidHours = Math.max(0, hours - (hours >= 5 ? 0.5 : 0))
     
-    const existing = userHours.get(shift.user_id) || { name: shift.profiles?.full_name || shift.profiles?.email || shift.user_id.slice(0, 8), totalHours: 0, shifts: 0 }
+    const existing = userHours.get(shift.user_id) || { name: profile?.full_name || profile?.email || shift.user_id.slice(0, 8), totalHours: 0, shifts: 0 }
     existing.totalHours += paidHours
     existing.shifts += 1
     userHours.set(shift.user_id, existing)
@@ -64,21 +72,29 @@ export async function getStaffUtilization() {
   
   const { data: shifts } = await supabase
     .from("shifts")
-    .select("*, profiles(full_name, email, role)")
+    .select("*")
     .gte("clock_in", thirtyDaysAgo.toISOString())
   
   if (!shifts) return []
   
+  const userIds: string[] = Array.from(new Set(shifts.map((s: any) => s.user_id).filter(Boolean)))
+  let profileMap = new Map<string, { full_name: string; email: string; role: string }>()
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase.from("profiles").select("id, full_name, email, role").in("id", userIds)
+    profileMap = new Map((profiles || []).map(p => [p.id, p]))
+  }
+  
   const utilization = new Map<string, { name: string; role: string; hours: number; shifts: number }>()
   
   shifts.forEach((shift: any) => {
+    const profile = profileMap.get(shift.user_id)
     const hours = shift.clock_out 
       ? (new Date(shift.clock_out).getTime() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60)
       : (Date.now() - new Date(shift.clock_in).getTime()) / (1000 * 60 * 60)
     
     const existing = utilization.get(shift.user_id) || { 
-      name: shift.profiles?.full_name || shift.profiles?.email || "Unknown",
-      role: shift.profiles?.role || "operations",
+      name: profile?.full_name || profile?.email || "Unknown",
+      role: profile?.role || "operations",
       hours: 0,
       shifts: 0
     }

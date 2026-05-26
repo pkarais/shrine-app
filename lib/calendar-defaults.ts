@@ -43,7 +43,7 @@ export function injectSundayOrthros<T extends CalendarEvent>(
   const orthrosEnd = new Date(`${dateStr}T${String(12 + offset).padStart(2, "0")}:00:00Z`)
 
   const synthetic = {
-    id: -1,
+    id: -999,
     title: "Orthos & Divine Liturgy",
     description: "Default Sunday morning service",
     start_time: orthrosStart.toISOString(),
