@@ -50,9 +50,8 @@ export const submitIncident = async (data: IncidentData) => {
 
   if (!user) throw new Error("Unauthorized. Please log in to your Supabase account to save operational data.")
 
-  const db = user === authUser ? supabase : createAdminClient()
-
-  const { data: result, error } = await db.from("incidents").insert({
+  const admin = createAdminClient()
+  const { data: result, error } = await admin.from("incidents").insert({
     user_id: user.id,
     event_id: data.eventId,
     incident_date: data.incidentDate || new Date().toISOString(),

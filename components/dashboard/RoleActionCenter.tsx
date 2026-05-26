@@ -313,34 +313,38 @@ export function RoleActionCenter({ role, profile, event, staffAssignments, summa
       {/* Form Modals */}
       {isWalkthroughOpen && (
         <div 
-          className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-6 overflow-y-auto"
+          className="fixed inset-0 z-[99999] bg-surface overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) setIsWalkthroughOpen(false); }}
         >
-          <div className="w-full max-w-2xl bg-white rounded-[2rem] p-8 shadow-2xl relative">
-            <button onClick={() => setIsWalkthroughOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-surface rounded-full z-[110]">
-              <span className="material-symbols-outlined font-bold">close</span>
-            </button>
-            {selectedWalkthrough === "facility" ? (
-              <DailyWalkthrough eventId={event?.id} onClose={() => setIsWalkthroughOpen(false)} />
-            ) : (
-              <SecurityWalkthrough eventId={event?.id} onClose={() => setIsWalkthroughOpen(false)} />
-            )}
+          <div className="min-h-full flex items-center justify-center p-6">
+            <div className="w-full max-w-2xl bg-white rounded-[2rem] p-8 shadow-2xl relative my-8">
+              <button onClick={() => setIsWalkthroughOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-surface rounded-full z-[110]">
+                <span className="material-symbols-outlined font-bold">close</span>
+              </button>
+              {selectedWalkthrough === "facility" ? (
+                <DailyWalkthrough eventId={event?.id} onClose={() => setIsWalkthroughOpen(false)} />
+              ) : (
+                <SecurityWalkthrough eventId={event?.id} onClose={() => setIsWalkthroughOpen(false)} />
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {isIncidentOpen && (
         <div 
-          className="fixed inset-0 z-[100] bg-surface/80 backdrop-blur-md flex items-center justify-center p-6 overflow-y-auto"
+          className="fixed inset-0 z-[99999] bg-surface overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) setIsIncidentOpen(false); }}
         >
-          <div className="w-full max-w-4xl bg-white rounded-[2rem] p-8 shadow-2xl relative">
-            <button onClick={() => setIsIncidentOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-surface rounded-full z-[110]">
-              <span className="material-symbols-outlined font-bold">close</span>
-            </button>
-            <div className="py-2">
-              <h3 className="headline-md text-primary mb-6">Incident Report Form</h3>
-              <IncidentReport eventId={event?.id} onClose={() => setIsIncidentOpen(false)} />
+          <div className="min-h-full flex items-center justify-center p-6">
+            <div className="w-full max-w-4xl bg-white rounded-[2rem] p-8 shadow-2xl relative my-8">
+              <button onClick={() => setIsIncidentOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-surface rounded-full z-[110]">
+                <span className="material-symbols-outlined font-bold">close</span>
+              </button>
+              <div className="py-2">
+                <h3 className="headline-md text-primary mb-6">Incident Report Form</h3>
+                <IncidentReport eventId={event?.id} onClose={() => setIsIncidentOpen(false)} />
+              </div>
             </div>
           </div>
         </div>

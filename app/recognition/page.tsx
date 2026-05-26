@@ -30,16 +30,17 @@ export default function RecognitionPage() {
       try {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
 
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id, full_name, email, role")
-          .eq("id", user.id)
-          .single()
-        setProfile(profileData)
-        if (profileData?.role === "manager" || profileData?.role === "admin") {
-          setIsManager(true)
+        if (user) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id, full_name, email, role")
+            .eq("id", user.id)
+            .single()
+          setProfile(profileData)
+          if (profileData?.role === "manager" || profileData?.role === "admin") {
+            setIsManager(true)
+          }
         }
 
         const data = await getRecognitionPageData()

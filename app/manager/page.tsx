@@ -13,6 +13,7 @@ import { ScheduleOverview } from "@/components/manager/ScheduleOverview"
 import { OvertimeAlerts } from "@/components/manager/OvertimeAlerts"
 import { analyzeOvertime } from "@/lib/actions/overtime-analysis"
 import { getManagerIncidents } from "@/lib/actions/incidents"
+import { WalkthroughActivity } from "@/components/manager/WalkthroughActivity"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 
 export default async function ManagerPage() {
@@ -69,7 +70,7 @@ export default async function ManagerPage() {
 
   const admin = createAdminClient()
 
-  const [incidentsData, { data: shifts }, { data: profiles }, { data: visitorVolume }, { data: recentMessages }, { data: upcomingEvents }] = await Promise.all([
+  const [incidentsData, { data: shifts }, { data: profiles }, { data: visitorVolume }, { data: recentMessages }, { data: upcomingEvents }, { data: recentWalkthroughs }] = await Promise.all([
     getManagerIncidents(20),
     supabase.from("shifts").select("*").order("clock_in", { ascending: false }).limit(50),
     admin.from("profiles").select("id, full_name, email, role"),
@@ -82,11 +83,17 @@ export default async function ManagerPage() {
       .lte("start_time", nextDayIso)
       .order("start_time", { ascending: true })
       .limit(5),
+    supabase.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").order("completed_at", { ascending: false }).limit(20),
   ])
 
   const managerIncidents = Array.isArray(incidentsData) ? incidentsData : []
 
   const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]))
+
+  const walkthroughWithNames = (recentWalkthroughs || []).map((w: any) => ({
+    ...w,
+    user_name: profileMap.get(w.user_id)?.full_name || null,
+  }))
   const shiftsWithProfiles = (shifts ?? []).map((s: any) => ({
     ...s,
     profiles: profileMap.get(s.user_id) ?? null,
@@ -268,6 +275,15 @@ export default async function ManagerPage() {
       {/* Manager Alerts */}
       <section>
         <ManagerAlertsCard />
+      </section>
+
+      {/* Walkthrough Activity */}
+      <section className="bg-surface-container-low rounded-2xl p-8">
+        <div className="flex items-center gap-2 mb-6">
+          <span className="material-symbols-outlined text-primary">clipboard_check</span>
+          <h2 className="text-display-sm text-on-surface">Walkthrough Activity</h2>
+        </div>
+        <WalkthroughActivity initial={walkthroughWithNames} />
       </section>
 
       {/* Recent Incidents */}

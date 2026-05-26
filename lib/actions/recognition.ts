@@ -13,6 +13,20 @@ const getUserId = async () => {
   return user?.id || null
 }
 
+async function getActiveUserIds(supabase: any) {
+  try {
+    const { data: { users }, error } = await supabase.auth.admin.listUsers()
+    if (error) {
+      console.error("Error listing auth users:", error)
+      return new Set<string>()
+    }
+    return new Set((users || []).filter((u: any) => u.last_sign_in_at).map((u: any) => u.id))
+  } catch (e) {
+    console.error("Failed to list auth users:", e)
+    return new Set<string>()
+  }
+}
+
 export async function getRecognitionPageData() {
   const supabase = getClient()
   const userId = await getUserId()
@@ -33,12 +47,14 @@ export async function getRecognitionPageData() {
     supabase.from("v_employee_of_month_candidates").select("*").order("total_points", { ascending: false }),
   ])
 
-  const leaderboard = leaderboardData.data || []
+  const activeUserIds = await getActiveUserIds(supabase)
+
+  const leaderboard = (leaderboardData.data || []).filter((e: any) => activeUserIds.has(e.employee_id))
   const badges = badgesData.data || []
-  const badgeAwards = badgeAwardsData.data || []
+  const badgeAwards = (badgeAwardsData.data || []).filter((a: any) => activeUserIds.has(a.employee_id))
   const pointRules = pointRulesData.data || []
   const periods = periodsData.data || []
-  const eomCandidates = eomData.data || []
+  const eomCandidates = (eomData.data || []).filter((e: any) => activeUserIds.has(e.employee_id))
 
   let enrichedBadgeAwards: any[] = []
   if (badgeAwards.length > 0) {
@@ -288,12 +304,15 @@ export async function getStaffForBadgeAwarding() {
     return []
   }
 
-  // Filter to only active staff with profile_id and return
+  const activeUserIds = await getActiveUserIds(supabase)
+
+  // Filter to only active staff with profile_id who have logged in at least once
   const eligibleStaff = (staffDir || [])
     .filter((row: any) => 
       (row.status === "active" || !row.status) && 
       row.profile_id && 
-      row.name
+      row.name &&
+      activeUserIds.has(row.profile_id)
     )
     .map((row: any) => ({
       id: row.profile_id,        // User ID from profiles (for badge award)

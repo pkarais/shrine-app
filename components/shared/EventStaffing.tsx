@@ -5,6 +5,8 @@ import { Shield, Settings, UserCheck } from "lucide-react"
 interface Staff {
   user_id: string
   role_assigned: "operations" | "security" | "manager" | "greeter" | "director" | string
+  shift_start?: string | null
+  shift_end?: string | null
   profiles: {
     full_name: string | null
     email: string
@@ -55,6 +57,19 @@ export function EventStaffing({ staff }: EventStaffingProps) {
             <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant">
               {member.role_assigned}
             </p>
+            {member.shift_start && (
+              <p className="text-[10px] text-on-surface-variant mt-0.5 font-medium">
+                {member.shift_start.length <= 5
+                  ? member.shift_start
+                  : new Date(member.shift_start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {" – "}
+                {member.shift_end
+                  ? member.shift_end.length <= 5
+                    ? member.shift_end
+                    : new Date(member.shift_end).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                  : ""}
+              </p>
+            )}
           </div>
         </div>
       ))}

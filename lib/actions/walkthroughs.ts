@@ -20,18 +20,20 @@ export const submitWalkthrough = async (
     const hasDevBypass = cookies().get('shrine_dev_session')?.value === 'true'
     if (hasDevBypass && process.env.NODE_ENV === 'development') {
       const admin = createAdminClient()
-      const { data: anyUser } = await admin.from("profiles").select("id").limit(1).single()
-      if (anyUser) {
-        user = { id: anyUser.id } as any
+      const { data: managerUser } = await admin.from("profiles").select("id").eq("role", "manager").limit(1).single()
+      if (managerUser) {
+        user = { id: managerUser.id } as any
+      } else {
+        const { data: anyUser } = await admin.from("profiles").select("id").limit(1).single()
+        if (anyUser) user = { id: anyUser.id } as any
       }
     }
   }
 
   if (!user) throw new Error("Unauthorized. Please log in to your Supabase account to save operational data.")
 
-  const db = user === authUser ? supabase : createAdminClient()
-
-  const { data, error } = await db.from("walkthroughs").insert({
+  const admin = createAdminClient()
+  const { data, error } = await admin.from("walkthroughs").insert({
     user_id: user.id,
     event_id: eventId,
     category,
@@ -43,6 +45,20 @@ export const submitWalkthrough = async (
 
   if (error) throw new Error(error.message)
   return { success: true, data }
+}
+
+export async function deleteWalkthrough(id: string) {
+  const admin = createAdminClient()
+  const { error } = await admin.from("walkthroughs").delete().eq("id", id)
+  if (error) throw new Error(error.message)
+  return { success: true }
+}
+
+export async function clearAllWalkthroughs() {
+  const admin = createAdminClient()
+  const { error } = await admin.from("walkthroughs").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+  if (error) throw new Error(error.message)
+  return { success: true }
 }
 
 export const getTodayWalkthrough = async (eventId: number | null, type?: "opening" | "closing") => {

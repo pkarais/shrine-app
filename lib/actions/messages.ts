@@ -232,6 +232,12 @@ export async function getStaffAndManagers() {
   return data
 }
 
+export async function getMyUserId() {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user?.id || null
+}
+
 export async function getManagers() {
   const admin = createAdminClient()
   const { data, error } = await admin.from("profiles").select("id, full_name, email").eq("role", "manager").order("full_name", { ascending: true })

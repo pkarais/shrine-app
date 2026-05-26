@@ -352,7 +352,14 @@ export function DailyWalkthrough({
           <ClipboardCheck className="w-5 h-5 text-[var(--primary)]" />
           Facility Walkthrough
         </h3>
-        <span className="text-xs label-text text-[var(--on-surface-variant)]">{totalCompleted}/{allItems.length}</span>
+        <div className="flex items-center gap-2">
+          {!allChecked && (
+            <span className="text-[10px] font-bold text-[var(--error)] bg-[var(--error-container)] px-2 py-1 rounded-full">
+              {allItems.length - totalCompleted} remaining
+            </span>
+          )}
+          <span className="text-xs label-text text-[var(--on-surface-variant)]">{totalCompleted}/{allItems.length}</span>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -390,7 +397,7 @@ export function DailyWalkthrough({
               className={`rounded-lg border transition-all ${
                 isComplete
                   ? "border-[var(--primary)] bg-[var(--primary-container)]"
-                  : "border-[var(--outline-variant)] bg-[var(--surface-container)]"
+                  : "border-[var(--tertiary)]/40 bg-[var(--surface-container)]"
               }`}
             >
               <button
@@ -403,6 +410,11 @@ export function DailyWalkthrough({
                     <span className="body-md font-medium text-[var(--on-surface)]">{section.title}</span>
                     <p className="text-xs text-[var(--on-surface-variant)] mt-0.5">
                       {progress.checked}/{progress.total} checks
+                      {!isComplete && (
+                        <span className="text-[var(--tertiary)] font-bold ml-2">
+                          {progress.total - progress.checked} left
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
