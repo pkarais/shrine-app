@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { TopAppBar } from "@/components/layout/TopAppBar"
-import { useTheme } from "@/components/theme/ThemeProvider"
-import { Bell, Volume2, VolumeX, Clock, Shield, AlertTriangle, Moon, Sun, Smartphone } from "lucide-react"
+import { Bell, Volume2, VolumeX, Clock, Shield, AlertTriangle, Moon, Sun, Smartphone, AlarmClock, Check, User } from "lucide-react"
 import { Switch } from "@/components/ui/Switch"
 import { Button } from "@/components/ui/Button"
 import { useAlertAudio } from "@/hooks/useAlertAudio"
+import { getWakeUpAlarm, setWakeUpAlarm, deleteWakeUpAlarm } from "@/lib/actions/wake-up-alarm"
+import { createClient } from "@/utils/supabase/client"
 
 type AlertCategory = {
   id: string
@@ -21,7 +22,6 @@ type AlertSetting = {
   description: string
   audioKey: string
   defaultEnabled: boolean
-  isPersonal?: boolean
 }
 
 const ALERT_CATEGORIES: AlertCategory[] = [
@@ -30,18 +30,18 @@ const ALERT_CATEGORIES: AlertCategory[] = [
     label: "Personal Reminders",
     icon: Clock,
     alerts: [
-      { id: "wake_up", label: "Wake Up", description: "Morning wake up reminder", audioKey: "wake_up_reminder", defaultEnabled: true, isPersonal: true },
-      { id: "shift_start", label: "Shift Start", description: "Reminder before shift starts", audioKey: "shift_start_reminder", defaultEnabled: true, isPersonal: true },
-      { id: "shift_started", label: "Shift Started", description: "Confirmation when shift starts", audioKey: "shift_started", defaultEnabled: true, isPersonal: true },
-      { id: "break", label: "Break Reminder", description: "Take a break reminder", audioKey: "break_reminder", defaultEnabled: true, isPersonal: true },
-      { id: "break_over", label: "Break Over", description: "Break time ended", audioKey: "break_over_reminder", defaultEnabled: true, isPersonal: true },
-      { id: "end_of_shift", label: "End of Shift", description: "Shift ending reminder", audioKey: "end_of_shift_reminder", defaultEnabled: true, isPersonal: true },
-      { id: "missed_clock_out", label: "Missed Clock-Out", description: "Forgot to clock out", audioKey: "missed_clock_out_reminder", defaultEnabled: true, isPersonal: true },
-      { id: "leave_now", label: "Leave Now", description: "Time to leave reminder", audioKey: "leave_now_reminder", defaultEnabled: true, isPersonal: true },
+      { id: "shift_start", label: "Shift Start", description: "Reminder before shift starts", audioKey: "shift_start_reminder", defaultEnabled: true },
+      { id: "break", label: "Break Reminder", description: "Take a break reminder", audioKey: "break_reminder", defaultEnabled: true },
+      { id: "break_over", label: "Break Over", description: "Break time ended", audioKey: "break_over_reminder", defaultEnabled: true },
+      { id: "end_of_shift", label: "End of Shift", description: "Shift ending reminder", audioKey: "end_of_shift_reminder", defaultEnabled: true },
+      { id: "missed_clock_out", label: "Missed Clock-Out", description: "Forgot to clock out", audioKey: "missed_clock_out_reminder", defaultEnabled: true },
+      { id: "leave_now", label: "Leave Now", description: "Time to leave reminder", audioKey: "leave_now_reminder", defaultEnabled: true },
+      { id: "idle", label: "Idle Reminder", description: "No activity detected", audioKey: "idle_reminder", defaultEnabled: true },
+      { id: "low_battery", label: "Low Battery", description: "Device battery low", audioKey: "low_battery_reminder", defaultEnabled: true },
     ]
   },
   {
-    id: "geofence",
+    id: "location",
     label: "Location Alerts",
     icon: Smartphone,
     alerts: [
@@ -72,6 +72,8 @@ const ALERT_CATEGORIES: AlertCategory[] = [
       { id: "task_overdue", label: "Task Overdue", description: "Task past deadline", audioKey: "task_overdue", defaultEnabled: true },
       { id: "urgent_task", label: "Urgent Task", description: "High priority task", audioKey: "urgent_task", defaultEnabled: true },
       { id: "task_completed", label: "Task Completed", description: "Task done confirmation", audioKey: "task_completed", defaultEnabled: true },
+      { id: "task_note", label: "Note Required", description: "Note required on task", audioKey: "task_note_required", defaultEnabled: true },
+      { id: "task_photo", label: "Photo Required", description: "Photo required on task", audioKey: "task_photo_required", defaultEnabled: true },
     ]
   },
   {
@@ -84,6 +86,19 @@ const ALERT_CATEGORIES: AlertCategory[] = [
       { id: "security_check", label: "Security Check", description: "Security walkthrough", audioKey: "security_check_reminder", defaultEnabled: true },
       { id: "checklist_incomplete", label: "Checklist Incomplete", description: "Items not completed", audioKey: "checklist_incomplete", defaultEnabled: true },
       { id: "door_check", label: "Door Check", description: "Door not verified", audioKey: "door_check_missing", defaultEnabled: true },
+    ]
+  },
+  {
+    id: "leaderboard",
+    label: "Recognition",
+    icon: Bell,
+    alerts: [
+      { id: "badge_earned", label: "Badge Earned", description: "Recognition badge awarded", audioKey: "badge_earned", defaultEnabled: true },
+      { id: "eom_nomination", label: "EOM Nomination", description: "Employee of Month nomination", audioKey: "eom_nomination", defaultEnabled: true },
+      { id: "eom_winner", label: "EOM Winner", description: "Employee of Month awarded", audioKey: "eom_winner", defaultEnabled: true },
+      { id: "leaderboard_jump", label: "Leaderboard Jump", description: "Moved up rankings", audioKey: "leaderboard_jump", defaultEnabled: true },
+      { id: "points_deducted", label: "Points Deducted", description: "Points deducted", audioKey: "points_deducted", defaultEnabled: true },
+      { id: "top_five", label: "Top Five", description: "In top five leaderboard", audioKey: "top_five_alert", defaultEnabled: true },
     ]
   },
 ]
@@ -103,17 +118,14 @@ const MANAGER_ALERTS: AlertCategory[] = [
   },
 ]
 
-export default function SettingsPage() {
-  const { isDarkMode } = useTheme()
+function ManagerAlertControls() {
   const { play, preloadAll } = useAlertAudio()
-  const [isManager, setIsManager] = useState(false)
   const [globalAudioEnabled, setGlobalAudioEnabled] = useState(true)
   const [globalTextEnabled, setGlobalTextEnabled] = useState(true)
   const [alertSettings, setAlertSettings] = useState<Record<string, { audio: boolean; text: boolean }>>({})
   const [activeCategory, setActiveCategory] = useState("staff-reminders")
   const [testPlaying, setTestPlaying] = useState<string | null>(null)
 
-  // Load settings from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("shrine-alert-settings")
     if (saved) {
@@ -124,7 +136,6 @@ export default function SettingsPage() {
         setGlobalTextEnabled(parsed.globalText !== false)
       } catch {}
     } else {
-      // Initialize defaults
       const defaults: Record<string, { audio: boolean; text: boolean }> = {}
       ;[...ALERT_CATEGORIES, ...MANAGER_ALERTS].forEach(cat => {
         cat.alerts.forEach(alert => {
@@ -133,23 +144,9 @@ export default function SettingsPage() {
       })
       setAlertSettings(defaults)
     }
-
-    // Check if manager
-    const checkManager = async () => {
-      const supabase = (await import("@/utils/supabase/client")).createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-        setIsManager(profile?.role === "manager")
-      }
-    }
-    checkManager()
-
-    // Preload audio
     preloadAll()
   }, [preloadAll])
 
-  // Save settings
   const saveSettings = () => {
     localStorage.setItem("shrine-alert-settings", JSON.stringify({
       alerts: alertSettings,
@@ -160,185 +157,299 @@ export default function SettingsPage() {
   }
 
   const toggleAlert = (alertId: string, type: "audio" | "text") => {
-    setAlertSettings(prev => {
-      const updated = {
-        ...prev,
-        [alertId]: {
-          ...prev[alertId],
-          [type]: !prev[alertId]?.[type]
-        }
-      }
-      return updated
-    })
+    setAlertSettings(prev => ({
+      ...prev,
+      [alertId]: { ...prev[alertId], [type]: !prev[alertId]?.[type] }
+    }))
     setTimeout(saveSettings, 100)
   }
 
-  const testAlert = async (alert: AlertSetting) => {
+  const testAlert = (alert: AlertSetting) => {
     if (testPlaying === alert.id) return
     setTestPlaying(alert.id)
-    
     if (globalAudioEnabled && alertSettings[alert.id]?.audio) {
       play(alert.audioKey as any)
     }
-    
     setTimeout(() => setTestPlaying(null), 3000)
   }
 
-  const getCategoryAlerts = () => {
-    const cat = [...ALERT_CATEGORIES, ...(isManager ? MANAGER_ALERTS : [])].find(c => c.id === activeCategory)
-    return cat?.alerts || []
+  const categories = [...ALERT_CATEGORIES, ...MANAGER_ALERTS]
+  const categoryAlerts = categories.find(c => c.id === activeCategory)?.alerts || []
+
+  return (
+    <>
+      {/* Global Settings */}
+      <div className="card-surface rounded-2xl p-6 mb-6 border border-outline-variant/30">
+        <h2 className="font-headline text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+          <Volume2 className="w-5 h-5 text-primary" />
+          Global Alert Preferences
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-surface-container">
+            <div className="flex items-center gap-3">
+              <Volume2 className="w-5 h-5 text-secondary" />
+              <div>
+                <p className="font-medium text-on-surface">Audio Alerts</p>
+                <p className="text-xs text-on-surface-variant">Play sound for notifications</p>
+              </div>
+            </div>
+            <Switch checked={globalAudioEnabled} onCheckedChange={setGlobalAudioEnabled} onChange={saveSettings} />
+          </div>
+          <div className="flex items-center justify-between p-4 rounded-xl bg-surface-container">
+            <div className="flex items-center gap-3">
+              <Smartphone className="w-5 h-5 text-secondary" />
+              <div>
+                <p className="font-medium text-on-surface">Text Alerts</p>
+                <p className="text-xs text-on-surface-variant">Show visual notifications</p>
+              </div>
+            </div>
+            <Switch checked={globalTextEnabled} onCheckedChange={setGlobalTextEnabled} onChange={saveSettings} />
+          </div>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {categories.map(cat => {
+          const Icon = cat.icon
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                activeCategory === cat.id
+                  ? "bg-primary text-white"
+                  : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{cat.label}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Alert List */}
+      <div className="card-surface rounded-2xl p-6 border border-outline-variant/30">
+        <h2 className="font-headline text-lg font-bold text-on-surface mb-4">
+          {categories.find(c => c.id === activeCategory)?.label}
+        </h2>
+        <div className="space-y-3">
+          {categoryAlerts.map(alert => (
+            <div key={alert.id} className="flex items-center justify-between p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-on-surface">{alert.label}</p>
+                <p className="text-sm text-on-surface-variant">{alert.description}</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => testAlert(alert)}
+                  disabled={testPlaying === alert.id || !globalAudioEnabled}
+                  className="p-2 rounded-lg bg-surface-container-low hover:bg-primary/10 transition-colors disabled:opacity-50"
+                  title="Test alert"
+                >
+                  <Volume2 className={`w-4 h-4 ${testPlaying === alert.id ? 'text-primary animate-pulse' : 'text-on-surface-variant'}`} />
+                </button>
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-on-surface-variant" />
+                  <Switch checked={alertSettings[alert.id]?.text ?? true} onCheckedChange={() => toggleAlert(alert.id, "text")} size="sm" />
+                </div>
+                <div className="flex items-center gap-2">
+                  {alertSettings[alert.id]?.audio && globalAudioEnabled ? (
+                    <Volume2 className="w-4 h-4 text-secondary" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-on-surface-variant" />
+                  )}
+                  <Switch
+                    checked={alertSettings[alert.id]?.audio ?? alert.defaultEnabled}
+                    onCheckedChange={() => toggleAlert(alert.id, "audio")}
+                    disabled={!globalAudioEnabled}
+                    size="sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button onClick={saveSettings} variant="primary">
+          Save Changes
+        </Button>
+      </div>
+    </>
+  )
+}
+
+function StaffWakeUpAlarm() {
+  const [wakeUpTime, setWakeUpTime] = useState("")
+  const [enabled, setEnabled] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    loadAlarm()
+  }, [])
+
+  async function loadAlarm() {
+    try {
+      const alarm = await getWakeUpAlarm()
+      if (alarm) {
+        setWakeUpTime(alarm.wake_up_time.slice(0, 5))
+        setEnabled(alarm.enabled)
+      }
+    } catch (err) {
+      console.error("Failed to load wake-up alarm:", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const categories = [...ALERT_CATEGORIES, ...(isManager ? MANAGER_ALERTS : [])]
+  async function handleSave() {
+    if (!wakeUpTime) return
+    setSaving(true)
+    setSaved(false)
+    try {
+      await setWakeUpAlarm(wakeUpTime + ":00", enabled)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
+      console.error("Failed to save wake-up alarm:", err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    setSaving(true)
+    try {
+      await deleteWakeUpAlarm()
+      setWakeUpTime("")
+      setEnabled(false)
+    } catch (err) {
+      console.error("Failed to delete wake-up alarm:", err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 w-48 bg-surface-container rounded-full" />
+        <div className="h-32 bg-surface-container rounded-2xl" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-lg mx-auto">
+      <div className="card-surface rounded-2xl p-8 border border-outline-variant/30 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+          <AlarmClock className="w-8 h-8 text-primary" />
+        </div>
+
+        <h2 className="font-headline text-xl font-bold text-on-surface mb-2">
+          Wake-Up Alarm
+        </h2>
+        <p className="text-sm text-on-surface-variant mb-6">
+          Set a wake-up time. When the time arrives, you will hear an audio alert and see a text notification while signed in.
+        </p>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-4">
+            <div className="relative">
+              <input
+                type="time"
+                value={wakeUpTime}
+                onChange={(e) => setWakeUpTime(e.target.value)}
+                className="text-4xl font-headline font-bold text-primary bg-surface-container rounded-xl px-6 py-4 border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary/30 w-48 text-center [color-scheme:var(--color-scheme)]"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-sm text-on-surface-variant">Enable alarm</span>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Button
+              onClick={handleSave}
+              variant="primary"
+              disabled={saving || !wakeUpTime}
+            >
+              {saving ? "Saving..." : saved ? (
+                <span className="flex items-center gap-1"><Check className="w-4 h-4" /> Saved</span>
+              ) : "Save Alarm"}
+            </Button>
+            {wakeUpTime && (
+              <Button onClick={handleDelete} variant="outline" disabled={saving}>
+                Remove
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 p-4 rounded-xl bg-surface-container border border-outline-variant/30">
+        <p className="text-xs text-on-surface-variant text-center">
+          The wake-up alarm will trigger once per day at your set time. 
+          All other shift alerts (breaks, tasks, walkthroughs, safety) 
+          are managed by the system to support you during your shift.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function SettingsPage() {
+  const [role, setRole] = useState<string | null>(null)
+  const [checkingRole, setCheckingRole] = useState(true)
+
+  useEffect(() => {
+    async function checkRole() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+        setRole(profile?.role || null)
+      }
+      setCheckingRole(false)
+    }
+    checkRole()
+  }, [])
+
+  const isManager = role === "manager"
 
   return (
     <>
       <TopAppBar />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-10 sm:pb-16">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-headline text-2xl font-bold text-on-surface">Alert Settings</h1>
-              <p className="text-sm text-on-surface-variant">Configure your notifications and reminders</p>
-            </div>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Bell className="w-5 h-5 text-primary" />
           </div>
-          <Button onClick={saveSettings} variant="primary" size="sm">
-            Save Changes
-          </Button>
-        </div>
-
-        {/* Global Settings */}
-        <div className="card-surface rounded-2xl p-6 mb-6 border border-outline-variant/30">
-          <h2 className="font-headline text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
-            <Volume2 className="w-5 h-5 text-primary" />
-            Global Alert Preferences
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-surface-container">
-              <div className="flex items-center gap-3">
-                <Volume2 className="w-5 h-5 text-secondary" />
-                <div>
-                  <p className="font-medium text-on-surface">Audio Alerts</p>
-                  <p className="text-xs text-on-surface-variant">Play sound for notifications</p>
-                </div>
-              </div>
-              <Switch 
-                checked={globalAudioEnabled} 
-                onCheckedChange={setGlobalAudioEnabled}
-                onChange={saveSettings}
-              />
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl bg-surface-container">
-              <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-secondary" />
-                <div>
-                  <p className="font-medium text-on-surface">Text Alerts</p>
-                  <p className="text-xs text-on-surface-variant">Show visual notifications</p>
-                </div>
-              </div>
-              <Switch 
-                checked={globalTextEnabled} 
-                onCheckedChange={setGlobalTextEnabled}
-                onChange={saveSettings}
-              />
-            </div>
+          <div>
+            <h1 className="font-headline text-2xl font-bold text-on-surface">Settings</h1>
+            <p className="text-sm text-on-surface-variant">
+              {isManager ? "Configure alert preferences for the team" : "Set your personal wake-up alarm"}
+            </p>
           </div>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {categories.map(cat => {
-            const Icon = cat.icon
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  activeCategory === cat.id
-                    ? "bg-primary text-white"
-                    : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{cat.label}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Alert List */}
-        <div className="card-surface rounded-2xl p-6 border border-outline-variant/30">
-          <h2 className="font-headline text-lg font-bold text-on-surface mb-4">
-            {categories.find(c => c.id === activeCategory)?.label}
-          </h2>
-          <div className="space-y-3">
-            {getCategoryAlerts().map(alert => (
-              <div 
-                key={alert.id} 
-                className="flex items-center justify-between p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-on-surface">{alert.label}</p>
-                    {alert.isPersonal && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/10 text-secondary">Personal</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-on-surface-variant">{alert.description}</p>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  {/* Test Button */}
-                  <button
-                    onClick={() => testAlert(alert)}
-                    disabled={testPlaying === alert.id || !globalAudioEnabled}
-                    className="p-2 rounded-lg bg-surface-container-low hover:bg-primary/10 transition-colors disabled:opacity-50"
-                    title="Test alert"
-                  >
-                    <Volume2 className={`w-4 h-4 ${testPlaying === alert.id ? 'text-primary animate-pulse' : 'text-on-surface-variant'}`} />
-                  </button>
-
-                  {/* Text Toggle */}
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-on-surface-variant" />
-                    <Switch 
-                      checked={alertSettings[alert.id]?.text ?? true}
-                      onCheckedChange={() => toggleAlert(alert.id, "text")}
-                      size="sm"
-                    />
-                  </div>
-
-                  {/* Audio Toggle */}
-                  <div className="flex items-center gap-2">
-                    {alertSettings[alert.id]?.audio && globalAudioEnabled ? (
-                      <Volume2 className="w-4 h-4 text-secondary" />
-                    ) : (
-                      <VolumeX className="w-4 h-4 text-on-surface-variant" />
-                    )}
-                    <Switch 
-                      checked={alertSettings[alert.id]?.audio ?? alert.defaultEnabled}
-                      onCheckedChange={() => toggleAlert(alert.id, "audio")}
-                      disabled={!globalAudioEnabled}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+        {checkingRole ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-48 bg-surface-container rounded-full" />
+            <div className="h-32 bg-surface-container rounded-2xl" />
           </div>
-        </div>
-
-        {/* Info Footer */}
-        <div className="mt-6 p-4 rounded-xl bg-surface-container border border-outline-variant/30">
-          <p className="text-sm text-on-surface-variant">
-            <strong>Note:</strong> Alert preferences are saved to your browser. Text alerts will always show on screen. 
-            Audio alerts require sound to be enabled. Personal reminders are configurable per-user.
-          </p>
-        </div>
+        ) : isManager ? (
+          <ManagerAlertControls />
+        ) : (
+          <StaffWakeUpAlarm />
+        )}
       </main>
     </>
   )

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Manrope, Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme/ThemeProvider"
+import { WakeUpAlarmMonitor } from "@/components/WakeUpAlarmMonitor"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -40,6 +41,7 @@ export default function RootLayout({
         <div className="fixed top-0 left-0 w-full h-1 gold-accents z-[100]" />
         <ThemeProvider>
           {children}
+          <WakeUpAlarmMonitor />
         </ThemeProvider>
       </body>
     </html>
