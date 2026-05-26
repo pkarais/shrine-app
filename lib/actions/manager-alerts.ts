@@ -1,7 +1,6 @@
 "use server"
 
 import { createAdminClient } from "@/utils/supabase/server"
-import { createServerClient } from "@/utils/supabase/server"
 
 interface AlertPayload {
   type: string
@@ -12,24 +11,17 @@ interface AlertPayload {
 }
 
 export async function logAlertToManager(payload: AlertPayload) {
-  const admin = createAdminClient()
-
   try {
+    const admin = createAdminClient()
+
     let triggeredBy = "System"
     let triggeredByRole = "system"
-    let userId = payload.userId
 
-    if (!userId) {
-      const supabase = createServerClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      userId = user?.id
-    }
-
-    if (userId) {
+    if (payload.userId) {
       const { data: profile } = await admin
         .from("profiles")
         .select("full_name, role")
-        .eq("id", userId)
+        .eq("id", payload.userId)
         .single()
 
       if (profile) {
@@ -46,7 +38,7 @@ export async function logAlertToManager(payload: AlertPayload) {
         severity: payload.severity,
         triggered_by: triggeredBy,
         triggered_by_role: triggeredByRole,
-        metadata: { ...(payload.metadata || {}), user_id: userId },
+        metadata: { ...(payload.metadata || {}), user_id: payload.userId },
         acknowledged: false,
         created_at: new Date().toISOString(),
       })
@@ -66,9 +58,9 @@ export async function logAlertToManager(payload: AlertPayload) {
 }
 
 export async function getManagerAlerts(unacknowledgedOnly = true) {
-  const admin = createAdminClient()
-
   try {
+    const admin = createAdminClient()
+
     let query = admin
       .from("manager_alerts")
       .select("*")
@@ -94,9 +86,9 @@ export async function getManagerAlerts(unacknowledgedOnly = true) {
 }
 
 export async function acknowledgeAlert(alertId: string) {
-  const admin = createAdminClient()
-
   try {
+    const admin = createAdminClient()
+
     const { error } = await admin
       .from("manager_alerts")
       .update({

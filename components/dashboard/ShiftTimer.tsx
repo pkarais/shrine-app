@@ -10,6 +10,7 @@ import { getNextBreakInfo, getShiftProgress } from "@/lib/labor-math"
 import { GEOFENCE } from "@/constants"
 import { useAlertAudio } from "@/hooks/useAlertAudio"
 import { logAlertToManager } from "@/lib/actions/manager-alerts"
+import { createClient } from "@/utils/supabase/client"
 
 const SHRINE_LAT = GEOFENCE.LIBERTY_PARK.LAT
 const SHRINE_LON = GEOFENCE.LIBERTY_PARK.LON
@@ -74,7 +75,12 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
       )
 
       if (!inRange) {
-        setError(`You are ${Math.round(distance)}m from the shrine. Must be within ${GEOFENCE_RADIUS}m to clock in.`)
+        const errorMsg = `You are ${Math.round(distance)}m from the shrine. Must be within ${GEOFENCE_RADIUS}m to clock in.`
+        setError(errorMsg)
+        play("geofence_warning")
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        logAlertToManager({ type: "geofence_violation", message: errorMsg, severity: "critical", userId: user?.id })
         return
       }
 
@@ -97,10 +103,9 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
     } catch (err: any) {
       const errorMsg = err.message || "Failed to clock in"
       setError(errorMsg)
-      if (errorMsg.toLowerCase().includes("geofence") || errorMsg.toLowerCase().includes("outside")) {
-        play("geofence_warning")
-        logAlertToManager({ type: "geofence_violation", message: errorMsg, severity: "critical" })
-      }
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      logAlertToManager({ type: "geofence_violation", message: errorMsg, severity: "critical", userId: user?.id })
     }
   }, [currentShift])
 

@@ -76,10 +76,13 @@ export function ClockInCard({ eventId }: { eventId?: number | null }) {
                 play("geofence_warning")
                 
                 // Log to manager alerts (will be shown in Command Center)
+                const supabase = createClient()
+                const { data: { user } } = await supabase.auth.getUser()
                 logAlertToManager({
                   type: "geofence_violation",
                   message: errorMsg,
-                  severity: "critical"
+                  severity: "critical",
+                  userId: user?.id
                 })
               }
             } finally {
