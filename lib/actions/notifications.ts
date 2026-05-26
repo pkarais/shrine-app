@@ -1,6 +1,19 @@
 "use server"
 import { createServerClient } from "@/utils/supabase/server"
 
+export async function createNotification(userId: string, title: string, body: string, type: string = "info", referenceId?: string) {
+  const supabase = createServerClient()
+  const { error } = await supabase.from("notifications").insert({
+    user_id: userId,
+    title,
+    body,
+    type,
+    reference_id: referenceId || null,
+  })
+  if (error) throw new Error(error.message)
+  return { success: true }
+}
+
 export async function getUnreadCount() {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

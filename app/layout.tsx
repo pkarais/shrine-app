@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Manrope, Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme/ThemeProvider"
 import { WakeUpAlarmMonitor } from "@/components/WakeUpAlarmMonitor"
+import { ShiftLifecycleMonitor } from "@/components/ShiftLifecycleMonitor"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -42,6 +43,7 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <WakeUpAlarmMonitor />
+          <ShiftLifecycleMonitor />
         </ThemeProvider>
       </body>
     </html>

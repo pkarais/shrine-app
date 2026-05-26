@@ -8,6 +8,8 @@ import { startBreak, endBreak, getActiveBreak } from "@/lib/actions/breaks"
 import { checkGeofence } from "@/lib/geofence"
 import { getNextBreakInfo, getShiftProgress } from "@/lib/labor-math"
 import { GEOFENCE } from "@/constants"
+import { useAlertAudio } from "@/hooks/useAlertAudio"
+import { logAlertToManager } from "@/lib/actions/manager-alerts"
 
 const SHRINE_LAT = GEOFENCE.LIBERTY_PARK.LAT
 const SHRINE_LON = GEOFENCE.LIBERTY_PARK.LON
@@ -29,6 +31,7 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
   const [error, setError] = useState<string | null>(null)
   const [breakInfo, setBreakInfo] = useState<{ nextBreak: string; remainingMinutes: number; breakDuration: number; breakNumber: number; isPaid: boolean } | null>(null)
   const [shiftProgress, setShiftProgress] = useState<{ hoursWorked: number; paidHours: number; progressPercent: number; isOvertime: boolean; overtimeHours: number } | null>(null)
+  const { play } = useAlertAudio()
 
   const isActive = !!currentShift && !currentShift.clock_out
 
@@ -86,8 +89,18 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
         pos.coords.longitude
       )
       setIsRunning(true)
+      play("successful_clock_in")
+      const hour = new Date().getHours()
+      if (hour >= 9) {
+        play("manager_late_alert")
+      }
     } catch (err: any) {
-      setError(err.message || "Failed to clock in")
+      const errorMsg = err.message || "Failed to clock in"
+      setError(errorMsg)
+      if (errorMsg.toLowerCase().includes("geofence") || errorMsg.toLowerCase().includes("outside")) {
+        play("geofence_warning")
+        logAlertToManager({ type: "geofence_violation", message: errorMsg, severity: "critical" })
+      }
     }
   }, [currentShift])
 
@@ -100,6 +113,7 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
       setElapsed(0)
       setBreakInfo(null)
       setShiftProgress(null)
+      play("successful_clock_out")
     } catch (err: any) {
       setError(err.message || "Failed to clock out")
     }
@@ -114,10 +128,12 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
         await endBreak(activeBreakId)
         setIsOnBreak(false)
         setActiveBreakId(null)
+        play("break_over_reminder")
       } else {
         const result = await startBreak(currentShift.id)
         setIsOnBreak(true)
         setActiveBreakId(result.breakId)
+        play("break_reminder")
       }
     } catch (err: any) {
       setError(err.message || "Failed to update break status")
