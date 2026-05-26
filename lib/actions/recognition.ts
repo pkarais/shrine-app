@@ -1,6 +1,7 @@
 "use server"
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
+import { createNotification } from "./notifications"
 
 const getClient = () => createAdminClient()
 
@@ -266,6 +267,8 @@ export async function awardBadgeToEmployee(
     })
   }
 
+  await createNotification(employeeId, "Badge Earned!", `You earned the "${badge.name}" badge.`, "badge_awarded")
+
   return { success: true, award, badgeName: badge.name, employeeName: employeeProfile.full_name }
 }
 
@@ -300,4 +303,80 @@ export async function getStaffForBadgeAwarding() {
     }))
 
   return eligibleStaff
+}
+
+export async function nominateEmployee(
+  employeeId: string,
+  badgeId: string,
+  reason: string,
+  nominatedBy?: string
+) {
+  const supabase = getClient()
+  const nominatorId = nominatedBy || await getUserId()
+  if (!nominatorId) throw new Error("Not authenticated")
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", nominatorId).single()
+  if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Only managers can nominate")
+
+  const { data: badge } = await supabase.from("recognition_badges").select("name").eq("id", badgeId).single()
+  if (!badge) throw new Error("Badge not found")
+
+  const { data: nomination, error } = await supabase.from("badge_nominations").insert({
+    employee_id: employeeId,
+    badge_id: badgeId,
+    nominated_by: nominatorId,
+    reason,
+    status: "pending",
+  }).select().single()
+
+  if (error) throw new Error(`Failed to create nomination: ${error.message}`)
+
+  await createNotification(employeeId, "You've Been Nominated!", `You were nominated for the "${badge.name}" badge.`, "eom_nomination")
+
+  return { success: true, nomination }
+}
+
+export async function awardEmployeeOfMonth(employeeId: string, awardedBy?: string) {
+  const supabase = getClient()
+  const managerId = awardedBy || await getUserId()
+  if (!managerId) throw new Error("Not authenticated")
+
+  const { data: badge } = await supabase.from("recognition_badges").select("id").eq("name", "Employee of the Month").eq("active", true).single()
+  if (!badge) throw new Error("Employee of the Month badge not found. Run seed data first.")
+
+  return await awardBadgeToEmployee(employeeId, badge.id, "Selected as Employee of the Month")
+}
+
+export async function deductEmployeePoints(
+  employeeId: string,
+  eventType: string,
+  points: number,
+  reason: string,
+  notedBy?: string
+) {
+  const supabase = getClient()
+  const managerId = notedBy || await getUserId()
+  if (!managerId) throw new Error("Not authenticated")
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", managerId).single()
+  if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Only managers can deduct points")
+
+  const { data: rule } = await supabase.from("gamification_point_rules").select("event_type, points").eq("event_type", eventType).eq("active", true).single()
+  if (!rule) throw new Error(`Point rule not found for event type: ${eventType}`)
+  if (rule.points >= 0) throw new Error("Use deductEmployeePoints only for deduction-type rules")
+
+  const { data: deduction, error } = await supabase.from("point_deductions").insert({
+    employee_id: employeeId,
+    points: Math.abs(points),
+    reason,
+    event_type: eventType,
+    noted_by: managerId,
+    deduction_date: new Date().toISOString().split("T")[0],
+  }).select().single()
+
+  if (error) throw new Error(`Failed to deduct points: ${error.message}`)
+
+  await createNotification(employeeId, "Points Deducted", `${reason} (-${Math.abs(points)} points)`, "points_deducted")
+
+  return { success: true, deduction }
 }

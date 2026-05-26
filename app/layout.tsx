@@ -3,6 +3,7 @@ import { Manrope, Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme/ThemeProvider"
 import { WakeUpAlarmMonitor } from "@/components/WakeUpAlarmMonitor"
 import { ShiftLifecycleMonitor } from "@/components/ShiftLifecycleMonitor"
+import { RecognitionMonitor } from "@/components/RecognitionMonitor"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -44,6 +45,7 @@ export default function RootLayout({
           {children}
           <WakeUpAlarmMonitor />
           <ShiftLifecycleMonitor />
+          <RecognitionMonitor />
         </ThemeProvider>
       </body>
     </html>
