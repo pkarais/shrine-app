@@ -26,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/calendar", label: "Calendar", groups: ["all"] },
   { href: "/messages", label: "Chat", groups: ["all"] },
   { href: "/audio-test", label: "Audio", groups: ["all"] },
+  { href: "/settings", label: "Settings", groups: ["all"] },
   { href: "/profile", label: "Profile", groups: ["all"] },
 ]
 

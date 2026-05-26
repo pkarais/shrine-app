@@ -3,13 +3,16 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/Button"
 import { clockIn, clockOut } from "@/lib/actions/clock-in"
+import { logAlertToManager } from "@/lib/actions/manager-alerts"
 import { createClient } from "@/utils/supabase/client"
+import { useAlertAudio } from "@/hooks/useAlertAudio"
 
 export function ClockInCard({ eventId }: { eventId?: number | null }) {
   const [activeShift, setActiveShift] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { play } = useAlertAudio()
 
   useEffect(() => {
     loadShift()
@@ -48,10 +51,37 @@ export function ClockInCard({ eventId }: { eventId?: number | null }) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             try {
-              await clockIn(eventId ?? 1, pos.coords.latitude, pos.coords.longitude)
+              const result = await clockIn(eventId ?? 1, pos.coords.latitude, pos.coords.longitude)
+              
+              // Play successful clock-in sound
+              play("successful_clock_in")
+              
+              // Check if clock-in is late (after 9 AM)
+              const now = new Date()
+              const hour = now.getHours()
+              if (hour >= 9) {
+                // This would typically check against scheduled start time
+                // For now, play late alert if after 9 AM
+                play("manager_late_alert")
+              }
+              
               await loadShift()
             } catch (err: any) {
-              setError(err.message)
+              const errorMsg = err.message || String(err)
+              setError(errorMsg)
+              
+              // Check if it's a geofence error - play ONE alert only
+              if (errorMsg.toLowerCase().includes("geofence") || errorMsg.toLowerCase().includes("outside")) {
+                // Staff hears warning
+                play("geofence_warning")
+                
+                // Log to manager alerts (will be shown in Command Center)
+                logAlertToManager({
+                  type: "geofence_violation",
+                  message: errorMsg,
+                  severity: "critical"
+                })
+              }
             } finally {
               setActionLoading(false)
             }
@@ -77,6 +107,10 @@ export function ClockInCard({ eventId }: { eventId?: number | null }) {
     setError(null)
     try {
       await clockOut(activeShift.id)
+      
+      // Play successful clock-out sound
+      play("successful_clock_out")
+      
       await loadShift()
     } catch (err: any) {
       setError(err.message)

@@ -6,6 +6,7 @@ import { MediaFolders } from "@/components/manager/MediaFolders"
 import { DirectComms } from "@/components/manager/DirectComms"
 import { ShiftOptimizerPanel } from "@/components/manager/ShiftOptimizerPanel"
 import StaffingGaps from "@/components/manager/StaffingGaps"
+import ManagerAlertsCard from "@/components/manager/ManagerAlertsCard"
 import { AIConfigPanel } from "@/components/manager/AIConfigPanel"
 import { StaffTable } from "@/components/manager/StaffTable"
 import { ScheduleOverview } from "@/components/manager/ScheduleOverview"
@@ -262,6 +263,11 @@ export default async function ManagerPage() {
       {/* Staffing Gaps */}
       <section>
         <StaffingGaps />
+      </section>
+
+      {/* Manager Alerts */}
+      <section>
+        <ManagerAlertsCard />
       </section>
 
       {/* Recent Incidents */}
