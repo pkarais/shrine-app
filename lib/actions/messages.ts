@@ -106,32 +106,61 @@ export async function deleteGroupConversation(conversationId: string) {
 export async function getMyGroupConversations() {
   const { user } = await getAuthedUser()
   const db = createAdminClient()
-  let query = db.from("conversation_participants").select("conversation_id, group_conversations!inner(id, name, is_manager_group, created_at)").eq("user_id", user.id)
-  const { data: participations } = await query
-  if (!participations || participations.length === 0) return []
-  const convIds = participations.map((p: any) => p.conversation_id)
-  const { data: participants } = await db.from("conversation_participants").select("conversation_id, user_id, profiles!inner(id, full_name, email, role)").in("conversation_id", convIds)
-  const participantsByConv = new Map<string, any[]>()
-  ;(participants || []).forEach((p: any) => {
-    if (!participantsByConv.has(p.conversation_id)) participantsByConv.set(p.conversation_id, [])
-    participantsByConv.get(p.conversation_id)!.push(p.profiles)
-  })
-  const { data: lastMessages } = await db.from("group_messages").select("*").in("conversation_id", convIds).order("created_at", { ascending: false })
+
+  // Step 1: get conversation IDs this user is a participant in
+  const { data: myParticipations } = await db
+    .from("conversation_participants")
+    .select("conversation_id")
+    .eq("user_id", user.id)
+  if (!myParticipations || myParticipations.length === 0) return []
+  const convIds = myParticipations.map((p: any) => p.conversation_id)
+
+  // Step 2: fetch the group conversations themselves
+  const { data: groups } = await db
+    .from("group_conversations")
+    .select("id, name, is_manager_group, created_at")
+    .in("id", convIds)
+  if (!groups || groups.length === 0) return []
+
+  // Step 3: fetch all participants for these conversations
+  const { data: allParticipants } = await db
+    .from("conversation_participants")
+    .select("conversation_id, user_id")
+    .in("conversation_id", convIds)
+  const allParticipantUserIds = Array.from(new Set((allParticipants || []).map((p: any) => p.user_id)))
+
+  // Step 4: batch fetch profiles
+  const { data: profiles } = allParticipantUserIds.length > 0
+    ? await db.from("profiles").select("id, full_name, email, role").in("id", allParticipantUserIds)
+    : { data: [] }
+  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+
+  // Step 5: fetch last messages
+  const { data: lastMessages } = await db
+    .from("group_messages")
+    .select("conversation_id, content, created_at, sender_id")
+    .in("conversation_id", convIds)
+    .order("created_at", { ascending: false })
   const latestByConv = new Map<string, any>()
   ;(lastMessages || []).forEach((m: any) => {
     if (!latestByConv.has(m.conversation_id)) latestByConv.set(m.conversation_id, m)
   })
-  return participations.map((p: any) => {
-    const gc = p.group_conversations
-    return {
-      id: gc.id,
-      name: gc.name,
-      is_manager_group: gc.is_manager_group,
-      created_at: gc.created_at,
-      participants: participantsByConv.get(gc.id) || [],
-      lastMessage: latestByConv.get(gc.id) || null,
-    }
+
+  // Step 6: group participants by conversation
+  const participantsByConv = new Map<string, any[]>()
+  ;(allParticipants || []).forEach((p: any) => {
+    if (!participantsByConv.has(p.conversation_id)) participantsByConv.set(p.conversation_id, [])
+    participantsByConv.get(p.conversation_id)!.push(profileMap.get(p.user_id) || { id: p.user_id })
   })
+
+  return groups.map((g: any) => ({
+    id: g.id,
+    name: g.name,
+    is_manager_group: g.is_manager_group,
+    created_at: g.created_at,
+    participants: participantsByConv.get(g.id) || [],
+    lastMessage: latestByConv.get(g.id) || null,
+  }))
 }
 
 export async function getGroupMessages(conversationId: string, limit = 50) {
