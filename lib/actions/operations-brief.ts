@@ -1,6 +1,7 @@
 "use server"
 import { createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { requireAuth, requireManager } from "./auth-helpers"
 
 const VALID_STATUSES = ["draft", "review", "published", "archived"] as const
 type BriefStatus = typeof VALID_STATUSES[number]
@@ -13,6 +14,7 @@ const ALLOWED_TRANSITIONS: Record<BriefStatus, BriefStatus[]> = {
 }
 
 export async function updateIssueStatus(issueId: string, newStatus: string) {
+  await requireManager()
   const admin = createAdminClient()
 
   const { data: issue, error: fetchError } = await admin
@@ -42,6 +44,7 @@ export async function updateIssueStatus(issueId: string, newStatus: string) {
 }
 
 export async function updateIssueField(issueId: string, field: string, value: any) {
+  await requireManager()
   const allowedFields = ["opening_message", "title", "visibility", "content"]
   if (!allowedFields.includes(field)) throw new Error(`Field "${field}" cannot be edited`)
 
@@ -60,6 +63,7 @@ export async function updateSectionContent(
   markdownBody: string,
   content?: Record<string, any>
 ) {
+  await requireManager()
   const admin = createAdminClient()
   const updates: Record<string, any> = {
     markdown_body: markdownBody,
@@ -74,6 +78,7 @@ export async function updateSectionContent(
 }
 
 export async function fetchIssueBySlug(slug: string) {
+  await requireAuth()
   const admin = createAdminClient()
   const { data: issue, error: issueError } = await admin
     .from("operations_brief_issues")

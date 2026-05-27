@@ -116,7 +116,12 @@ export function RoleActionCenter({ role, profile, event, staffAssignments, summa
 
       {/* Action Tab Content */}
       {activeTab === "action" && (
-        <div className="space-y-6">
+        <div 
+          className="space-y-6 rounded-[2rem] overflow-hidden p-6 relative"
+          style={{ backgroundImage: 'url(/images/oversight-hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'top center', backgroundAttachment: 'fixed' }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative z-10">
           {(isOperations || isSecurity || isManager) && (
             <div className="grid grid-cols-1 gap-4">
               {(isOperations || isManager) && (
@@ -174,37 +179,37 @@ export function RoleActionCenter({ role, profile, event, staffAssignments, summa
           )}
 
           {isManager && (
-            <div className="space-y-6 pt-6 mt-6 bg-surface-container-low/50 p-6 rounded-[2rem]">
-              <h3 className="headline-sm text-primary flex items-center gap-2">
+            <div className="space-y-6 pt-6 mt-6">
+              <h3 className="headline-sm text-white flex items-center gap-2">
                 Operations Oversight
                 {unassignedCount > 0 && (
-                  <span className="px-2 py-0.5 bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)] text-xs rounded-full">
+                  <span className="px-2 py-0.5 bg-white/20 text-white text-xs rounded-full backdrop-blur-sm">
                     {unassignedCount} unassigned
                   </span>
                 )}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-surface-container rounded-2xl">
+                <div className="p-4 bg-black/30 backdrop-blur-md rounded-2xl border border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Active Walkthroughs</span>
-                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Active Walkthroughs</span>
+                    <Activity className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-2xl font-bold">{summary?.recentWalkthroughs?.length || 0} Recent</p>
-                  <p className="text-xs text-on-surface-variant mt-1">
-                    Last: <span className="text-secondary font-bold">
+                  <p className="text-2xl font-bold text-white">{summary?.recentWalkthroughs?.length || 0} Recent</p>
+                  <p className="text-xs text-white/60 mt-1">
+                    Last: <span className="text-white font-bold">
                       {summary?.recentWalkthroughs?.[0]?.walkthrough_type || "N/A"}
                     </span>
                   </p>
                 </div>
-                <div className="p-4 bg-surface-container rounded-2xl">
+                <div className="p-4 bg-black/30 backdrop-blur-md rounded-2xl border border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Maintenance Tasks</span>
-                    <ShieldAlert className="w-4 h-4 text-tertiary" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/70">Maintenance Tasks</span>
+                    <ShieldAlert className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-2xl font-bold">{ticketCounts.open || 0} Open</p>
-                  <p className="text-xs text-on-surface-variant mt-1">
+                  <p className="text-2xl font-bold text-white">{ticketCounts.open || 0} Open</p>
+                  <p className="text-xs text-white/60 mt-1">
                     {unassignedCount > 0 ? (
-                      <span className="text-tertiary font-bold">{unassignedCount} unassigned</span>
+                      <span className="text-white font-bold">{unassignedCount} unassigned</span>
                     ) : "All assigned"}
                   </p>
                 </div>
@@ -274,6 +279,7 @@ export function RoleActionCenter({ role, profile, event, staffAssignments, summa
               <ChantStandCard dcsLink={event?.dcs_link} />
             </div>
           )}
+          </div>
         </div>
       )}
 

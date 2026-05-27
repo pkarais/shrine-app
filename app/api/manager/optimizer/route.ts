@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@/utils/supabase/server"
-import { analyzeOvertime } from "@/lib/actions/overtime-analysis"
+import { analyzeOvertime } from "@/lib/overtime-analysis"
 
 export async function POST() {
   try {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react"
 import { createClient } from "@/utils/supabase/client"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import { Wrench, Clock, CheckCircle2, RefreshCw, Inbox, User, Plus } from "lucide-react"
 import { Button } from "@/components/ui/Button"
@@ -29,6 +29,7 @@ type Ticket = {
 type UserRole = "manager" | "operations" | "security" | "council" | "staff" | "volunteer" | "visitor" | ""
 
 export default function TicketsPage() {
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -50,7 +51,8 @@ export default function TicketsPage() {
         const { data: { user: authUser } } = await supabase.auth.getUser()
         
         if (!authUser) {
-          redirect("/login")
+          router.push("/login")
+          return
         }
         
         setUser(authUser)

@@ -23,9 +23,10 @@ export const clockIn = async (eventId: number, lat: number, lon: number) => {
     user_id: user.id,
     event_id: eventId,
     clock_in: new Date().toISOString(),
-  })
+  }).select().single()
 
-  return { data, error }
+  if (error) throw new Error(error.message)
+  return { success: true, shift: data }
 }
 
 export const clockOut = async (shiftId: string) => {
@@ -38,6 +39,8 @@ export const clockOut = async (shiftId: string) => {
     .update({ clock_out: new Date().toISOString() })
     .eq("id", shiftId)
     .eq("user_id", user.id)
+    .select().single()
 
-  return { data, error }
+  if (error) throw new Error(error.message)
+  return { success: true, shift: data }
 }

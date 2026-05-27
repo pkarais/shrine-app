@@ -85,9 +85,6 @@ export default async function CalendarPage({
   events = injectSundayOrthros(selectedDateStr, events)
   events.sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
 
-  console.log(`[CALENDAR DEBUG] Selected: ${selectedDateStr}, Found: ${events?.length || 0}`)
-  if (error) console.error(`[CALENDAR DEBUG] Error:`, error)
-
   const profileRole = user
     ? (await supabase.from("profiles").select("role").eq("id", user.id).single()).data?.role || null
     : hasDevBypass

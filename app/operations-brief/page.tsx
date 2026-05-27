@@ -139,15 +139,25 @@ export default function OperationsBriefGeneratorPage() {
       <TopAppBar />
       <main className="min-h-screen bg-surface pt-24 pb-16 px-6">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-6 rounded-3xl bg-primary p-6 text-white shadow-xl md:p-8">
-            <div className="flex items-center gap-3 text-white/70">
-              <Newspaper className="w-6 h-6" />
-              <span className="text-sm font-semibold uppercase tracking-[0.2em]">Operations Website Publishing</span>
+          <div 
+            className="mb-6 rounded-3xl overflow-hidden shadow-xl relative min-h-[280px] md:min-h-[320px] flex items-end"
+            style={{ backgroundImage: 'url(/images/briefbackgrnd.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-primary/20" />
+            <div className="relative z-10 p-6 md:p-8 w-full">
+              <div className="flex items-center gap-3 text-white/80">
+                <Newspaper className="w-6 h-6" />
+                <span className="text-sm font-semibold uppercase tracking-[0.2em]">Operations Website Publishing</span>
+              </div>
+              <div className="mt-4 w-fit rounded-2xl bg-black/30 backdrop-blur-md px-5 py-3 border border-white/10">
+                <h1 className="text-3xl font-black md:text-5xl text-white">Operations Monthly Brief Generator</h1>
+              </div>
+              <div className="mt-3 w-fit rounded-2xl bg-black/30 backdrop-blur-md px-5 py-3 border border-white/10">
+                <p className="max-w-3xl text-white/80 text-sm md:text-base">
+                  Generate a monthly newsletter draft from live app data, edit content, preview the website post, generate a PDF, and publish to the archive.
+                </p>
+              </div>
             </div>
-            <h1 className="mt-4 text-3xl font-black md:text-5xl">Operations Monthly Brief Generator</h1>
-            <p className="mt-3 max-w-3xl text-white/70">
-              Generate a monthly newsletter draft from live app data, edit content, preview the website post, generate a PDF, and publish to the archive.
-            </p>
           </div>
 
           <div className="mb-6 flex flex-wrap items-end gap-4 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">

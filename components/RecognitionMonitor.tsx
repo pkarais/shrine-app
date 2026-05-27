@@ -7,7 +7,7 @@ import { playAlertSound, type AlertSoundKey } from "@/lib/audio/alert-sounds"
 interface LeaderboardEntry {
   rank: number
   employee_id: string
-  net_points: number
+  total_points: number
 }
 
 function getDateKey(): string {
@@ -117,7 +117,7 @@ export function RecognitionMonitor() {
       // 4. Leaderboard rank tracking for leaderboard_jump and top_five
       const { data: leaderboard } = await supabase
         .from("v_current_month_leaderboard")
-        .select("rank, employee_id, net_points")
+        .select("rank, employee_id, total_points")
         .order("rank", { ascending: true })
 
       if (leaderboard && leaderboard.length > 0) {

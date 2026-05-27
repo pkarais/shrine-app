@@ -296,7 +296,7 @@ export async function getStaffForBadgeAwarding() {
   // Get staff_directory with profile_id - this is the SOURCE OF TRUTH
   const { data: staffDir, error: staffError } = await supabase
     .from("staff_directory")
-    .select("id, name, role, status, profile_id")
+    .select("name, role, status, profile_id")
     .order("name", { ascending: true })
   
   if (staffError) {
@@ -318,7 +318,6 @@ export async function getStaffForBadgeAwarding() {
       id: row.profile_id,        // User ID from profiles (for badge award)
       full_name: row.name,        // Name from staff_directory
       role: row.role,
-      staff_directory_id: row.id  // Keep reference to staff_directory record
     }))
 
   return eligibleStaff

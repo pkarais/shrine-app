@@ -1,6 +1,7 @@
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { ManagerTicketCommand } from "@/components/shared/ManagerTicketCommand"
 import { cookies } from "next/headers"
+import Image from "next/image"
 import { VisitorVolumeChart } from "@/components/manager/VisitorVolumeChart"
 import { MediaFolders } from "@/components/manager/MediaFolders"
 import { DirectComms } from "@/components/manager/DirectComms"
@@ -11,7 +12,7 @@ import { AIConfigPanel } from "@/components/manager/AIConfigPanel"
 import { StaffTable } from "@/components/manager/StaffTable"
 import { ScheduleOverview } from "@/components/manager/ScheduleOverview"
 import { OvertimeAlerts } from "@/components/manager/OvertimeAlerts"
-import { analyzeOvertime } from "@/lib/actions/overtime-analysis"
+import { analyzeOvertime } from "@/lib/overtime-analysis"
 import { getManagerIncidents } from "@/lib/actions/incidents"
 import { WalkthroughActivity } from "@/components/manager/WalkthroughActivity"
 import { TopAppBar } from "@/components/layout/TopAppBar"
@@ -203,24 +204,60 @@ export default async function ManagerPage() {
     <>
       <TopAppBar />
       <main className="pt-24 pb-16 px-6 max-w-7xl mx-auto space-y-12">
-      {/* Hero Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
-        <div className="lg:col-span-8 space-y-2">
-          <p className="font-label text-xs uppercase tracking-[0.05em] text-on-surface-variant">Sacred Blueprint / Operations</p>
-          <h2 className="text-display-lg text-on-surface">Manager&apos;s Command Center</h2>
+      {/* Hero Section with Command Center Image */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        {/* Image Card - Top Left */}
+        <div className="lg:col-span-4">
+          <div className="relative h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg border border-outline-variant/20 bg-black/30">
+            <Image
+              src="/images/commandcenter.jpg"
+              alt="Command Center"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 33vw"
+              className="object-contain bg-black/40"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5">
+              <p className="font-label text-[10px] uppercase tracking-[0.1em] text-white/70">Sacred Blueprint</p>
+              <h3 className="font-headline text-xl font-bold text-white">Operations Command</h3>
+            </div>
+          </div>
         </div>
-        <div className="lg:col-span-4 flex justify-end gap-3">
-          <button className="bg-surface-container-highest px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-dim transition-colors text-on-surface">
-            <span className="material-symbols-outlined">ios_share</span>
-            Export Data
-          </button>
-          <a
-            href="/calendar"
-            className="gold-accents text-on-secondary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-sm transition-transform active:scale-95"
-          >
-            <span className="material-symbols-outlined">add_task</span>
-            Adjust Shifts
-          </a>
+
+        {/* Title + Actions Card */}
+        <div className="lg:col-span-8">
+          <div className="h-full rounded-2xl overflow-hidden shadow-lg border border-outline-variant/20 relative bg-surface-container">
+            <div className="absolute inset-0 opacity-40">
+              <Image
+                src="/images/cmndcenter2.png"
+                alt=""
+                fill
+                sizes="66vw"
+                className="object-cover"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="relative z-10 h-full flex flex-col justify-end p-8 space-y-6">
+              <div className="w-fit rounded-2xl bg-surface/80 backdrop-blur-md p-4 border border-outline-variant/20 shadow-lg space-y-1">
+                <p className="font-label text-xs uppercase tracking-[0.05em] text-on-surface-variant">Sacred Blueprint / Operations</p>
+                <h2 className="text-display-lg text-on-surface">Manager&apos;s Command Center</h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button className="bg-surface-container-highest px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-dim transition-colors text-on-surface">
+                  <span className="material-symbols-outlined">ios_share</span>
+                  Export Data
+                </button>
+                <a
+                  href="/calendar"
+                  className="gold-accents text-on-secondary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+                >
+                  <span className="material-symbols-outlined">add_task</span>
+                  Adjust Shifts
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

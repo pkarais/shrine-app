@@ -37,14 +37,35 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  const authRequiredPaths = ['/dashboard', '/manager', '/profile', '/messages', '/tickets', '/recognition', '/calendar', '/operations-brief', '/council']
+  const authRequiredPaths = ['/dashboard', '/manager', '/profile', '/messages', '/tickets', '/recognition', '/calendar', '/operations-brief', '/council', '/brief', '/audio-test']
+  const managerOnlyPaths = ['/manager', '/audio-test']
 
   const needsAuth = authRequiredPaths.some(p => path === p || path.startsWith(p + '/'))
+  const needsManager = managerOnlyPaths.some(p => path === p || path.startsWith(p + '/'))
 
   if (needsAuth && !isAuthenticated) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // Manager-only routes
+  if (needsManager && isAuthenticated) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id
+    if (!userId && !hasDevBypass) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+    if (userId) {
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single()
+      if (!profile || (profile.role !== "manager" && profile.role !== "admin")) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return supabaseResponse

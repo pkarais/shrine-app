@@ -1,6 +1,7 @@
 "use server"
 
 import { createAdminClient } from "@/utils/supabase/server"
+import { requireAuth, requireManager } from "./auth-helpers"
 
 interface AlertPayload {
   type: string
@@ -12,16 +13,20 @@ interface AlertPayload {
 
 export async function logAlertToManager(payload: AlertPayload) {
   try {
+    // Verify caller is authenticated (staff or manager)
+    const user = await requireAuth()
     const admin = createAdminClient()
 
     let triggeredBy = "System"
     let triggeredByRole = "system"
 
-    if (payload.userId) {
+    // Use the authenticated user as the triggerer, or payload.userId if system event
+    const effectiveUserId = payload.userId || user.id
+    if (effectiveUserId) {
       const { data: profile } = await admin
         .from("profiles")
         .select("full_name, role")
-        .eq("id", payload.userId)
+        .eq("id", effectiveUserId)
         .single()
 
       if (profile) {
@@ -59,6 +64,7 @@ export async function logAlertToManager(payload: AlertPayload) {
 
 export async function getManagerAlerts(unacknowledgedOnly = true) {
   try {
+    await requireManager()
     const admin = createAdminClient()
 
     let query = admin
@@ -87,6 +93,7 @@ export async function getManagerAlerts(unacknowledgedOnly = true) {
 
 export async function acknowledgeAlert(alertId: string) {
   try {
+    await requireManager()
     const admin = createAdminClient()
 
     const { error } = await admin

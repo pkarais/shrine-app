@@ -1,3 +1,4 @@
+"use server"
 import { createServerClient } from "@/utils/supabase/server"
 
 export function isAfterHours(startTime: string, endTime: string): boolean {

@@ -55,8 +55,10 @@ export async function markAlarmTriggered() {
   if (!user) return
 
   const today = new Date().toISOString().split("T")[0]
-  await supabase
+  const { error } = await supabase
     .from("staff_wake_up_alarms")
     .update({ last_triggered_date: today, updated_at: new Date().toISOString() })
     .eq("user_id", user.id)
+
+  if (error) throw new Error(error.message)
 }

@@ -342,8 +342,7 @@ function LeaderboardTable({ data }: { data: any[] }) {
               <td className="p-3 sm:p-4"><RankBadge rank={entry.rank} /></td>
               <td className="p-3 sm:p-4 font-medium">{entry.display_name}</td>
               <td className="p-3 sm:p-4 text-right font-bold" style={{ fontFamily: "'Manrope', system-ui, sans-serif" }}>
-                {entry.net_points}
-                {entry.deductions > 0 && <span className="text-red-500 text-[10px] ml-1">(-{entry.deductions})</span>}
+                {entry.total_points}
               </td>
               <td className="p-3 sm:p-4 text-right hidden sm:table-cell">{entry.badges_earned}</td>
               <td className="p-3 sm:p-4 text-right hidden sm:table-cell">{entry.tasks_completed}</td>

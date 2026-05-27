@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { getConversations, markMessagesAsRead, getStaffAndManagers, getMyUserId } from "@/lib/actions/messages"
+import { getConversations, markMessagesAsRead, getContactsForUser, getMyUserId } from "@/lib/actions/messages"
 import { Search } from "lucide-react"
 
 interface StaffProfile {
@@ -44,7 +44,7 @@ export function ConversationList({
     setLoading(true)
     const [convData, staffData, myId] = await Promise.all([
       getConversations(),
-      getStaffAndManagers(),
+      getContactsForUser(),
       getMyUserId(),
     ])
     setConversations(convData as Conversation[])

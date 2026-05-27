@@ -20,13 +20,21 @@ export const endBreak = async (breakId: string) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
+  // Get the shift_id for this break first
+  const { data: breakRow, error: breakError } = await supabase
+    .from("breaks")
+    .select("shift_id")
+    .eq("id", breakId)
+    .single()
+
+  if (breakError) throw new Error(breakError.message)
+  if (!breakRow) throw new Error("Break not found")
+
   const { data, error } = await supabase
     .from("breaks")
     .update({ break_end: new Date().toISOString() })
     .eq("id", breakId)
-    .eq("shift_id", (
-      await supabase.from("breaks").select("shift_id").eq("id", breakId).single()
-    ).data?.shift_id)
+    .eq("shift_id", breakRow.shift_id)
 
   if (error) throw new Error(error.message)
   return { success: true, data }

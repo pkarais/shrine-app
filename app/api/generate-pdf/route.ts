@@ -4,31 +4,51 @@ import puppeteer from "puppeteer-core"
 import path from "path"
 import os from "os"
 
-function findChrome() {
-  // Windows
-  if (os.platform() === "win32") {
-    const candidates = [
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-      path.join(os.homedir(), "AppData\\Local\\Google\\Chrome\\Application\\chrome.exe"),
-    ]
-    for (const c of candidates) {
-      try {
-        if (require("fs").existsSync(c)) return c
-      } catch {}
+async function getBrowser() {
+  // Vercel / serverless: use @sparticuz/chromium
+  try {
+    const chromium = require("@sparticuz/chromium")
+    const executablePath = await chromium.executablePath()
+    return puppeteer.launch({
+      args: chromium.args,
+      executablePath,
+      headless: chromium.headless,
+    })
+  } catch {
+    // Local dev: find system Chrome
+  }
+
+  // Local fallback — find installed Chrome
+  function findChrome() {
+    if (os.platform() === "win32") {
+      const candidates = [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        path.join(os.homedir(), "AppData\\Local\\Google\\Chrome\\Application\\chrome.exe"),
+      ]
+      for (const c of candidates) {
+        try { if (require("fs").existsSync(c)) return c } catch {}
+      }
     }
+    if (os.platform() === "darwin") {
+      const c = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      try { if (require("fs").existsSync(c)) return c } catch {}
+    }
+    const linuxCandidates = ["/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser"]
+    for (const c of linuxCandidates) {
+      try { if (require("fs").existsSync(c)) return c } catch {}
+    }
+    return undefined
   }
-  // macOS
-  if (os.platform() === "darwin") {
-    const c = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    try { if (require("fs").existsSync(c)) return c } catch {}
-  }
-  // Linux
-  const linuxCandidates = ["/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser"]
-  for (const c of linuxCandidates) {
-    try { if (require("fs").existsSync(c)) return c } catch {}
-  }
-  return undefined
+
+  const chromePath = findChrome()
+  if (!chromePath) throw new Error("Chrome not found. Install Chrome or @sparticuz/chromium for serverless.")
+
+  return puppeteer.launch({
+    executablePath: chromePath,
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -96,17 +116,7 @@ export async function POST(request: NextRequest) {
   `).join("")}
 </body></html>`
 
-    const chromePath = findChrome()
-    if (!chromePath) {
-      return NextResponse.json({ error: "Chrome not found. Cannot generate PDF." }, { status: 500 })
-    }
-
-    const browser = await puppeteer.launch({
-      executablePath: chromePath,
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    })
-
+    const browser = await getBrowser()
     const page = await browser.newPage()
     await page.setContent(html, { waitUntil: "load" })
 

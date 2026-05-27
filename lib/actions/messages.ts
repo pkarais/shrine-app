@@ -1,6 +1,7 @@
 "use server"
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
+import { requireAuth } from "./auth-helpers"
 
 async function getAuthedUser() {
   const supabase = createServerClient()
@@ -219,17 +220,37 @@ export async function markMessagesAsRead(partnerId: string) {
 }
 
 export async function getOperationsStaff() {
+  await requireAuth()
   const admin = createAdminClient()
   const { data, error } = await admin.from("profiles").select("id, full_name, email, role").in("role", ["operations", "security"]).order("full_name", { ascending: true })
   if (error) throw new Error(error.message)
   return data
 }
 
-export async function getStaffAndManagers() {
+export async function getContactsForUser() {
+  const user = await requireAuth()
   const admin = createAdminClient()
-  const { data, error } = await admin.from("profiles").select("id, full_name, email, role").in("role", ["operations", "security", "manager"]).order("full_name", { ascending: true })
+
+  // Get current user's role
+  const { data: myProfile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  const myRole = myProfile?.role || ""
+
+  // Role-based contact filtering:
+  // - Security sees: security + managers
+  // - Operations sees: operations + managers
+  // - Manager sees: all staff (operations + security + managers)
+  let roles: string[]
+  if (myRole === "manager" || myRole === "admin") {
+    roles = ["operations", "security", "manager"]
+  } else if (myRole === "security") {
+    roles = ["security", "manager"]
+  } else {
+    roles = ["operations", "manager"]
+  }
+
+  const { data, error } = await admin.from("profiles").select("id, full_name, email, role").in("role", roles).order("full_name", { ascending: true })
   if (error) throw new Error(error.message)
-  return data
+  return data || []
 }
 
 export async function getMyUserId() {
@@ -239,6 +260,7 @@ export async function getMyUserId() {
 }
 
 export async function getManagers() {
+  await requireAuth()
   const admin = createAdminClient()
   const { data, error } = await admin.from("profiles").select("id, full_name, email").eq("role", "manager").order("full_name", { ascending: true })
   if (error) throw new Error(error.message)

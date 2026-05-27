@@ -2,6 +2,7 @@
 import { createServerClient } from "@/utils/supabase/server"
 import { createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
+import { requireAuth, requireManager } from "./auth-helpers"
 import { createHash } from "crypto"
 import { getScheduleForDate } from "@/data/employee-schedules"
 
@@ -32,6 +33,7 @@ function normalizeAssigneeId(rawId: string) {
 }
 
 export async function validateStaffingForEvent(eventId: number) {
+  await requireManager()
   const supabase = createServerClient()
   const { data: event } = await supabase.from("events").select("*").eq("id", eventId).single()
   if (!event) throw new Error("Event not found")
@@ -66,6 +68,7 @@ export async function validateStaffingForEvent(eventId: number) {
 }
 
 export async function getStaffingGaps(dateFrom?: string, dateTo?: string) {
+  await requireManager()
   const supabase = createServerClient()
   let query = supabase.from("events").select("*").order("start_time", { ascending: true })
   if (dateFrom) query = query.gte("start_time", dateFrom)
@@ -213,6 +216,7 @@ export async function assignDayShift(dateStr: string, shiftName: string, userId:
 }
 
 export async function getEventAssignments(eventId: number) {
+  await requireAuth()
   const admin = createAdminClient()
   if (!admin) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured")
   const { data, error } = await admin

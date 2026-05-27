@@ -56,14 +56,10 @@ export default function LoginPage() {
       </div>
 
       {/* Background Hero Image - Hidden in dark mode */}
-      <div className="absolute inset-0 z-0 dark:hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1465848059293-208e11dfea17?w=1920&q=80"
-          alt="Shrine Background"
-          fill
-          priority
-          className="object-cover"
-        />
+      <div 
+        className="absolute inset-0 z-0 dark:hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/images/liberty-hero.jpg)' }}
+      >
         <div className="absolute inset-0 bg-primary/40 mix-blend-multiply" />
         <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
       </div>
@@ -79,29 +75,48 @@ export default function LoginPage() {
 
       {/* Layout Container */}
       <div className="relative z-10 w-full max-w-7xl px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        {/* Left Side: Editorial Branding */}
-        <div className="max-w-xl">
-          <div className="inline-flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 flex items-center justify-center rounded-xl byzantine-gradient shadow-lg">
-              <span className="material-symbols-outlined text-white text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                account_balance
-              </span>
-            </div>
-            <span className="font-headline font-extrabold text-2xl tracking-tight text-white dark:text-white">LandmarkOps</span>
+        {/* Left Side: Glass Card with Hero Image */}
+        <div className="relative max-w-xl rounded-[2rem] overflow-hidden shadow-2xl border border-white/20">
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/images/liberty-hero.jpg"
+              alt="Liberty Background"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-primary/60 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent" />
           </div>
 
-          <h1 className="font-headline text-5xl md:text-7xl font-extrabold text-white dark:text-white leading-[1.1] mb-6 -tracking-[0.03em]">
-            Preserve the <span className="text-secondary-fixed dark:text-[#d4a017]">Sacred</span> Heritage.
-          </h1>
+          {/* Card Content */}
+          <div className="relative z-10 p-8 md:p-10">
+            <div className="flex flex-col items-center text-center gap-3 mb-8">
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl byzantine-gradient shadow-lg">
+                <span className="material-symbols-outlined text-white text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  account_balance
+                </span>
+              </div>
+              <span className="font-headline font-extrabold text-2xl tracking-tight text-white">LandmarkOps</span>
+            </div>
 
-          <p className="font-body text-xl text-white/80 dark:text-white/70 leading-relaxed mb-10 max-w-lg">
-            The modern operational core for national landmarks. Manage daily liturgy, staff logistics, and site security with reverent precision.
-          </p>
+            <h1 className="font-headline text-4xl md:text-5xl font-extrabold text-white leading-[1.1] mb-4 -tracking-[0.03em]">
+              Preserve the <span className="text-secondary-fixed">Sacred</span> Heritage.
+            </h1>
 
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="px-6 py-3 bg-white/10 dark:bg-white/5 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse" />
-              <span className="font-label text-sm font-medium text-white tracking-wide uppercase">System Status: Optimal</span>
+            <div className="rounded-2xl bg-white/10 backdrop-blur-md px-6 py-4 border border-white/20 shadow-lg">
+              <p className="font-body text-sm text-white/90 leading-relaxed max-w-md">
+                The modern operational core for national landmarks. Manage daily liturgy, staff logistics, and site security with reverent precision.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse" />
+                <span className="font-label text-xs font-medium text-white tracking-wide uppercase">System Status: Optimal</span>
+              </div>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
+import { requireAuth, requireManager } from "./auth-helpers"
 
 export const submitWalkthrough = async (
   eventId: number | null,
@@ -48,13 +49,25 @@ export const submitWalkthrough = async (
 }
 
 export async function deleteWalkthrough(id: string) {
+  const user = await requireAuth()
   const admin = createAdminClient()
+
+  // Verify user is manager or owns the walkthrough
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  const isManager = profile?.role === "manager" || profile?.role === "admin"
+
+  if (!isManager) {
+    const { data: wt } = await admin.from("walkthroughs").select("user_id").eq("id", id).single()
+    if (wt?.user_id !== user.id) throw new Error("Unauthorized")
+  }
+
   const { error } = await admin.from("walkthroughs").delete().eq("id", id)
   if (error) throw new Error(error.message)
   return { success: true }
 }
 
 export async function clearAllWalkthroughs() {
+  await requireManager()
   const admin = createAdminClient()
   const { error } = await admin.from("walkthroughs").delete().neq("id", "00000000-0000-0000-0000-000000000000")
   if (error) throw new Error(error.message)
