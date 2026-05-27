@@ -539,6 +539,32 @@ CREATE POLICY "group_messages_insert_participant" ON group_messages FOR INSERT T
     WHERE cp.conversation_id = group_messages.conversation_id AND cp.user_id = auth.uid()
   ));
 
+-- ── SOP Documents ──────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS sop_documents (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title         TEXT NOT NULL,
+  category      TEXT NOT NULL,
+  description   TEXT,
+  file_path     TEXT NOT NULL,
+  file_name     TEXT NOT NULL,
+  file_size     INT,
+  file_type     TEXT NOT NULL DEFAULT 'application/pdf',
+  uploaded_by   UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sop_category ON sop_documents (category);
+CREATE INDEX IF NOT EXISTS idx_sop_uploaded_by ON sop_documents (uploaded_by);
+
+ALTER TABLE sop_documents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "sop_select_operations" ON sop_documents FOR SELECT TO authenticated
+  USING ((SELECT role FROM profiles WHERE id = auth.uid()) IN ('operations', 'manager'));
+CREATE POLICY "sop_insert_manager" ON sop_documents FOR INSERT TO authenticated
+  WITH CHECK ((SELECT role FROM profiles WHERE id = auth.uid()) = 'manager');
+CREATE POLICY "sop_delete_manager" ON sop_documents FOR DELETE TO authenticated
+  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'manager');
+
 -- ────────────────────────────────────────────────────────────
 -- 5. TRIGGERS (auto-update updated_at on events)
 -- ────────────────────────────────────────────────────────────
@@ -603,4 +629,35 @@ CREATE POLICY "employee_uploads_delete"
   USING (
     bucket_id = 'employee-uploads'
     AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Operations SOPs bucket (PDF documents for staff)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('operations-sops', 'operations-sops', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policy: managers can upload SOPs to any category folder
+CREATE POLICY "sop_uploads_insert"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'operations-sops'
+    AND auth.jwt()->>'role' = 'manager'
+  );
+
+-- Policy: operations and managers can read SOPs
+CREATE POLICY "sop_uploads_select"
+  ON storage.objects FOR SELECT TO authenticated
+  USING (
+    bucket_id = 'operations-sops'
+    AND (
+      auth.jwt()->>'role' IN ('operations', 'manager')
+    )
+  );
+
+-- Policy: managers can delete SOPs
+CREATE POLICY "sop_uploads_delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'operations-sops'
+    AND auth.jwt()->>'role' = 'manager'
   );

@@ -10,9 +10,9 @@ interface Break {
 }
 
 const BREAKS: Break[] = [
-  { label: "First Break", startOffsetMinutes: 105, durationMinutes: 15 },   // 1:45 after clock-in
+  { label: "First Break", startOffsetMinutes: 90, durationMinutes: 15 },   // 1:30 after clock-in
   { label: "Lunch Break", startOffsetMinutes: 180, durationMinutes: 30 },    // 3:00 after clock-in
-  { label: "Final Break", startOffsetMinutes: 270, durationMinutes: 15 },   // 1:30 after lunch ends (4:30 total)
+  { label: "Final Break", startOffsetMinutes: 300, durationMinutes: 15 },   // 5:00 after clock-in
 ]
 
 export function BreakCountdown() {

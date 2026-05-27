@@ -21,6 +21,7 @@ type NavItem = { href: string; label: string; groups: NavGroup[] }
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", groups: ["all"] },
   { href: "/tickets", label: "Tickets", groups: ["all"] },
+  { href: "/sops", label: "SOPs", groups: ["all"] },
   { href: "/recognition", label: "Recognition", groups: ["all"] },
   { href: "/manager", label: "Command Center", groups: ["manager"] },
   { href: "/operations-brief", label: "Brief", groups: ["manager"] },

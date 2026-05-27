@@ -1,119 +1,125 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Clock, Play, Square, Coffee } from "lucide-react"
+import { Clock, Coffee, Play, Square, ShieldCheck, Download, FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import { clockIn, clockOut } from "@/lib/actions/clock-in"
+import { clockIn, clockOut, getActiveShift } from "@/lib/actions/clock-in"
 import { startBreak, endBreak, getActiveBreak } from "@/lib/actions/breaks"
-import { checkGeofence } from "@/lib/geofence"
 import { getNextBreakInfo, getShiftProgress } from "@/lib/labor-math"
-import { GEOFENCE } from "@/constants"
 import { useAlertAudio } from "@/hooks/useAlertAudio"
-import { logAlertToManager } from "@/lib/actions/manager-alerts"
 import { createClient } from "@/utils/supabase/client"
-
-const SHRINE_LAT = GEOFENCE.LIBERTY_PARK.LAT
-const SHRINE_LON = GEOFENCE.LIBERTY_PARK.LON
-const GEOFENCE_RADIUS = GEOFENCE.LIBERTY_PARK.RADIUS_METERS
+import { getManagerShiftReport, generateShiftReportCSV } from "@/lib/actions/shift-report"
 
 interface Shift {
-  id?: string
+  id: string
   clock_in: string
   clock_out?: string | null
-  event_id?: number
-  events?: { title: string } | null
+  event_id?: number | null
 }
 
-export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
+export function ShiftTimer() {
   const [elapsed, setElapsed] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
   const [isOnBreak, setIsOnBreak] = useState(false)
   const [activeBreakId, setActiveBreakId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [breakInfo, setBreakInfo] = useState<{ nextBreak: string; remainingMinutes: number; breakDuration: number; breakNumber: number; isPaid: boolean } | null>(null)
-  const [shiftProgress, setShiftProgress] = useState<{ hoursWorked: number; paidHours: number; progressPercent: number; isOvertime: boolean; overtimeHours: number } | null>(null)
+  const [breakInfo, setBreakInfo] = useState<any>(null)
+  const [shiftProgress, setShiftProgress] = useState<any>(null)
+  const [activeShift, setActiveShift] = useState<Shift | null>(null)
+  const [isManager, setIsManager] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [generatingReport, setGeneratingReport] = useState(false)
   const { play } = useAlertAudio()
 
-  const isActive = !!currentShift && !currentShift.clock_out
-
+  // Fetch role + active shift on mount
   useEffect(() => {
-    if (isActive && currentShift.id) {
-      setIsRunning(true)
-      const start = new Date(currentShift.clock_in).getTime()
-      const clockInDate = new Date(currentShift.clock_in)
-      const interval = setInterval(() => {
-        const now = Date.now()
-        setElapsed(now - start)
-        setBreakInfo(getNextBreakInfo(clockInDate, new Date(now)))
-        setShiftProgress(getShiftProgress(clockInDate, new Date(now)))
-      }, 1000)
-
-      getActiveBreak(currentShift.id!).then((breakRecord) => {
-        if (breakRecord) {
-          setIsOnBreak(true)
-          setActiveBreakId(breakRecord.id)
-        }
-      })
-
-      return () => clearInterval(interval)
-    }
-  }, [isActive, currentShift])
-
-  const handleClockIn = useCallback(async () => {
-    setError(null)
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject)
-      )
-
-      const { inRange, distance } = checkGeofence(
-        pos.coords.latitude,
-        pos.coords.longitude,
-        SHRINE_LAT,
-        SHRINE_LON,
-        GEOFENCE_RADIUS
-      )
-
-      if (!inRange) {
-        const errorMsg = `You are ${Math.round(distance)}m from the shrine. Must be within ${GEOFENCE_RADIUS}m to clock in.`
-        setError(errorMsg)
-        play("geofence_warning")
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        logAlertToManager({ type: "geofence_violation", message: errorMsg, severity: "critical", userId: user?.id })
-        return
-      }
-
-      if (!currentShift?.event_id) {
-        setError("No active event found. Cannot clock in.")
-        return
-      }
-
-      await clockIn(
-        currentShift.event_id,
-        pos.coords.latitude,
-        pos.coords.longitude
-      )
-      setIsRunning(true)
-      play("successful_clock_in")
-      const hour = new Date().getHours()
-      if (hour >= 9) {
-        play("manager_late_alert")
-      }
-    } catch (err: any) {
-      const errorMsg = err.message || "Failed to clock in"
-      setError(errorMsg)
+    async function init() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      logAlertToManager({ type: "geofence_violation", message: errorMsg, severity: "critical", userId: user?.id })
-    }
-  }, [currentShift])
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
-  const handleClockOut = useCallback(async () => {
-    if (!currentShift?.id) return
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
+
+      setIsManager(profile?.role === "manager")
+
+      const shift = await getActiveShift()
+      if (shift) {
+        setActiveShift(shift)
+      }
+      setLoading(false)
+    }
+    init()
+  }, [])
+
+  const isActive = !!activeShift && !activeShift.clock_out
+
+  // Timer + break info updater
+  useEffect(() => {
+    if (!isActive || !activeShift) return
+
+    setIsRunning(true)
+    const start = new Date(activeShift.clock_in).getTime()
+    const clockInDate = new Date(activeShift.clock_in)
+
+    const interval = setInterval(() => {
+      const now = Date.now()
+      setElapsed(now - start)
+      setBreakInfo(getNextBreakInfo(clockInDate, new Date(now)))
+      setShiftProgress(getShiftProgress(clockInDate, new Date(now)))
+    }, 1000)
+
+    // Check for active break
+    getActiveBreak(activeShift.id).then((breakRecord: any) => {
+      if (breakRecord) {
+        setIsOnBreak(true)
+        setActiveBreakId(breakRecord.id)
+      }
+    })
+
+    return () => clearInterval(interval)
+  }, [isActive, activeShift])
+
+  // Manager off-site clock-in (no GPS)
+  const handleManagerClockIn = useCallback(async () => {
     setError(null)
     try {
-      await clockOut(currentShift.id)
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // Get current or next event
+      const { data: events } = await supabase
+        .from("events")
+        .select("id")
+        .gte("start_time", new Date().toISOString())
+        .order("start_time", { ascending: true })
+        .limit(1)
+
+      const eventId = events?.[0]?.id ?? 1
+
+      // Use default shrine coordinates for manager off-site clock-in
+      const result = await clockIn(eventId, 0, 0)
+      setActiveShift(result.shift)
+      setIsRunning(true)
+      play("successful_clock_in")
+    } catch (err: any) {
+      setError(err.message || "Failed to clock in")
+    }
+  }, [play])
+
+  const handleClockOut = useCallback(async () => {
+    if (!activeShift?.id) return
+    setError(null)
+    try {
+      await clockOut(activeShift.id)
+      setActiveShift(null)
       setIsRunning(false)
       setElapsed(0)
       setBreakInfo(null)
@@ -122,12 +128,11 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
     } catch (err: any) {
       setError(err.message || "Failed to clock out")
     }
-  }, [currentShift])
+  }, [activeShift, play])
 
   const handleBreak = useCallback(async () => {
-    if (!currentShift?.id) return
+    if (!activeShift?.id) return
     setError(null)
-
     try {
       if (isOnBreak && activeBreakId) {
         await endBreak(activeBreakId)
@@ -135,7 +140,7 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
         setActiveBreakId(null)
         play("break_over_reminder")
       } else {
-        const result = await startBreak(currentShift.id)
+        const result = await startBreak(activeShift.id)
         setIsOnBreak(true)
         setActiveBreakId(result.breakId)
         play("break_reminder")
@@ -143,7 +148,7 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
     } catch (err: any) {
       setError(err.message || "Failed to update break status")
     }
-  }, [isOnBreak, activeBreakId, currentShift])
+  }, [isOnBreak, activeBreakId, activeShift, play])
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000)
@@ -153,19 +158,36 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
   }
 
-  const statusLabel = isOnBreak ? "On Break" : isActive || isRunning ? "Clocked In" : "Not Clocked In"
-  const statusColor = isOnBreak ? "var(--secondary)" : isActive || isRunning ? "var(--primary)" : "var(--on-surface-variant)"
+  if (loading) {
+    return (
+      <section className="card-surface p-8 flex flex-col items-center gap-6 min-h-[280px]">
+        <div className="animate-pulse w-full h-full bg-surface-container rounded-xl" />
+      </section>
+    )
+  }
+
+  const statusLabel = isOnBreak ? "On Break" : isActive ? "Clocked In" : "Not Clocked In"
+  const statusColor = isOnBreak ? "var(--secondary)" : isActive ? "var(--primary)" : "var(--on-surface-variant)"
 
   return (
     <section className="card-surface p-8 flex flex-col items-center gap-6">
+      {/* Header */}
       <div className="flex items-center gap-2" style={{ color: statusColor }}>
         <Clock className="w-4 h-4" />
         <span className="text-xs label-text">{statusLabel}</span>
+        {isManager && (
+          <span className="ml-1 px-2 py-0.5 bg-amber-500/20 text-amber-500 text-[10px] font-bold rounded-full uppercase">
+            Manager
+          </span>
+        )}
       </div>
+
+      {/* Timer */}
       <div className="display-lg font-display" style={{ color: statusColor }}>
         {formatTime(elapsed)}
       </div>
 
+      {/* Progress */}
       {shiftProgress && (
         <div className="w-full space-y-2">
           <div className="flex justify-between text-sm">
@@ -182,7 +204,7 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
           </div>
           <div className="flex gap-2 justify-center flex-wrap">
             <span className="px-3 py-1 bg-[var(--primary-fixed)] text-[var(--primary)] text-[10px] font-bold rounded-full uppercase tracking-tighter">
-              {breakInfo?.breakNumber === 1 ? "1st break → 2h" : breakInfo?.breakNumber === 2 ? "Lunch → 4.5h" : breakInfo?.breakNumber === 3 ? "2nd break → 6.5h" : "All breaks done"}
+              {breakInfo?.breakNumber === 1 ? "1st break → 1.5h" : breakInfo?.breakNumber === 2 ? "Lunch → 3h" : breakInfo?.breakNumber === 3 ? "Final break → 5h" : "All breaks done"}
             </span>
             <span className="px-3 py-1 bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)] text-[10px] font-bold rounded-full uppercase tracking-tighter">
               8h standard
@@ -191,34 +213,67 @@ export function ShiftTimer({ currentShift }: { currentShift?: Shift | null }) {
         </div>
       )}
 
+      {/* Actions */}
       <div className="flex gap-3 flex-wrap justify-center">
-        {!isActive && !isRunning && (
-          <Button
-            onClick={handleClockIn}
-            variant="gold"
-            size="lg"
-          >
-            <Play className="w-4 h-4 mr-2" /> Clock In
+        {!isActive && isManager && (
+          <Button onClick={handleManagerClockIn} variant="gold" size="lg">
+            <ShieldCheck className="w-4 h-4 mr-2" /> Manager Clock-In
           </Button>
         )}
-        {(isActive || isRunning) && (
+        {isActive && (
           <>
-            <Button
-              onClick={handleBreak}
-              variant={isOnBreak ? "gold" : "outline"}
-            >
+            <Button onClick={handleBreak} variant={isOnBreak ? "gold" : "outline"}>
               <Coffee className="w-4 h-4 mr-1" /> {isOnBreak ? "End Break" : "On Break"}
             </Button>
-            <Button
-              onClick={handleClockOut}
-              variant="danger"
-            >
+            <Button onClick={handleClockOut} variant="danger">
               <Square className="w-4 h-4 mr-1" /> Clock Out
             </Button>
           </>
         )}
       </div>
+
       {error && <p className="text-sm text-[var(--error)]">{error}</p>}
+
+      {/* Export Shift Report */}
+      {isManager && (
+        <button
+          onClick={async () => {
+            setGeneratingReport(true)
+            try {
+              const report = await getManagerShiftReport(activeShift?.id)
+              if (!report) {
+                alert("No shift found to report on.")
+                return
+              }
+              const csv = await generateShiftReportCSV(report)
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+              const url = URL.createObjectURL(blob)
+              const link = document.createElement("a")
+              link.href = url
+              link.setAttribute("download", `manager-shift-report-${new Date().toISOString().slice(0, 10)}.csv`)
+              document.body.appendChild(link)
+              link.click()
+              document.body.removeChild(link)
+              URL.revokeObjectURL(url)
+            } catch (e: any) {
+              alert("Failed to generate report: " + e.message)
+            } finally {
+              setGeneratingReport(false)
+            }
+          }}
+          disabled={generatingReport}
+          className="flex items-center gap-2 px-4 py-2 bg-surface-container-high text-on-surface rounded-xl text-sm font-medium hover:bg-surface-container-highest transition-colors disabled:opacity-50"
+        >
+          <FileText className="w-4 h-4" />
+          {generatingReport ? "Generating..." : "Export Shift Report"}
+        </button>
+      )}
+
+      {isManager && !isActive && (
+        <p className="text-xs text-on-surface-variant text-center">
+          Manager clock-in bypasses GPS verification. Use responsibly.
+        </p>
+      )}
     </section>
   )
 }

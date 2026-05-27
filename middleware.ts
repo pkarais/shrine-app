@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  const authRequiredPaths = ['/dashboard', '/manager', '/profile', '/messages', '/tickets', '/recognition', '/calendar', '/operations-brief', '/council', '/brief', '/audio-test']
+  const authRequiredPaths = ['/dashboard', '/manager', '/profile', '/messages', '/tickets', '/recognition', '/calendar', '/operations-brief', '/council', '/brief', '/audio-test', '/sops']
   const managerOnlyPaths = ['/manager', '/audio-test']
 
   const needsAuth = authRequiredPaths.some(p => path === p || path.startsWith(p + '/'))
