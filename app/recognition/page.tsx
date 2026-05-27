@@ -153,6 +153,9 @@ export default function RecognitionPage() {
           // Refresh badge awards after successful award
           const data = await getRecognitionPageData()
           setBadgeAwards(data.badgeAwards || [])
+          setLeaderboard(data.leaderboard || [])
+          setSummary(data.summary || null)
+          setPointEvents(data.pointEvents || [])
         }}
       />
     </>

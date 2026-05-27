@@ -224,7 +224,7 @@ export async function awardBadgeToEmployee(
   // Verify badge exists and is active
   const { data: badge } = await supabase
     .from("recognition_badges")
-    .select("id, name, active")
+    .select("id, name, active, point_value")
     .eq("id", badgeId)
     .eq("active", true)
     .single()
@@ -264,19 +264,26 @@ export async function awardBadgeToEmployee(
     throw new Error(`Failed to award badge: ${awardError.message}`)
   }
 
-  // Trigger point event for badge earned (if point rule exists)
-  const { data: pointRule } = await supabase
-    .from("gamification_point_rules")
-    .select("points")
-    .eq("event_type", "badge_earned")
-    .eq("active", true)
-    .single()
+  // Trigger point event for badge earned based on the badge's point_value
+  // Fallback to the generic gamification rules if the badge has 0 points assigned but should award something
+  let pointsToAward = badge.point_value || 0
 
-  if (pointRule) {
+  if (pointsToAward === 0) {
+    const { data: pointRule } = await supabase
+      .from("gamification_point_rules")
+      .select("points")
+      .eq("event_type", "badge_earned")
+      .eq("active", true)
+      .single()
+      
+    if (pointRule) pointsToAward = pointRule.points
+  }
+
+  if (pointsToAward > 0) {
     await supabase.from("gamification_point_events").insert({
       employee_id: employeeId,
       event_type: "badge_earned",
-      points: pointRule.points,
+      points: pointsToAward,
       description: `Earned badge: ${badge.name}${reason ? ` - ${reason}` : ""}`,
       reference_type: "badge_award",
       reference_id: award.id,
