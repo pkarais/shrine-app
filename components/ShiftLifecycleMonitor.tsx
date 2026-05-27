@@ -37,33 +37,34 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
 
-function getStorageKey(): string {
-  return `shift_alerts_fired:${getDateKey()}`
+function getStorageKey(userId: string): string {
+  return `shift_alerts_fired:${userId}:${getDateKey()}`
 }
 
-function loadFiredSet(): Set<string> {
+function loadFiredSet(userId: string): Set<string> {
   try {
-    const raw = sessionStorage.getItem(getStorageKey())
+    const raw = localStorage.getItem(getStorageKey(userId))
     return raw ? new Set<string>(JSON.parse(raw)) : new Set<string>()
   } catch {
     return new Set<string>()
   }
 }
 
-function saveFiredSet(set: Set<string>): void {
+function saveFiredSet(userId: string, set: Set<string>): void {
   try {
-    sessionStorage.setItem(getStorageKey(), JSON.stringify(Array.from(set)))
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(Array.from(set)))
   } catch {}
 }
 
 export function ShiftLifecycleMonitor() {
   const firedRef = useRef<Set<string> | null>(null)
+  const userIdRef = useRef<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   function getFiredSet(): Set<string> {
     if (!firedRef.current) {
-      firedRef.current = loadFiredSet()
+      firedRef.current = userIdRef.current ? loadFiredSet(userIdRef.current) : new Set<string>()
     }
     return firedRef.current
   }
@@ -72,7 +73,7 @@ export function ShiftLifecycleMonitor() {
     const key = `${id}:${getDateKey()}`
     const set = getFiredSet()
     set.add(key)
-    saveFiredSet(set)
+    if (userIdRef.current) saveFiredSet(userIdRef.current, set)
   }
 
   function hasFired(id: string): boolean {
@@ -114,6 +115,12 @@ export function ShiftLifecycleMonitor() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Seed userId so localStorage key is user-scoped (prevents cross-user and cross-tab duplicate fires)
+      if (!userIdRef.current) {
+        userIdRef.current = user.id
+        firedRef.current = loadFiredSet(user.id)
+      }
 
       const now = new Date()
       const todayStr = getDateKey()
@@ -257,8 +264,8 @@ export function ShiftLifecycleMonitor() {
         }
       }
 
-      // 9. ALL TASKS COMPLETE check (idle/end of known work)
-      if (activeShift && clockInTime) {
+      // 9. ALL TASKS COMPLETE check — only fires if end_of_shift_auto already fired (avoids double-alert at shift boundary)
+      if (activeShift && clockInTime && hasFired("end_of_shift_auto")) {
         const hoursWorked = (now.getTime() - clockInTime.getTime()) / (1000 * 60 * 60)
         if (hoursWorked >= LABOR.SHIFT_LENGTH_HOURS && hoursWorked < LABOR.SHIFT_LENGTH_HOURS + 0.1) {
           await fireAlert("all_tasks_complete", user.id, "all_tasks_complete",
