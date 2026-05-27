@@ -37,9 +37,9 @@ export async function sendMessage(recipientId: string, content: string, mediaUrl
 }
 
 export async function sendToManagers(content: string, mediaUrls: string[] = []) {
-  const { user, role, isAdmin } = await getAuthedUser()
+  const { user, role } = await getAuthedUser()
   if (!["operations", "security"].includes(role)) throw new Error("Only staff can message the manager group")
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const db = createAdminClient()
   let convId: string | null = null
   const { data: existing } = await db.from("group_conversations").select("id").eq("is_manager_group", true).limit(1).single()
   if (existing) {
@@ -65,9 +65,9 @@ export async function sendToManagers(content: string, mediaUrls: string[] = []) 
 }
 
 export async function sendGroupMessage(conversationId: string, content: string, mediaUrls: string[] = []) {
-  const { user, role, isAdmin } = await getAuthedUser()
+  const { user, role } = await getAuthedUser()
   if (role !== "manager") throw new Error("Only managers can send group messages")
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const db = createAdminClient()
   const { data, error } = await db.from("group_messages").insert({
     conversation_id: conversationId, sender_id: user.id, content, media_urls: mediaUrls,
   }).select("*").single()
@@ -76,13 +76,14 @@ export async function sendGroupMessage(conversationId: string, content: string, 
 }
 
 export async function createGroupConversation(name: string, participantIds: string[]) {
-  const { user, role, isAdmin } = await getAuthedUser()
+  const { user, role } = await getAuthedUser()
   if (role !== "manager") throw new Error("Only managers can create group conversations")
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const db = createAdminClient()
   const { data: conv, error: convErr } = await db.from("group_conversations").insert({
     name, created_by: user.id, is_manager_group: false,
   }).select("id").single()
   if (convErr) throw new Error(convErr.message)
+  if (!conv) throw new Error("Failed to create group conversation")
   const participants = Array.from(new Set([...participantIds, user.id])).map((uid) => ({
     conversation_id: conv.id, user_id: uid,
   }))
