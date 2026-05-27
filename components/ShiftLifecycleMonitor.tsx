@@ -37,17 +37,46 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
 
+function getStorageKey(): string {
+  return `shift_alerts_fired:${getDateKey()}`
+}
+
+function loadFiredSet(): Set<string> {
+  try {
+    const raw = sessionStorage.getItem(getStorageKey())
+    return raw ? new Set<string>(JSON.parse(raw)) : new Set<string>()
+  } catch {
+    return new Set<string>()
+  }
+}
+
+function saveFiredSet(set: Set<string>): void {
+  try {
+    sessionStorage.setItem(getStorageKey(), JSON.stringify(Array.from(set)))
+  } catch {}
+}
+
 export function ShiftLifecycleMonitor() {
-  const firedRef = useRef<Set<string>>(new Set())
+  const firedRef = useRef<Set<string> | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  function getFiredSet(): Set<string> {
+    if (!firedRef.current) {
+      firedRef.current = loadFiredSet()
+    }
+    return firedRef.current
+  }
+
   function markFired(id: string) {
-    firedRef.current.add(`${id}:${getDateKey()}`)
+    const key = `${id}:${getDateKey()}`
+    const set = getFiredSet()
+    set.add(key)
+    saveFiredSet(set)
   }
 
   function hasFired(id: string): boolean {
-    return firedRef.current.has(`${id}:${getDateKey()}`)
+    return getFiredSet().has(`${id}:${getDateKey()}`)
   }
 
   function playSound(key: string) {
