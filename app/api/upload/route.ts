@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +9,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const admin = createAdminClient()
     const formData = await request.formData()
     const files = formData.getAll("files") as File[]
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
       const filePath = `${user.id}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await admin.storage
         .from("employee-uploads")
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
       if (uploadError) throw new Error(uploadError.message)
 
-      const { data: signedUrl } = await supabase.storage
+      const { data: signedUrl } = await admin.storage
         .from("employee-uploads")
         .createSignedUrl(filePath, 31536000)
 
