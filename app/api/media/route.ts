@@ -81,3 +81,25 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const supabase = createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const admin = createAdminClient()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+    if (profile?.role !== "manager") return NextResponse.json({ error: "Manager access required" }, { status: 403 })
+
+    const { path } = await request.json() as { path: string }
+    if (!path) return NextResponse.json({ error: "Missing path" }, { status: 400 })
+
+    const { error } = await admin.storage.from("employee-uploads").remove([path])
+    if (error) throw new Error(error.message)
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { FileText, Video, X, Image as ImageIcon } from "lucide-react"
+import { FileText, Video, X, Image as ImageIcon, Trash2 } from "lucide-react"
 
 interface MediaFile {
   userId: string
@@ -23,6 +23,29 @@ export function MediaFolders() {
   const [loading, setLoading] = useState(true)
   const [lightboxFile, setLightboxFile] = useState<MediaFile | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  async function deleteFile(file: MediaFile) {
+    if (!confirm(`Delete "${file.name}" permanently?`)) return
+    setDeleting(true)
+    try {
+      const res = await fetch("/api/media", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: file.path }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || "Failed to delete")
+      }
+      setLightboxFile(null)
+      setFiles((prev) => prev.filter((f) => f.path !== file.path))
+    } catch (err: any) {
+      alert(err.message || "Failed to delete file")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   useEffect(() => {
     if (lightboxFile) {
@@ -166,6 +189,14 @@ export function MediaFolders() {
             className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
             <X className="w-6 h-6 text-white" />
+          </button>
+          <button
+            onClick={() => deleteFile(lightboxFile)}
+            disabled={deleting}
+            className="absolute top-4 left-4 p-2 rounded-full bg-red-600/30 hover:bg-red-600/60 transition-colors disabled:opacity-50"
+            title="Delete file"
+          >
+            <Trash2 className="w-5 h-5 text-red-300" />
           </button>
           <div className="max-w-4xl w-full max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             {getFileType(lightboxFile.mimetype) === "image" ? (

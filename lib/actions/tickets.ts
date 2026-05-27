@@ -474,6 +474,20 @@ const enrichTicketsWithEvents = async (supabase: any, tickets: any[]) => {
   return tickets.map((t: any) => ({ ...t, events: eventMap.get(t.event_id) || null }))
 }
 
+export const deleteTicket = async (ticketId: string) => {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") throw new Error("Manager access required")
+
+  const { error } = await admin.from("maintenance_tickets").delete().eq("id", ticketId)
+  if (error) throw new Error(error.message)
+  return { success: true }
+}
+
 export const getOperationsStaff = async () => {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

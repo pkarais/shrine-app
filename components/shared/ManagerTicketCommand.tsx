@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
-import { Wrench, Clock, CheckCircle2, RefreshCw, Users, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react"
-import { getManagerTickets, getOperationsStaff, assignTicket, unassignTicket } from "@/lib/actions/tickets"
+import { Wrench, Clock, CheckCircle2, RefreshCw, Users, AlertTriangle, ChevronDown, ChevronUp, Trash2 } from "lucide-react"
+import { getManagerTickets, getOperationsStaff, assignTicket, unassignTicket, deleteTicket } from "@/lib/actions/tickets"
 import { TicketCard } from "@/components/shared/TicketCard"
 
 type Ticket = {
@@ -83,6 +83,18 @@ export function ManagerTicketCommand() {
         await fetchAll()
       } catch (err: any) {
         setError(err.message || "Failed to unassign ticket")
+      }
+    })
+  }
+
+  const handleDelete = (ticketId: string) => {
+    setError(null)
+    startTransition(async () => {
+      try {
+        await deleteTicket(ticketId)
+        await fetchAll()
+      } catch (err: any) {
+        setError(err.message || "Failed to delete ticket")
       }
     })
   }
@@ -205,6 +217,7 @@ export function ManagerTicketCommand() {
                   staff={staff}
                   onAssign={handleAssign}
                   onUnassign={handleUnassign}
+                  onDelete={handleDelete}
                   assigningId={assigningId}
                   setAssigningId={setAssigningId}
                 />
@@ -229,6 +242,7 @@ function ManagerTicketRow({
   staff,
   onAssign,
   onUnassign,
+  onDelete,
   assigningId,
   setAssigningId,
 }: {
@@ -236,6 +250,7 @@ function ManagerTicketRow({
   staff: StaffMember[]
   onAssign: (ticketId: string, assigneeId: string) => void
   onUnassign: (ticketId: string) => void
+  onDelete: (ticketId: string) => void
   assigningId: string | null
   setAssigningId: (id: string | null) => void
 }) {
@@ -368,8 +383,20 @@ function ManagerTicketRow({
             </div>
           )}
 
-          <div className="text-[10px] text-[var(--on-surface-variant)] opacity-50">
-            ID: {ticket.id.slice(0, 8)}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-[var(--on-surface-variant)] opacity-50">
+              ID: {ticket.id.slice(0, 8)}
+            </span>
+            <button
+              onClick={() => {
+                if (confirm("Delete this ticket permanently?")) onDelete(ticket.id)
+              }}
+              disabled={isPending}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </button>
           </div>
         </div>
       )}
