@@ -218,38 +218,52 @@ export async function awardBadgeToEmployee(
     throw new Error("Can only award badges to operations or security staff")
   }
 
-  // Verify badge exists and is active
+  // Verify badge exists (look up by ID — manager already selected it from the active list)
   const { data: badge, error: badgeError } = await supabase
     .from("recognition_badges")
     .select("*")
     .eq("id", badgeId)
-    .eq("active", true)
     .single()
 
   if (badgeError || !badge) {
-    throw new Error(badgeError ? `Badge lookup failed: ${badgeError.message}` : "Badge not found or inactive")
+    throw new Error(badgeError ? `Badge lookup failed: ${badgeError.message}` : "Badge not found")
   }
 
-  // Check if employee already has this badge (prevent duplicates in same month)
-  const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
-  const { data: existingAward } = await supabase
+  // Find the next available badge_level for this employee+badge
+  // (DB has UNIQUE(employee_id, badge_id, badge_level) so we must increment)
+  const { data: existingAwards } = await supabase
     .from("employee_badge_awards")
-    .select("id")
+    .select("badge_level, awarded_at")
     .eq("employee_id", employeeId)
     .eq("badge_id", badgeId)
-    .gte("awarded_at", `${currentMonth}-01`)
-    .single()
+    .order("badge_level", { ascending: false })
 
-  if (existingAward) {
-    throw new Error(`${employeeProfile.full_name} already has the "${badge.name}" badge for this month`)
+  const currentMaxLevel = existingAwards?.[0]?.badge_level ?? 0
+  const maxAllowed = badge.max_level ?? 1
+
+  // Prevent awarding the same badge in the same calendar month at the same level
+  if (existingAwards && existingAwards.length > 0) {
+    const lastAward = existingAwards[0]
+    const lastMonth = new Date(lastAward.awarded_at).toISOString().slice(0, 7)
+    const thisMonth = new Date().toISOString().slice(0, 7)
+    if (lastMonth === thisMonth) {
+      throw new Error(`${employeeProfile.full_name} already received the "${badge.name}" badge this month`)
+    }
   }
 
-  // Create the badge award
+  if (currentMaxLevel >= maxAllowed) {
+    throw new Error(`${employeeProfile.full_name} has already reached the maximum level for the "${badge.name}" badge`)
+  }
+
+  const nextLevel = currentMaxLevel + 1
+
+  // Create the badge award at the next level
   const { data: award, error: awardError } = await supabase
     .from("employee_badge_awards")
     .insert({
       employee_id: employeeId,
       badge_id: badgeId,
+      badge_level: nextLevel,
       awarded_by: managerId,
       reason: reason || null,
       awarded_at: new Date().toISOString(),
