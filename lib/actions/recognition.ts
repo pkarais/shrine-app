@@ -292,22 +292,39 @@ export async function awardBadgeToEmployee(
 export async function getStaffForBadgeAwarding() {
   const supabase = getClient()
   
-  // Fetches from profiles per AGENTS.md convention and role filter
-  const { data: profiles, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, role")
-    .in("role", ["operations", "security"])
-    .order("full_name", { ascending: true })
+  // Get staff_directory with profile_id - this is the SOURCE OF TRUTH for names
+  const { data: staffDir, error: staffError } = await supabase
+    .from("staff_directory")
+    .select("name, role, status, profile_id")
+    .order("name", { ascending: true })
   
-  if (error) {
-    console.error("Error fetching profiles:", error)
+  if (staffError) {
+    console.error("Error fetching staff_directory:", staffError)
     return []
   }
 
   const activeUserIds = await getActiveUserIds(supabase)
 
-  const eligibleStaff = (profiles || [])
-    .filter((row: any) => row.full_name && activeUserIds.has(row.id))
+  // Filter to active operations/security staff and deduplicate by profile_id
+  const seenProfileIds = new Set<string>()
+  const eligibleStaff = (staffDir || [])
+    .filter((row: any) => {
+      if (!row.profile_id || !row.name) return false
+      if (row.status !== "active" && row.status) return false
+      if (!activeUserIds.has(row.profile_id)) return false
+      
+      const role = (row.role || "").toLowerCase()
+      if (!["operations", "security"].includes(role)) return false
+
+      if (seenProfileIds.has(row.profile_id)) return false
+      seenProfileIds.add(row.profile_id)
+      return true
+    })
+    .map((row: any) => ({
+      id: row.profile_id,        // User ID (for badge award)
+      full_name: row.name,       // Name from staff_directory
+      role: row.role,
+    }))
     
   return eligibleStaff
 }
