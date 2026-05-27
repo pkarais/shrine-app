@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { checkGeofence } from "@/lib/geofence"
 import { GEOFENCE } from "@/constants"
 
@@ -56,11 +56,16 @@ export const clockOut = async (shiftId: string) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+
+  // Verify shift belongs to this user
+  const { data: shift } = await admin.from("shifts").select("id").eq("id", shiftId).eq("user_id", user.id).single()
+  if (!shift) throw new Error("Shift not found")
+
+  const { data, error } = await admin
     .from("shifts")
     .update({ clock_out: new Date().toISOString() })
     .eq("id", shiftId)
-    .eq("user_id", user.id)
     .select().single()
 
   if (error) throw new Error(error.message)
