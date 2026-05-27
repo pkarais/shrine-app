@@ -261,30 +261,24 @@ export async function awardBadgeToEmployee(
     throw new Error(`Failed to award badge: ${awardError.message}`)
   }
 
-  // Trigger point event for badge earned based on the badge's point_value
-  // Fallback to the generic gamification rules if the badge has 0 points assigned but should award something
-  let pointsToAward = badge.point_value || 0
-
-  if (pointsToAward === 0) {
-    const { data: pointRule } = await supabase
-      .from("gamification_point_rules")
-      .select("points")
-      .eq("event_type", "badge_earned")
-      .eq("active", true)
-      .single()
-      
-    if (pointRule) pointsToAward = pointRule.points
-  }
+  // Derive badge-specific event_type that matches gamification_point_rules entries
+  // e.g. "Always On Time" → "badge_always_on_time"
+  const badgeEventType = `badge_${badge.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')}`
+  const pointsToAward = badge.point_value || 5
 
   if (pointsToAward > 0) {
-    await supabase.from("gamification_point_events").insert({
+    const { error: pointError } = await supabase.from("gamification_point_events").insert({
       employee_id: employeeId,
-      event_type: "badge_earned",
+      event_type: badgeEventType,
       points: pointsToAward,
-      description: `Earned badge: ${badge.name}${reason ? ` - ${reason}` : ""}`,
-      reference_type: "badge_award",
-      reference_id: award.id,
+      note: `Earned badge: ${badge.name}${reason ? ` - ${reason}` : ""}`,
+      source_id: award.id,
+      source_table: "employee_badge_awards",
     })
+    if (pointError) {
+      console.error("Failed to record point event:", pointError)
+      // Non-critical — badge award already succeeded
+    }
   }
 
   // Use admin client (already available as `supabase`) to bypass RLS when inserting
