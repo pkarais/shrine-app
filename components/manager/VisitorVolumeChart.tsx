@@ -101,8 +101,8 @@ export function VisitorVolumeChart({ initialRows }: { initialRows: VisitorRow[] 
             )}
             {item.isCritical && (
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-tertiary text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
-                <span className="material-symbols-outlined text-[12px]">warning</span>
-                Critical
+                <span className="material-symbols-outlined text-[12px]">trending_up</span>
+                Peak
               </div>
             )}
           </div>

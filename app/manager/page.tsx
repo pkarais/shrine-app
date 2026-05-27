@@ -284,7 +284,7 @@ export default async function ManagerPage() {
       </section>
 
       {/* Operations Summary */}
-      <ScheduleOverview events={upcomingEvents || []} />
+      <ScheduleOverview events={upcomingEvents || []} staffingCount={todayAssignmentCount} />
 
       {/* Bento Grid Dashboard */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

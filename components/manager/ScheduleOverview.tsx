@@ -13,11 +13,12 @@ interface Event {
   required_greeter?: number
 }
 
-export function ScheduleOverview({ events }: { events: Event[] }) {
-  const totalStaffing = events.reduce(
+export function ScheduleOverview({ events, staffingCount }: { events: Event[]; staffingCount?: number }) {
+  const computedStaffing = events.reduce(
     (sum, e) => sum + (e.required_ops ?? 0) + (e.required_security ?? 0) + (e.required_greeter ?? 0),
     0
   )
+  const totalStaffing = staffingCount ?? computedStaffing
   const majorFeasts = events.filter((e) => e.category === "major_feast").length
 
   const stats = [
