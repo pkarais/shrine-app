@@ -87,7 +87,7 @@ export default async function ManagerPage() {
       .lte("start_time", nextDayIso)
       .order("start_time", { ascending: true })
       .limit(5),
-    supabase.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").order("completed_at", { ascending: false }).limit(20),
+    admin.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").order("completed_at", { ascending: false }).limit(20),
   ])
 
   const managerIncidents = Array.isArray(incidentsData) ? incidentsData : []

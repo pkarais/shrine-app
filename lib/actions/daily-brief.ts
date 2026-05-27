@@ -6,17 +6,16 @@ import { requireManager } from "@/lib/actions/auth-helpers"
 export async function generateDailyBriefDraft(briefDate?: string) {
   const user = await requireManager()
 
-  const targetDate = briefDate ? new Date(briefDate) : new Date()
-  const dateStr = targetDate.toISOString().slice(0, 10)
+  const dateStr = briefDate ? briefDate.slice(0, 10) : new Date().toISOString().slice(0, 10)
   const slug = `daily-brief-${dateStr}`
+  // Use noon UTC so toLocaleDateString displays the correct date in any timezone
+  const targetDate = new Date(`${dateStr}T12:00:00.000Z`)
 
   const admin = createAdminClient()
 
-  // Gather daily data
-  const dayStart = new Date(targetDate)
-  dayStart.setHours(0, 0, 0, 0)
-  const dayEnd = new Date(targetDate)
-  dayEnd.setHours(23, 59, 59, 999)
+  // Gather daily data — UTC-explicit range, no FK joins
+  const dayStart = new Date(`${dateStr}T00:00:00.000Z`)
+  const dayEnd = new Date(`${dateStr}T23:59:59.999Z`)
 
   const [
     { data: shifts },
@@ -26,13 +25,24 @@ export async function generateDailyBriefDraft(briefDate?: string) {
     { data: events },
     { data: assignments },
   ] = await Promise.all([
-    admin.from("shifts").select("*, profiles(full_name, role)").gte("clock_in", dayStart.toISOString()).lte("clock_in", dayEnd.toISOString()),
-    admin.from("incidents").select("*, profiles(full_name)").gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString()),
-    admin.from("walkthroughs").select("*, profiles(full_name)").gte("completed_at", dayStart.toISOString()).lte("completed_at", dayEnd.toISOString()),
-    admin.from("maintenance_tickets").select("*").gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString()),
+    admin.from("shifts").select("id, user_id, clock_in, clock_out").gte("clock_in", dayStart.toISOString()).lte("clock_in", dayEnd.toISOString()),
+    admin.from("incidents").select("id, user_id, severity, description, location, created_at").gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString()),
+    admin.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").gte("completed_at", dayStart.toISOString()).lte("completed_at", dayEnd.toISOString()),
+    admin.from("maintenance_tickets").select("id, title, priority, status, created_at").gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString()),
     admin.from("events").select("*").gte("start_time", dayStart.toISOString()).lte("start_time", dayEnd.toISOString()).order("start_time"),
-    admin.from("staff_assignments").select("*, events(title), profiles(full_name, role)").gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString()),
+    admin.from("staff_assignments").select("id").gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString()),
   ])
+
+  // Batch-fetch profiles for all referenced user_ids
+  const allUserIds = Array.from(new Set([
+    ...(shifts || []).map((s: any) => s.user_id),
+    ...(incidents || []).map((i: any) => i.user_id),
+    ...(walkthroughs || []).map((w: any) => w.user_id),
+  ].filter(Boolean)))
+  const { data: profilesData } = allUserIds.length
+    ? await admin.from("profiles").select("id, full_name, role").in("id", allUserIds)
+    : { data: [] as any[] }
+  const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]))
 
   // Metrics
   const totalStaff = new Set((shifts || []).map((s: any) => s.user_id)).size
@@ -82,22 +92,22 @@ export async function generateDailyBriefDraft(briefDate?: string) {
       section_key: "scheduling_shifts",
       section_title: "Scheduling & Shifts",
       section_order: 2,
-      markdown_body: generateShiftMarkdown(shifts || []),
-      content: { shifts: (shifts || []).map((s: any) => ({ name: s.profiles?.full_name || "Unknown", role: s.profiles?.role, clock_in: s.clock_in, clock_out: s.clock_out })) },
+      markdown_body: generateShiftMarkdown(shifts || [], profileMap),
+      content: { shifts: (shifts || []).map((s: any) => ({ name: profileMap.get(s.user_id)?.full_name || "Unknown", role: profileMap.get(s.user_id)?.role, clock_in: s.clock_in, clock_out: s.clock_out })) },
     },
     {
       section_key: "site_readiness",
       section_title: "Site Readiness",
       section_order: 3,
-      markdown_body: generateWalkthroughMarkdown(walkthroughs || []),
-      content: { walkthroughs: (walkthroughs || []).map((w: any) => ({ type: w.walkthrough_type, category: w.category, by: w.profiles?.full_name, completed_at: w.completed_at })) },
+      markdown_body: generateWalkthroughMarkdown(walkthroughs || [], profileMap),
+      content: { walkthroughs: (walkthroughs || []).map((w: any) => ({ type: w.walkthrough_type, category: w.category, by: profileMap.get(w.user_id)?.full_name, completed_at: w.completed_at })) },
     },
     {
       section_key: "incidents_safety",
       section_title: "Incidents & Safety",
       section_order: 4,
-      markdown_body: generateIncidentMarkdown(incidents || []),
-      content: { incidents: (incidents || []).map((i: any) => ({ severity: i.severity, description: i.description, location: i.location, by: i.profiles?.full_name })) },
+      markdown_body: generateIncidentMarkdown(incidents || [], profileMap),
+      content: { incidents: (incidents || []).map((i: any) => ({ severity: i.severity, description: i.description, location: i.location, by: profileMap.get(i.user_id)?.full_name })) },
     },
     {
       section_key: "maintenance_tickets",
@@ -146,11 +156,11 @@ export async function generateDailyBriefDraft(briefDate?: string) {
   return { success: true, issueId: issue.id, slug }
 }
 
-function generateShiftMarkdown(shifts: any[]) {
+function generateShiftMarkdown(shifts: any[], profileMap: Map<string, any>) {
   if (!shifts.length) return "No shifts recorded today."
   const lines = shifts.map((s) => {
-    const name = s.profiles?.full_name || "Unknown"
-    const role = s.profiles?.role || "staff"
+    const name = profileMap.get(s.user_id)?.full_name || "Unknown"
+    const role = profileMap.get(s.user_id)?.role || "staff"
     const clockIn = new Date(s.clock_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     const clockOut = s.clock_out ? new Date(s.clock_out).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Active"
     return `- **${name}** (${role}): ${clockIn} — ${clockOut}`
@@ -158,20 +168,20 @@ function generateShiftMarkdown(shifts: any[]) {
   return lines.join("\n")
 }
 
-function generateWalkthroughMarkdown(walkthroughs: any[]) {
+function generateWalkthroughMarkdown(walkthroughs: any[], profileMap: Map<string, any>) {
   if (!walkthroughs.length) return "No walkthroughs completed today."
   const lines = walkthroughs.map((w) => {
-    const name = w.profiles?.full_name || "Unknown"
+    const name = profileMap.get(w.user_id)?.full_name || "Unknown"
     const time = new Date(w.completed_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     return `- **${w.walkthrough_type}** (${w.category}) — ${name} at ${time}`
   })
   return lines.join("\n")
 }
 
-function generateIncidentMarkdown(incidents: any[]) {
+function generateIncidentMarkdown(incidents: any[], profileMap: Map<string, any>) {
   if (!incidents.length) return "No incidents reported today."
   const lines = incidents.map((i) => {
-    const name = i.profiles?.full_name || "Unknown"
+    const name = profileMap.get(i.user_id)?.full_name || "Unknown"
     const severity = i.severity || "unknown"
     return `- **[${severity.toUpperCase()}]** ${i.description?.slice(0, 100)}... — ${name} at ${i.location || "N/A"}`
   })

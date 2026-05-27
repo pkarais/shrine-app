@@ -66,6 +66,14 @@ export async function deleteWalkthrough(id: string) {
   return { success: true }
 }
 
+export async function getWalkthroughDetail(id: string) {
+  await requireManager()
+  const admin = createAdminClient()
+  const { data, error } = await admin.from("walkthroughs").select("*").eq("id", id).single()
+  if (error) throw new Error(error.message)
+  return data
+}
+
 export async function clearAllWalkthroughs() {
   await requireManager()
   const admin = createAdminClient()
