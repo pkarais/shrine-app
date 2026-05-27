@@ -72,7 +72,7 @@ export default function RecognitionPage() {
   ]
 
   const handleWipeCanvas = async () => {
-    if (!confirm("Are you sure you want to delete ALL points and badges and reset the leaderboard? This action cannot be undone.")) return;
+    if (!window.confirm("Are you sure you want to delete ALL points and badges and reset the leaderboard? This action cannot be undone.")) return;
     try {
       await resetGamificationData();
       const data = await getRecognitionPageData();
@@ -84,12 +84,12 @@ export default function RecognitionPage() {
       setEomCandidates(data.eomCandidates || []);
       setSummary(data.summary || null);
     } catch (err: any) {
-      alert("Failed to reset: " + err.message);
+      window.alert("Failed to reset: " + err.message);
     }
   }
 
   const handleDeleteAward = async (awardId: string) => {
-    if (!confirm("Are you sure you want to delete this badge award?")) return;
+    if (!window.confirm("Are you sure you want to delete this badge award?")) return;
     try {
       await deleteBadgeAward(awardId);
       const data = await getRecognitionPageData();
@@ -101,7 +101,7 @@ export default function RecognitionPage() {
       setEomCandidates(data.eomCandidates || []);
       setSummary(data.summary || null);
     } catch (err: any) {
-      alert("Failed to delete badge: " + err.message);
+      window.alert("Failed to delete badge: " + err.message);
     }
   }
 
