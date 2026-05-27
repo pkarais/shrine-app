@@ -19,11 +19,11 @@ async function getAuthedUser() {
 }
 
 export async function sendMessage(recipientId: string, content: string, mediaUrls: string[] = []) {
-  const { user, role, isAdmin } = await getAuthedUser()
+  const { user, role } = await getAuthedUser()
   const isManager = role === "manager"
   const isStaff = ["operations", "security"].includes(role)
   if (!isManager && !isStaff) throw new Error("Not authorized to send messages")
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const db = createAdminClient()
   const { data: recipient } = await db.from("profiles").select("role").eq("id", recipientId).single()
   if (!recipient) throw new Error("Recipient not found")
   if (isStaff && !["operations", "security", "manager"].includes(recipient.role)) {
@@ -93,8 +93,8 @@ export async function createGroupConversation(name: string, participantIds: stri
 }
 
 export async function getMyGroupConversations() {
-  const { user, role, isAdmin } = await getAuthedUser()
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const { user } = await getAuthedUser()
+  const db = createAdminClient()
   let query = db.from("conversation_participants").select("conversation_id, group_conversations!inner(id, name, is_manager_group, created_at)").eq("user_id", user.id)
   const { data: participations } = await query
   if (!participations || participations.length === 0) return []
@@ -124,8 +124,8 @@ export async function getMyGroupConversations() {
 }
 
 export async function getGroupMessages(conversationId: string, limit = 50) {
-  const { user, role, isAdmin } = await getAuthedUser()
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const { user, role } = await getAuthedUser()
+  const db = createAdminClient()
   const { data: membership } = await db.from("conversation_participants").select("id").eq("conversation_id", conversationId).eq("user_id", user.id).limit(1).maybeSingle()
   if (!membership && role !== "manager") throw new Error("Not a participant")
   const { data, error } = await db.from("group_messages").select("*").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(limit)
@@ -138,8 +138,8 @@ export async function getGroupMessages(conversationId: string, limit = 50) {
 }
 
 export async function getConversations() {
-  const { user, isAdmin } = await getAuthedUser()
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const { user } = await getAuthedUser()
+  const db = createAdminClient()
   const { data: profile } = await db.from("profiles").select("role").eq("id", user.id).single()
   const isManager = profile?.role === "manager"
   const isStaff = ["operations", "security"].includes(profile?.role || "")
@@ -211,8 +211,8 @@ export async function getMessagesWithUser(userId: string, limit = 50) {
 }
 
 export async function markMessagesAsRead(partnerId: string) {
-  const { user, isAdmin } = await getAuthedUser()
-  const db = isAdmin ? createAdminClient() : createServerClient()
+  const { user } = await getAuthedUser()
+  const db = createAdminClient()
   const { error } = await db.from("messages").update({ read_at: new Date().toISOString() }).eq("sender_id", partnerId).eq("recipient_id", user.id).is("read_at", null)
   if (error) throw new Error(error.message)
   return { success: true }
