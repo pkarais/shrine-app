@@ -92,6 +92,17 @@ export async function createGroupConversation(name: string, participantIds: stri
   return { success: true, conversation: { ...conv, participant_ids: participants.map((p: any) => p.user_id) } }
 }
 
+export async function deleteGroupConversation(conversationId: string) {
+  const { user, role } = await getAuthedUser()
+  if (role !== "manager") throw new Error("Only managers can delete group conversations")
+  const db = createAdminClient()
+  await db.from("group_messages").delete().eq("conversation_id", conversationId)
+  await db.from("conversation_participants").delete().eq("conversation_id", conversationId)
+  const { error } = await db.from("group_conversations").delete().eq("id", conversationId)
+  if (error) throw new Error(error.message)
+  return { success: true }
+}
+
 export async function getMyGroupConversations() {
   const { user } = await getAuthedUser()
   const db = createAdminClient()

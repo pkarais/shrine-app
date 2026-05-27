@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { getMyGroupConversations, createGroupConversation } from "@/lib/actions/messages"
-import { Users, Plus, MessageCircle } from "lucide-react"
+import { getMyGroupConversations, createGroupConversation, deleteGroupConversation } from "@/lib/actions/messages"
+import { Users, Plus, MessageCircle, Trash2 } from "lucide-react"
 
 interface GroupConversation {
   id: string
@@ -24,6 +24,7 @@ export function GroupChatList({
 }) {
   const [conversations, setConversations] = useState<GroupConversation[]>([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -40,6 +41,20 @@ export function GroupChatList({
   useEffect(() => {
     load()
   }, [load, refreshKey])
+
+  async function handleDelete(e: React.MouseEvent, convId: string, convName: string) {
+    e.stopPropagation()
+    if (!confirm(`Delete "${convName}"? This cannot be undone.`)) return
+    setDeletingId(convId)
+    try {
+      await deleteGroupConversation(convId)
+      setConversations((prev) => prev.filter((c) => c.id !== convId))
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -80,13 +95,15 @@ export function GroupChatList({
         ) : (
           <div className="divide-y divide-[var(--outline-variant)]/20">
             {conversations.map((conv) => (
-              <button
+              <div
                 key={conv.id}
-                onClick={() => onSelect(conv.id, conv.name)}
-                className="w-full text-left p-4 hover:bg-surface-container transition-colors"
+                className="w-full text-left p-4 hover:bg-surface-container transition-colors flex items-center gap-2 group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold">
+                <button
+                  onClick={() => onSelect(conv.id, conv.name)}
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold shrink-0">
                     {conv.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -103,8 +120,16 @@ export function GroupChatList({
                       {conv.lastMessage && ` · ${conv.lastMessage.content?.slice(0, 30)}...`}
                     </p>
                   </div>
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={(e) => handleDelete(e, conv.id, conv.name)}
+                  disabled={deletingId === conv.id}
+                  className="p-2 rounded-lg text-error opacity-0 group-hover:opacity-100 hover:bg-error/10 transition-all shrink-0 disabled:opacity-50"
+                  title="Delete group"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             ))}
           </div>
         )}
