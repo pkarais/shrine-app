@@ -6,8 +6,8 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import Image from "next/image"
-import { Trophy, Medal, Sparkles, Award, TrendingUp, Gift, Users, X, AlertCircle as CircleAlert, Plus, UserPlus, CheckCircle } from "lucide-react"
-import { getRecognitionPageData, awardBadgeToEmployee, getStaffForBadgeAwarding } from "@/lib/actions/recognition"
+import { Trophy, Medal, Sparkles, Award, TrendingUp, Gift, Users, X, AlertCircle as CircleAlert, Plus, UserPlus, CheckCircle, Trash2, RotateCcw } from "lucide-react"
+import { getRecognitionPageData, awardBadgeToEmployee, getStaffForBadgeAwarding, deleteBadgeAward, resetGamificationData } from "@/lib/actions/recognition"
 
 export default function RecognitionPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -70,6 +70,40 @@ export default function RecognitionPage() {
     { id: "points", label: "Points", icon: TrendingUp },
     { id: "eom", label: "EOM", icon: Users },
   ]
+
+  const handleWipeCanvas = async () => {
+    if (!confirm("Are you sure you want to delete ALL points and badges and reset the leaderboard? This action cannot be undone.")) return;
+    try {
+      await resetGamificationData();
+      const data = await getRecognitionPageData();
+      setLeaderboard(data.leaderboard || []);
+      setBadges(data.badges || []);
+      setBadgeAwards(data.badgeAwards || []);
+      setPointRules(data.pointRules || []);
+      setPointEvents(data.pointEvents || []);
+      setEomCandidates(data.eomCandidates || []);
+      setSummary(data.summary || null);
+    } catch (err: any) {
+      alert("Failed to reset: " + err.message);
+    }
+  }
+
+  const handleDeleteAward = async (awardId: string) => {
+    if (!confirm("Are you sure you want to delete this badge award?")) return;
+    try {
+      await deleteBadgeAward(awardId);
+      const data = await getRecognitionPageData();
+      setLeaderboard(data.leaderboard || []);
+      setBadges(data.badges || []);
+      setBadgeAwards(data.badgeAwards || []);
+      setPointRules(data.pointRules || []);
+      setPointEvents(data.pointEvents || []);
+      setEomCandidates(data.eomCandidates || []);
+      setSummary(data.summary || null);
+    } catch (err: any) {
+      alert("Failed to delete badge: " + err.message);
+    }
+  }
 
   if (loading) return <RecognitionSkeleton />
 
@@ -139,6 +173,8 @@ export default function RecognitionPage() {
             onSelectBadge={setSelectedBadge}
             isManager={isManager}
             onOpenAwardPanel={() => setShowAwardPanel(true)}
+            onWipeCanvas={handleWipeCanvas}
+            onDeleteAward={handleDeleteAward}
           />
         )}
         {activeSection === "points" && <PointsSection pointRules={pointRules} pointEvents={pointEvents} />}
@@ -259,7 +295,7 @@ function LeaderboardSection({ data }: { data: any[] }) {
   )
 }
 
-function BadgesSection({ badges, badgeAwards, onSelectBadge, isManager, onOpenAwardPanel }: { badges: any[]; badgeAwards: any[]; onSelectBadge: (b: any) => void; isManager?: boolean; onOpenAwardPanel?: () => void }) {
+function BadgesSection({ badges, badgeAwards, onSelectBadge, isManager, onOpenAwardPanel, onWipeCanvas, onDeleteAward }: { badges: any[]; badgeAwards: any[]; onSelectBadge: (b: any) => void; isManager?: boolean; onOpenAwardPanel?: () => void; onWipeCanvas?: () => void; onDeleteAward?: (id: string) => void }) {
   return (
     <div className="space-y-10">
       <section>
@@ -267,14 +303,23 @@ function BadgesSection({ badges, badgeAwards, onSelectBadge, isManager, onOpenAw
           <h2 className="headline-sm flex items-center gap-2">
             <Award className="w-5 h-5 text-[var(--primary)]" /> Available Badges
           </h2>
-          {isManager && onOpenAwardPanel && (
-            <button
-              onClick={onOpenAwardPanel}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-sm font-medium hover:bg-[var(--primary)]/90 transition-colors shadow-lg shadow-[var(--primary)]/20"
-            >
-              <Plus className="w-4 h-4" />
-              Award Badge
-            </button>
+          {isManager && onOpenAwardPanel && onWipeCanvas && (
+            <div className="flex gap-2">
+              <button
+                onClick={onWipeCanvas}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors shadow-lg"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Wipe Canvas
+              </button>
+              <button
+                onClick={onOpenAwardPanel}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-sm font-medium hover:bg-[var(--primary)]/90 transition-colors shadow-lg shadow-[var(--primary)]/20"
+              >
+                <Plus className="w-4 h-4" />
+                Award Badge
+              </button>
+            </div>
           )}
         </div>
         <BadgesGrid data={badges} onSelect={onSelectBadge} />
@@ -283,7 +328,7 @@ function BadgesSection({ badges, badgeAwards, onSelectBadge, isManager, onOpenAw
         <h2 className="headline-sm mb-4 flex items-center gap-2">
           <Medal className="w-5 h-5 text-amber-500" /> Badge Awards
         </h2>
-        <BadgeAwardsGrid data={badgeAwards} />
+        <BadgeAwardsGrid data={badgeAwards} isManager={isManager} onDeleteAward={onDeleteAward} />
       </section>
     </div>
   )
@@ -423,12 +468,12 @@ function BadgeDetailModal({ badge, onClose }: { badge: any; onClose: () => void 
   )
 }
 
-function BadgeAwardsGrid({ data }: { data: any[] }) {
+function BadgeAwardsGrid({ data, isManager, onDeleteAward }: { data: any[]; isManager?: boolean; onDeleteAward?: (id: string) => void }) {
   if (!data?.length) return <EmptyState icon={Medal} message="No badge awards yet. Managers can award badges from this page." />
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {data.map((award: any) => (
-        <div key={award.id} className="card-surface p-4 border border-[var(--outline-variant)]/30 flex items-start gap-3">
+        <div key={award.id} className="card-surface p-4 border border-[var(--outline-variant)]/30 flex items-start gap-3 relative group">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
             {award.recognition_badges?.icon_url ? (
               <Image src={award.recognition_badges.icon_url} alt="" width={24} height={24} className="w-6 h-6" />
@@ -436,7 +481,7 @@ function BadgeAwardsGrid({ data }: { data: any[] }) {
               <Medal className="w-5 h-5 text-amber-500" />
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="font-bold text-sm truncate">{award.recognition_badges?.name || "Badge"}</p>
             <p className="text-xs text-[var(--on-surface-variant)] truncate">
               {award.profiles?.full_name || award.employee_id?.slice(0, 8)}
@@ -446,6 +491,15 @@ function BadgeAwardsGrid({ data }: { data: any[] }) {
               {new Date(award.awarded_at).toLocaleDateString()}
             </p>
           </div>
+          {isManager && onDeleteAward && (
+            <button
+              onClick={() => onDeleteAward(award.id)}
+              className="absolute top-2 right-2 p-1.5 rounded-full text-[var(--on-surface-variant)] hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+              title="Delete Award"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       ))}
     </div>
