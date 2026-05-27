@@ -50,6 +50,7 @@ export function BottomNav() {
         ...(isStaff ? [{ href: "/tickets", icon: "assignment", label: "Tickets" }] : []),
         ...(isStaff ? [{ href: "/recognition", icon: "workspace_premium", label: "Recognition" }] : []),
         ...(isManager ? [{ href: "/manager", icon: "admin_panel_settings", label: "Command" }] : []),
+        ...(isManager ? [{ href: "/manager/payroll", icon: "payments", label: "Payroll" }] : []),
         { href: "/calendar", icon: "calendar_today", label: "Calendar" },
         { href: "/messages", icon: "chat_bubble", label: "Chat" },
         { href: "/profile", icon: "person", label: "Profile" },

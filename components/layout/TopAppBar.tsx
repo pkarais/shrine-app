@@ -24,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/sops", label: "SOPs", groups: ["staff", "manager"] },
   { href: "/recognition", label: "Recognition", groups: ["staff", "manager"] },
   { href: "/manager", label: "Command Center", groups: ["manager"] },
+  { href: "/manager/payroll", label: "Payroll", groups: ["manager"] },
   { href: "/operations-brief", label: "Monthly Brief", groups: ["manager"] },
   { href: "/daily-brief", label: "Daily Brief", groups: ["manager"] },
   { href: "/calendar", label: "Calendar", groups: ["all", "council"] },

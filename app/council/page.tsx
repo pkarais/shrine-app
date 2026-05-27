@@ -5,6 +5,7 @@ import { TopAppBar } from "@/components/layout/TopAppBar"
 import { MaintenanceTicketForm } from "@/components/forms/MaintenanceTicketForm"
 import { RunningVisitorCountCard } from "@/components/council/RunningVisitorCountCard"
 import { DigitalChantStandPanel } from "@/components/council/DigitalChantStandPanel"
+import { MapContext } from "@/components/dashboard/MapContext"
 import { getCurrentOrNextEvent } from "@/lib/actions/event-context"
 
 export default async function CouncilDashboardPage() {
@@ -100,16 +101,25 @@ export default async function CouncilDashboardPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card-surface p-6">
-            <h2 className="font-headline text-2xl font-bold text-primary mb-4">Submit Maintenance Request</h2>
-            <p className="text-xs text-on-surface-variant mb-4">
-              Create a ticket with photos that goes to the staff pool for assignment.
-            </p>
-            <MaintenanceTicketForm eventId={currentEvent?.id || null} />
+        {/* Create Ticket Section with background image effect */}
+        <section 
+          className="rounded-[2rem] overflow-hidden p-6 relative"
+          style={{ backgroundImage: 'url(/images/oversight-hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'top center', backgroundAttachment: 'fixed' }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative z-10 max-w-xl mx-auto">
+            <div className="card-surface p-6">
+              <h2 className="font-headline text-2xl font-bold text-primary mb-4">Submit Maintenance Request</h2>
+              <p className="text-xs text-on-surface-variant mb-4">
+                Create a ticket with photos that goes to the staff pool for assignment.
+              </p>
+              <MaintenanceTicketForm eventId={currentEvent?.id || null} />
+            </div>
           </div>
+        </section>
 
-          <div className="card-surface p-6">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 card-surface p-6">
             <h2 className="font-headline text-xl font-bold text-primary mb-4">This Week&apos;s Events</h2>
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {(weekEvents || []).length > 0 ? (
@@ -130,6 +140,17 @@ export default async function CouncilDashboardPage() {
               ) : (
                 <p className="text-sm text-on-surface-variant italic">No events scheduled this week.</p>
               )}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <MapContext />
+            <div className="card-surface overflow-hidden rounded-3xl">
+              <img
+                src="/images/chatpg.jpg"
+                alt="Shrine chat view"
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
         </section>

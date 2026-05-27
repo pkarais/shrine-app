@@ -76,13 +76,25 @@ export type PayrollReportData = {
 
 export async function getStaffPayRates() {
   const admin = createAdminClient()
-  const { data: rates, error } = await admin
+  
+  // Fetch separately — no FK constraint means Supabase can't auto-join
+  const { data: rates, error: ratesError } = await admin
     .from("staff_pay_rates")
-    .select("*, staff_directory(id, name, role, profile_id)")
+    .select("*")
     .order("created_at", { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return rates || []
+  
+  if (ratesError) throw new Error(ratesError.message)
+  
+  const { data: staff } = await admin
+    .from("staff_directory")
+    .select("id, name, role, profile_id")
+  
+  const staffMap = new Map((staff || []).map(s => [s.id, s]))
+  
+  return (rates || []).map((r: any) => ({
+    ...r,
+    staff_directory: staffMap.get(r.staff_id) || null,
+  }))
 }
 
 export async function getCurrentPayRate(staffId: string): Promise<number> {

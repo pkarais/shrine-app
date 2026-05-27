@@ -239,11 +239,14 @@ export async function getContactsForUser() {
   // - Security sees: security + managers
   // - Operations sees: operations + managers
   // - Manager sees: all staff (operations + security + managers)
+  // - Council sees: managers only
   let roles: string[]
   if (myRole === "manager" || myRole === "admin") {
     roles = ["operations", "security", "manager"]
   } else if (myRole === "security") {
     roles = ["security", "manager"]
+  } else if (myRole === "council") {
+    roles = ["manager"]
   } else {
     roles = ["operations", "manager"]
   }

@@ -359,13 +359,15 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      <section className="mt-12">
-        <RecurringScheduleCalendar
-          selectedDate={selectedDateStr}
-          weekAssignments={weekAssignments}
-          canEdit={profileRole === "manager"}
-        />
-      </section>
+      {profileRole === "manager" && (
+        <section className="mt-12">
+          <RecurringScheduleCalendar
+            selectedDate={selectedDateStr}
+            weekAssignments={weekAssignments}
+            canEdit={true}
+          />
+        </section>
+      )}
 
       </main>
     </>
