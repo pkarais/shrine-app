@@ -527,3 +527,177 @@ export async function seedWeekSchedule(
 
   return { seeded, skipped, errors }
 }
+
+// ─── Copy previous week's schedule into the current week ───
+
+export async function copyWeekFromPrevious(
+  currentWeekStart: string
+): Promise<{ copied: number; skipped: number; errors: string[] }> {
+  await requireManager()
+  const admin = createAdminClient()
+  if (!admin) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured")
+
+  // Compute previous week start/end (7 days back)
+  const currDate = new Date(currentWeekStart + "T12:00:00Z")
+  const prevDate = new Date(currDate)
+  prevDate.setUTCDate(currDate.getUTCDate() - 7)
+  const prevWeekStart = prevDate.toISOString().split("T")[0]
+  const prevWeekEndDate = new Date(prevDate)
+  prevWeekEndDate.setUTCDate(prevDate.getUTCDate() + 6)
+  const prevWeekEnd = prevWeekEndDate.toISOString().split("T")[0]
+
+  type SourceEntry = {
+    date: string
+    userId: string
+    role: string
+    shiftStart: string | null
+    shiftEnd: string | null
+  }
+  const sourceEntries: SourceEntry[] = []
+
+  // Try DB data for previous week first
+  const prevTitles = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(prevDate)
+    d.setUTCDate(prevDate.getUTCDate() + i)
+    return `Daily Shift ${d.toISOString().split("T")[0]}`
+  })
+
+  const { data: prevEvents } = await admin
+    .from("events")
+    .select("id, title, start_time")
+    .in("title", prevTitles)
+
+  if (prevEvents && prevEvents.length > 0) {
+    const prevEventIds = prevEvents.map(e => e.id)
+    const { data: prevAssignments } = await admin
+      .from("staff_assignments")
+      .select("user_id, role_assigned, shift_start, shift_end, event_id")
+      .in("event_id", prevEventIds)
+
+    const eventDateMap = new Map(prevEvents.map(e => [e.id as number, e.start_time as string]))
+
+    for (const a of prevAssignments || []) {
+      const prevEventDate = eventDateMap.get(a.event_id)
+      if (!prevEventDate) continue
+      const prevDateStr = new Date(prevEventDate).toISOString().split("T")[0]
+      // Shift date forward by 7 days
+      const currEquiv = new Date(prevDateStr + "T12:00:00Z")
+      currEquiv.setUTCDate(currEquiv.getUTCDate() + 7)
+      const currDateStr = currEquiv.toISOString().split("T")[0]
+      // Re-anchor the time to the new date (same HH:MM, different day)
+      const startTime = a.shift_start ? new Date(a.shift_start).toISOString().slice(11, 16) : null
+      const endTime = a.shift_end ? new Date(a.shift_end).toISOString().slice(11, 16) : null
+      sourceEntries.push({
+        date: currDateStr,
+        userId: a.user_id,
+        role: a.role_assigned || "operations",
+        shiftStart: startTime ? `${currDateStr}T${startTime}:00.000Z` : null,
+        shiftEnd: endTime ? `${currDateStr}T${endTime}:00.000Z` : null,
+      })
+    }
+  }
+
+  // Fallback to static schedule if no DB data for previous week
+  if (sourceEntries.length === 0) {
+    const staticEntries = getScheduleForDateRange(prevWeekStart, prevWeekEnd)
+    if (staticEntries.length === 0) {
+      return { copied: 0, skipped: 0, errors: ["No schedule data found for the previous week to copy from."] }
+    }
+    const { data: profiles } = await admin.from("profiles").select("id, full_name")
+    const { data: directory } = await admin.from("staff_directory").select("profile_id, name").not("profile_id", "is", null)
+    const dirMap = new Map((directory || []).map(d => [d.name.toLowerCase(), d.profile_id as string]))
+    const profileList = profiles || []
+
+    for (const entry of staticEntries) {
+      const prevDt = new Date(entry.date + "T12:00:00Z")
+      const currDt = new Date(prevDt)
+      currDt.setUTCDate(prevDt.getUTCDate() + 7)
+      const currDateStr = currDt.toISOString().split("T")[0]
+
+      const dirEntry = dirMap.get(entry.staffName.toLowerCase())
+      let userId: string
+      if (dirEntry) {
+        userId = normalizeAssigneeId(dirEntry)
+      } else {
+        const exact = profileList.find(p => p.full_name?.toLowerCase() === entry.staffName.toLowerCase())
+        if (exact?.id) {
+          userId = normalizeAssigneeId(exact.id)
+        } else {
+          const prefix = profileList.find(p => p.full_name?.toLowerCase().startsWith(entry.staffName.toLowerCase() + " "))
+          userId = normalizeAssigneeId(prefix?.id || deterministicUuid(entry.staffName))
+        }
+      }
+
+      sourceEntries.push({
+        date: currDateStr,
+        userId,
+        role: SCHEDULE_ROLE_MAP[entry.staffName] || "operations",
+        shiftStart: entry.shiftStart ? `${currDateStr}T${entry.shiftStart}:00.000Z` : null,
+        shiftEnd: entry.shiftEnd ? `${currDateStr}T${entry.shiftEnd}:00.000Z` : null,
+      })
+    }
+  }
+
+  // Find or create events for each day in the current week
+  const currTitles = Array.from(new Set(sourceEntries.map(e => `Daily Shift ${e.date}`)))
+  const { data: currEvents } = await admin
+    .from("events")
+    .select("id, title")
+    .in("title", currTitles)
+
+  const currEventMap = new Map((currEvents || []).map(e => [e.title as string, e.id as number]))
+
+  for (const title of currTitles) {
+    if (!currEventMap.has(title)) {
+      const date = title.replace("Daily Shift ", "")
+      const { data: created } = await admin.from("events").insert({
+        title,
+        start_time: `${date}T09:00:00.000Z`,
+        end_time: `${date}T17:00:00.000Z`,
+        description: `Daily operations shift — ${date}`,
+        required_ops: 1,
+        required_security: 1,
+        required_greeter: 0,
+        director_mandatory: false,
+        category: "standard",
+      }).select("id").single()
+      if (created?.id) currEventMap.set(title, created.id)
+    }
+  }
+
+  let copied = 0
+  let skipped = 0
+  const errors: string[] = []
+
+  for (const entry of sourceEntries) {
+    const eventId = currEventMap.get(`Daily Shift ${entry.date}`)
+    if (!eventId) { skipped++; continue }
+
+    // Skip if a record already exists — preserve any edits already made to this week
+    const { data: existing } = await admin
+      .from("staff_assignments")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("user_id", entry.userId)
+      .maybeSingle()
+    if (existing) { skipped++; continue }
+
+    const { error } = await admin.from("staff_assignments").insert({
+      event_id: eventId,
+      user_id: entry.userId,
+      role_assigned: entry.role,
+      shift_start: entry.shiftStart,
+      shift_end: entry.shiftEnd,
+    })
+
+    if (error) {
+      errors.push(`${entry.date}: ${error.message}`)
+      skipped++
+    } else {
+      copied++
+    }
+  }
+
+  return { copied, skipped, errors }
+}
+

@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { getScheduleForDateRange, type DayShift } from "@/data/employee-schedules"
-import { updateScheduleCell, seedWeekSchedule, type WeekScheduleAssignment } from "@/lib/actions/staffing"
+import { updateScheduleCell, seedWeekSchedule, copyWeekFromPrevious, type WeekScheduleAssignment } from "@/lib/actions/staffing"
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -50,6 +50,9 @@ export function RecurringScheduleCalendar({
   const [seeding, setSeeding] = useState(false)
   const [seedMsg, setSeedMsg] = useState<string | null>(null)
   const [seedErr, setSeedErr] = useState<string | null>(null)
+  const [copying, setCopying] = useState(false)
+  const [copyMsg, setCopyMsg] = useState<string | null>(null)
+  const [copyErr, setCopyErr] = useState<string | null>(null)
 
   const { weekDays, scheduleByDate, staffNames } = useMemo(() => {
     const now = new Date(selectedDate + "T12:00:00")
@@ -71,6 +74,8 @@ export function RecurringScheduleCalendar({
       byDate[s.date].push(s)
       names.add(s.staffName)
     }
+    // Always show all known staff even if this week has no static data
+    for (const name of Object.keys(STAFF_ROLES)) names.add(name)
     return { weekDays: days, scheduleByDate: byDate, staffNames: Array.from(names) }
   }, [selectedDate])
 
@@ -174,6 +179,25 @@ export function RecurringScheduleCalendar({
     }
   }
 
+  const handleCopyFromPrevious = async () => {
+    setCopying(true)
+    setCopyMsg(null)
+    setCopyErr(null)
+    try {
+      const result = await copyWeekFromPrevious(weekDays[0])
+      if (result.errors.length > 0) {
+        setCopyErr(`Copied ${result.copied}, skipped ${result.skipped}. Errors: ${result.errors.slice(0, 3).join("; ")}`)
+      } else {
+        setCopyMsg(`Copied ${result.copied} entries from previous week.`)
+      }
+      router.refresh()
+    } catch (err: any) {
+      setCopyErr(err?.message || "Copy failed.")
+    } finally {
+      setCopying(false)
+    }
+  }
+
   const handleMarkOff = async () => {
     if (!editingCell) return
     setSaving(true)
@@ -207,24 +231,60 @@ export function RecurringScheduleCalendar({
             Staff Schedule
           </h3>
           <p className="text-xs text-on-surface-variant mt-1">
-            Weekly schedule view. {canEdit ? "Click any cell to edit. Use \"Seed Week\" to persist the default schedule." : "Read-only schedule."}
+            Weekly schedule view. {canEdit ? "Click any cell to edit shifts." : "Read-only schedule."}
           </p>
           {seedMsg && <p className="text-xs text-primary font-medium mt-1">{seedMsg}</p>}
           {seedErr && <p className="text-xs text-error font-medium mt-1">{seedErr}</p>}
+          {copyMsg && <p className="text-xs text-primary font-medium mt-1">{copyMsg}</p>}
+          {copyErr && <p className="text-xs text-error font-medium mt-1">{copyErr}</p>}
         </div>
         {canEdit && (
-          <button
-            type="button"
-            onClick={handleSeedWeek}
-            disabled={seeding}
-            className="btn-secondary px-4 py-2 text-sm flex items-center gap-2 shrink-0 disabled:opacity-50"
-            title="Write this week's default schedule to the database so edits persist"
-          >
-            <span className="material-symbols-outlined text-base">cloud_upload</span>
-            {seeding ? "Seeding..." : "Seed This Week"}
-          </button>
+          <div className="flex gap-2 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={handleCopyFromPrevious}
+              disabled={copying || seeding}
+              className="btn-secondary px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+              title="Copy last week's schedule into this week (skips cells already edited)"
+            >
+              <span className="material-symbols-outlined text-base">content_copy</span>
+              {copying ? "Copying..." : "Copy Prev Week"}
+            </button>
+            <button
+              type="button"
+              onClick={handleSeedWeek}
+              disabled={seeding || copying}
+              className="btn-secondary px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+              title="Write this week's default schedule template to the database"
+            >
+              <span className="material-symbols-outlined text-base">cloud_upload</span>
+              {seeding ? "Seeding..." : "Seed Template"}
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Empty week banner — shown when no DB assignments and no static data for this week */}
+      {canEdit && weekAssignments.length === 0 && Object.keys(scheduleByDate).length === 0 && (
+        <div className="mx-6 mb-4 p-4 bg-surface-container-high rounded-2xl border border-outline-variant/20 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-on-surface-variant">event_note</span>
+            <div>
+              <p className="text-sm font-medium text-on-surface">No schedule yet for this week.</p>
+              <p className="text-xs text-on-surface-variant">Copy last week's schedule to get started, or click any cell to add individual shifts.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyFromPrevious}
+            disabled={copying}
+            className="btn-primary px-4 py-2 text-sm flex items-center gap-2 shrink-0 disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-base">content_copy</span>
+            {copying ? "Copying..." : "Copy Previous Week"}
+          </button>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px] border-collapse">
