@@ -396,13 +396,24 @@ export async function updateScheduleCell(
     .eq("event_id", eventId)
     .eq("user_id", normalizedUserId)
 
-  // If marking OFF (no shift times), we're done after deleting
+  // If marking OFF: insert a record with null shift times so the overlay can override
+  // the static baseline schedule and show this person as explicitly OFF.
   if (!shiftStart || !shiftEnd) {
+    const { error: offError } = await admin.from("staff_assignments").insert({
+      event_id: eventId,
+      user_id: normalizedUserId,
+      role_assigned: role,
+      shift_start: null,
+      shift_end: null,
+    })
+    if (offError) throw new Error("Mark-off insert failed: " + offError.message)
     return { success: true, markedOff: true }
   }
 
-  const shiftStartIso = new Date(`${dateStr}T${shiftStart}:00-05:00`).toISOString()
-  const shiftEndIso = new Date(`${dateStr}T${shiftEnd}:00-05:00`).toISOString()
+  // Store times as UTC-naive (append Z) so the HH:MM round-trips correctly.
+  // Applying a -05:00 offset here caused retrieved times to be 5 hours off (09:00 → displayed as 14:00).
+  const shiftStartIso = `${dateStr}T${shiftStart}:00.000Z`
+  const shiftEndIso = `${dateStr}T${shiftEnd}:00.000Z`
 
   const { data, error } = await admin.from("staff_assignments").insert({
     event_id: eventId,
