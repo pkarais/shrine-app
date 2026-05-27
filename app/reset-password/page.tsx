@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/Button"
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
@@ -27,7 +28,7 @@ export default function ResetPasswordPage() {
     }
     checkSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
         setSessionValid(true)
         setSessionChecking(false)
