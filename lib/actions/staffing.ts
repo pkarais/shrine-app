@@ -284,7 +284,8 @@ export async function getWeekScheduleAssignments(weekStart: string, weekEnd: str
     const dateStr = eventDate ? new Date(eventDate).toISOString().split("T")[0] : ""
     return {
       date: dateStr,
-      staffName: profileMap.get(a.user_id) || "",
+      // Return the first word of full_name so it matches the static schedule short names ("Paul Karais" → "Paul")
+      staffName: (profileMap.get(a.user_id) || "").split(" ")[0] || "",
       userId: a.user_id,
       shiftStart: a.shift_start ? new Date(a.shift_start).toISOString().slice(11, 16) : null,
       shiftEnd: a.shift_end ? new Date(a.shift_end).toISOString().slice(11, 16) : null,
@@ -324,17 +325,31 @@ export async function updateScheduleCell(
     if (directoryEntry?.profile_id) {
       normalizedUserId = normalizeAssigneeId(directoryEntry.profile_id)
     } else {
-      // Fallback: try profiles table by full_name (exact case-insensitive)
-      const { data: staffProfile } = await admin
+      // Fallback: match profiles by first name prefix (e.g. "Paul" matches "Paul Karais")
+      // Try exact match first, then "FirstName %" to avoid "Paul" matching "Paulin Something"
+      let resolvedId: string | null = null
+
+      const { data: exact } = await admin
         .from("profiles")
-        .select("id, full_name")
+        .select("id")
         .ilike("full_name", staffName)
         .maybeSingle()
+      if (exact?.id) {
+        resolvedId = exact.id
+      } else {
+        const { data: prefix } = await admin
+          .from("profiles")
+          .select("id")
+          .ilike("full_name", `${staffName} %`)
+          .limit(1)
+          .maybeSingle()
+        if (prefix?.id) resolvedId = prefix.id
+      }
 
-      if (!staffProfile) {
+      if (!resolvedId) {
         throw new Error(`Staff member "${staffName}" not found in staff directory or profiles. Ensure they are listed in the staff directory with a linked profile.`)
       }
-      normalizedUserId = normalizeAssigneeId(staffProfile.id)
+      normalizedUserId = normalizeAssigneeId(resolvedId)
     }
   }
 
