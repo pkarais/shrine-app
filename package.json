@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "node -e \"try { require('child_process').execSync('node scripts/sync-google-calendar.js', { stdio: 'inherit', timeout: 20000 }) } catch(e) { console.log('[sync] failed, continuing...') }\" && next dev",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
-    "@sparticuz/chromium": "^130.0.0",
+    "@sparticuz/chromium": "^148.0.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.49.4",
     "class-variance-authority": "^0.7.1",
