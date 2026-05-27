@@ -1,14 +1,11 @@
 "use server"
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers"
 import { createNotification } from "./notifications"
 
 const getClient = () => createAdminClient()
 
 const getUserId = async () => {
   const supabase = createServerClient()
-  const hasDevBypass = cookies().get("shrine_dev_session")?.value === "true"
-  if (hasDevBypass && process.env.NODE_ENV === "development") return null
   const { data: { user } } = await supabase.auth.getUser()
   return user?.id || null
 }
@@ -222,15 +219,15 @@ export async function awardBadgeToEmployee(
   }
 
   // Verify badge exists and is active
-  const { data: badge } = await supabase
+  const { data: badge, error: badgeError } = await supabase
     .from("recognition_badges")
-    .select("id, name, active, point_value")
+    .select("*")
     .eq("id", badgeId)
     .eq("active", true)
     .single()
 
-  if (!badge) {
-    throw new Error("Badge not found or inactive")
+  if (badgeError || !badge) {
+    throw new Error(badgeError ? `Badge lookup failed: ${badgeError.message}` : "Badge not found or inactive")
   }
 
   // Check if employee already has this badge (prevent duplicates in same month)
@@ -290,7 +287,20 @@ export async function awardBadgeToEmployee(
     })
   }
 
-  await createNotification(employeeId, "Badge Earned!", `You earned the "${badge.name}" badge.`, "badge_awarded")
+  // Use admin client (already available as `supabase`) to bypass RLS when inserting
+  // a notification for the employee on the manager's behalf.
+  try {
+    await supabase.from("notifications").insert({
+      user_id: employeeId,
+      title: "Badge Earned!",
+      body: `You earned the "${badge.name}" badge.`,
+      type: "badge_awarded",
+      reference_id: null,
+    })
+  } catch (notifErr) {
+    // Notification failure is non-critical — badge award already succeeded.
+    console.error("Failed to send badge notification:", notifErr)
+  }
 
   return { success: true, award, badgeName: badge.name, employeeName: employeeProfile.full_name }
 }
