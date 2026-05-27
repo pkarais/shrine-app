@@ -408,3 +408,45 @@ export async function deductEmployeePoints(
 
   return { success: true, deduction }
 }
+
+export async function deleteBadgeAward(awardId: string) {
+  const supabase = getClient()
+  const managerId = await getUserId()
+  if (!managerId) throw new Error("Not authenticated")
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", managerId).single()
+  if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Only managers can delete badges")
+
+  // Delete the point event associated with this award first
+  await supabase
+    .from("gamification_point_events")
+    .delete()
+    .eq("reference_type", "badge_award")
+    .eq("reference_id", awardId)
+
+  // Then delete the award itself
+  const { error } = await supabase.from("employee_badge_awards").delete().eq("id", awardId)
+  if (error) throw new Error(`Failed to delete badge award: ${error.message}`)
+
+  return { success: true }
+}
+
+export async function resetGamificationData() {
+  const supabase = getClient()
+  const managerId = await getUserId()
+  if (!managerId) throw new Error("Not authenticated")
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", managerId).single()
+  if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Only managers can reset gamification data")
+
+  // Delete all gamification records to wipe the canvas
+  await Promise.all([
+    supabase.from("employee_badge_awards").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    supabase.from("gamification_point_events").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    supabase.from("badge_nominations").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    supabase.from("point_deductions").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+    supabase.from("point_redemptions").delete().neq("id", "00000000-0000-0000-0000-000000000000"),
+  ])
+
+  return { success: true }
+}
