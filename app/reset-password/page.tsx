@@ -20,10 +20,12 @@ export default function ResetPasswordPage() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    supabase.auth.getSession().then((result) => {
+    const checkSession = async () => {
+      const result = await supabase.auth.getSession()
       setSessionValid(!!result.data.session)
       setSessionChecking(false)
-    })
+    }
+    checkSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
