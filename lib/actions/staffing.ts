@@ -4,7 +4,7 @@ import { createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { requireAuth, requireManager } from "./auth-helpers"
 import { createHash } from "crypto"
-import { getScheduleForDate } from "@/data/employee-schedules"
+import { getScheduleForDate, getScheduleForDateRange } from "@/data/employee-schedules"
 
 const SCHEDULE_ROLE_MAP: Record<string, string> = {
   Paul: "director", Fabio: "operations", Josh: "operations", Paulin: "operations",
@@ -425,4 +425,105 @@ export async function updateScheduleCell(
 
   if (error) throw new Error("Assignment insert failed: " + error.message)
   return { success: true, assignment: data }
+}
+
+// ─── Seed static schedule into staff_assignments ───
+
+export async function seedWeekSchedule(
+  weekStart: string,
+  weekEnd: string
+): Promise<{ seeded: number; skipped: number; errors: string[] }> {
+  await requireManager()
+  const admin = createAdminClient()
+  if (!admin) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured")
+
+  const entries = getScheduleForDateRange(weekStart, weekEnd)
+  if (entries.length === 0) {
+    return { seeded: 0, skipped: 0, errors: ["No static schedule data found for this week."] }
+  }
+
+  // Batch-load profiles and directory for name → user_id resolution
+  const { data: profiles } = await admin.from("profiles").select("id, full_name")
+  const { data: directory } = await admin.from("staff_directory").select("profile_id, name").not("profile_id", "is", null)
+  const dirMap = new Map((directory || []).map(d => [d.name.toLowerCase(), d.profile_id as string]))
+  const profileList = profiles || []
+
+  function resolveUserId(staffName: string): string {
+    const dirEntry = dirMap.get(staffName.toLowerCase())
+    if (dirEntry) return normalizeAssigneeId(dirEntry)
+    const exact = profileList.find(p => p.full_name?.toLowerCase() === staffName.toLowerCase())
+    if (exact?.id) return normalizeAssigneeId(exact.id)
+    const prefix = profileList.find(p => p.full_name?.toLowerCase().startsWith(staffName.toLowerCase() + " "))
+    if (prefix?.id) return normalizeAssigneeId(prefix.id)
+    return normalizeAssigneeId(deterministicUuid(staffName))
+  }
+
+  // Find or create a daily shift event for each date in the range
+  const dates = Array.from(new Set(entries.map(e => e.date)))
+  const eventTitles = dates.map(d => `Daily Shift ${d}`)
+  const { data: existingEvents } = await admin
+    .from("events")
+    .select("id, title")
+    .in("title", eventTitles)
+
+  const eventMap = new Map((existingEvents || []).map(e => [e.title as string, e.id as number]))
+
+  for (const date of dates) {
+    const title = `Daily Shift ${date}`
+    if (!eventMap.has(title)) {
+      const { data: created } = await admin.from("events").insert({
+        title,
+        start_time: `${date}T09:00:00.000Z`,
+        end_time: `${date}T17:00:00.000Z`,
+        description: `Daily operations shift — ${date}`,
+        required_ops: 1,
+        required_security: 1,
+        required_greeter: 0,
+        director_mandatory: false,
+        category: "standard",
+      }).select("id").single()
+      if (created?.id) eventMap.set(title, created.id)
+    }
+  }
+
+  let seeded = 0
+  let skipped = 0
+  const errors: string[] = []
+
+  for (const entry of entries) {
+    const eventId = eventMap.get(`Daily Shift ${entry.date}`)
+    if (!eventId) { skipped++; continue }
+
+    const userId = resolveUserId(entry.staffName)
+    const role = SCHEDULE_ROLE_MAP[entry.staffName] || "operations"
+
+    // Skip if a record already exists — preserve any manual edits
+    const { data: existing } = await admin
+      .from("staff_assignments")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("user_id", userId)
+      .maybeSingle()
+    if (existing) { skipped++; continue }
+
+    const shiftStartIso = entry.shiftStart ? `${entry.date}T${entry.shiftStart}:00.000Z` : null
+    const shiftEndIso = entry.shiftEnd ? `${entry.date}T${entry.shiftEnd}:00.000Z` : null
+
+    const { error } = await admin.from("staff_assignments").insert({
+      event_id: eventId,
+      user_id: userId,
+      role_assigned: role,
+      shift_start: shiftStartIso,
+      shift_end: shiftEndIso,
+    })
+
+    if (error) {
+      errors.push(`${entry.staffName} on ${entry.date}: ${error.message}`)
+      skipped++
+    } else {
+      seeded++
+    }
+  }
+
+  return { seeded, skipped, errors }
 }

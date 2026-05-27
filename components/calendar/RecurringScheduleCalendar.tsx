@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { getScheduleForDateRange, type DayShift } from "@/data/employee-schedules"
-import { updateScheduleCell, type WeekScheduleAssignment } from "@/lib/actions/staffing"
+import { updateScheduleCell, seedWeekSchedule, type WeekScheduleAssignment } from "@/lib/actions/staffing"
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -47,6 +47,9 @@ export function RecurringScheduleCalendar({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [seeding, setSeeding] = useState(false)
+  const [seedMsg, setSeedMsg] = useState<string | null>(null)
+  const [seedErr, setSeedErr] = useState<string | null>(null)
 
   const { weekDays, scheduleByDate, staffNames } = useMemo(() => {
     const now = new Date(selectedDate + "T12:00:00")
@@ -150,6 +153,27 @@ export function RecurringScheduleCalendar({
     }
   }
 
+  const handleSeedWeek = async () => {
+    setSeeding(true)
+    setSeedMsg(null)
+    setSeedErr(null)
+    try {
+      const weekStart = weekDays[0]
+      const weekEnd = weekDays[6]
+      const result = await seedWeekSchedule(weekStart, weekEnd)
+      if (result.errors.length > 0) {
+        setSeedErr(`Seeded ${result.seeded}, skipped ${result.skipped}. Errors: ${result.errors.slice(0, 3).join("; ")}`)
+      } else {
+        setSeedMsg(`Seeded ${result.seeded} entries (${result.skipped} already in DB).`)
+      }
+      router.refresh()
+    } catch (err: any) {
+      setSeedErr(err?.message || "Seed failed.")
+    } finally {
+      setSeeding(false)
+    }
+  }
+
   const handleMarkOff = async () => {
     if (!editingCell) return
     setSaving(true)
@@ -176,14 +200,30 @@ export function RecurringScheduleCalendar({
 
   return (
     <div className="bg-surface-container-low rounded-[2rem] overflow-hidden">
-      <div className="p-6 pb-4">
-        <h3 className="font-headline text-xl font-bold text-primary flex items-center gap-2">
-          <span className="material-symbols-outlined">calendar_month</span>
-          Staff Schedule
-        </h3>
-        <p className="text-xs text-on-surface-variant mt-1">
-          Weekly schedule view. {canEdit ? "Click any cell to override shifts." : "Read-only schedule."}
-        </p>
+      <div className="p-6 pb-4 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h3 className="font-headline text-xl font-bold text-primary flex items-center gap-2">
+            <span className="material-symbols-outlined">calendar_month</span>
+            Staff Schedule
+          </h3>
+          <p className="text-xs text-on-surface-variant mt-1">
+            Weekly schedule view. {canEdit ? "Click any cell to edit. Use \"Seed Week\" to persist the default schedule." : "Read-only schedule."}
+          </p>
+          {seedMsg && <p className="text-xs text-primary font-medium mt-1">{seedMsg}</p>}
+          {seedErr && <p className="text-xs text-error font-medium mt-1">{seedErr}</p>}
+        </div>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={handleSeedWeek}
+            disabled={seeding}
+            className="btn-secondary px-4 py-2 text-sm flex items-center gap-2 shrink-0 disabled:opacity-50"
+            title="Write this week's default schedule to the database so edits persist"
+          >
+            <span className="material-symbols-outlined text-base">cloud_upload</span>
+            {seeding ? "Seeding..." : "Seed This Week"}
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -223,7 +263,15 @@ export function RecurringScheduleCalendar({
                     const shift = mergedScheduleByDate[dayStr]?.[name]
                     const isOff = !shift || (shift.shiftStart === null && shift.shiftEnd === null)
                     const isSelected = dayStr === selectedDate
-                    const isOverride = weekAssignments.some(a => a.date === dayStr && a.staffName === name)
+                    // Show "Edited" only when DB value actually differs from static schedule baseline
+                    const dbAssignment = weekAssignments.find(a => a.date === dayStr && a.staffName === name)
+                    const staticShift = scheduleByDate[dayStr]?.find(s => s.staffName === name)
+                    const isEdited = dbAssignment !== undefined && (
+                      dbAssignment.shiftStart !== (staticShift?.shiftStart ?? null) ||
+                      dbAssignment.shiftEnd !== (staticShift?.shiftEnd ?? null)
+                    )
+                    // isOverride: any DB record exists (used for styling borders + OFF label)
+                    const isOverride = dbAssignment !== undefined
 
                     if (dayStr === "2026-05-25") {
                       return (
@@ -239,12 +287,12 @@ export function RecurringScheduleCalendar({
                         onClick={() => openEdit(name, dayStr)}
                         className={`px-3 py-3 text-center align-top transition-colors ${
                           isSelected ? "ring-2 ring-inset ring-primary/30 bg-primary/5" : ""
-                        } ${canEdit && !isOff ? "cursor-pointer hover:bg-primary/10" : ""} ${canEdit && isOff ? "cursor-pointer hover:bg-surface-container-high" : ""} ${isOverride ? "border-b-2 border-secondary" : ""}`}
+                        } ${canEdit && !isOff ? "cursor-pointer hover:bg-primary/10" : ""} ${canEdit && isOff ? "cursor-pointer hover:bg-surface-container-high" : ""} ${isEdited ? "border-b-2 border-secondary" : ""}`}
                         title={canEdit ? `Click to edit ${name}'s shift` : undefined}
                       >
                         {isOff ? (
                           <span className={`text-[11px] font-medium ${isOverride ? "text-error font-bold" : "text-on-surface-variant/40"}`}>
-                            {isOverride ? "OFF" : "OFF"}
+                            OFF
                           </span>
                         ) : shift?.shiftStart && shift?.shiftEnd ? (
                           <div className="space-y-0.5">
@@ -254,7 +302,7 @@ export function RecurringScheduleCalendar({
                             <span className="block text-[11px] text-on-surface-variant leading-tight">
                               {formatTime(shift.shiftEnd)}
                             </span>
-                            {isOverride && (
+                            {isEdited && (
                               <span className="block text-[9px] text-secondary font-bold uppercase tracking-wider">Edited</span>
                             )}
                           </div>
