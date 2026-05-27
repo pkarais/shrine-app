@@ -18,19 +18,40 @@ export async function GET() {
 
     if (foldersError) throw new Error(foldersError.message)
 
-    const results: { userId: string; name: string; path: string; mimetype: string; size: number; signedUrl: string }[] = []
+    // Batch-resolve user IDs to display names
+    const folderNames = (folders ?? []).filter((f: any) => !f.metadata?.mimetype).map((f: any) => f.name)
+    const profileMap = new Map<string, string>()
+    if (folderNames.length > 0) {
+      const { data: profiles } = await admin
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", folderNames)
+      for (const p of (profiles ?? [])) {
+        profileMap.set(p.id, p.full_name || p.email || p.id)
+      }
+    }
+
+    const results: {
+      userId: string
+      displayName: string
+      name: string
+      path: string
+      mimetype: string
+      size: number
+      signedUrl: string
+    }[] = []
 
     // Step 2: for each folder (userId), list its files
-    for (const folder of folders ?? []) {
-      // Folders have no mimetype
+    for (const folder of (folders ?? [])) {
+      // Root-level file (has mimetype, not a folder)
       if (folder.metadata?.mimetype) {
-        // File at root level (shouldn't happen but handle it)
         const { data: urlData } = await admin.storage
           .from("employee-uploads")
           .createSignedUrl(folder.name, 3600)
         if (urlData?.signedUrl) {
           results.push({
             userId: "unknown",
+            displayName: "Unknown",
             name: folder.name,
             path: folder.name,
             mimetype: folder.metadata.mimetype ?? "",
@@ -41,25 +62,27 @@ export async function GET() {
         continue
       }
 
-      // It's a folder — list its contents
+      // It is a folder — list its contents
       const { data: files, error: filesError } = await admin.storage
         .from("employee-uploads")
         .list(folder.name, { limit: 200 })
 
       if (filesError || !files) continue
 
-      const actualFiles = files.filter((f) => f.metadata?.mimetype)
+      const actualFiles = files.filter((f: any) => f.metadata?.mimetype)
       if (actualFiles.length === 0) continue
 
       // Batch generate signed URLs
       const { data: signedUrls, error: signedError } = await admin.storage
         .from("employee-uploads")
         .createSignedUrls(
-          actualFiles.map((f) => `${folder.name}/${f.name}`),
+          actualFiles.map((f: any) => `${folder.name}/${f.name}`),
           3600
         )
 
       if (signedError || !signedUrls) continue
+
+      const displayName = profileMap.get(folder.name) || folder.name
 
       for (let i = 0; i < actualFiles.length; i++) {
         const file = actualFiles[i]
@@ -67,6 +90,7 @@ export async function GET() {
         if (!signed?.signedUrl) continue
         results.push({
           userId: folder.name,
+          displayName,
           name: file.name,
           path: `${folder.name}/${file.name}`,
           mimetype: file.metadata?.mimetype ?? "",

@@ -6,6 +6,7 @@ import { FileText, Video, X, Image as ImageIcon, Trash2 } from "lucide-react"
 
 interface MediaFile {
   userId: string
+  displayName: string
   name: string
   path: string
   mimetype: string
@@ -15,6 +16,7 @@ interface MediaFile {
 
 interface GroupedFile {
   userId: string
+  displayName: string
   files: MediaFile[]
 }
 
@@ -82,7 +84,7 @@ export function MediaFolders() {
     if (existing) {
       existing.files.push(file)
     } else {
-      acc.push({ userId: file.userId, files: [file] })
+      acc.push({ userId: file.userId, displayName: file.displayName, files: [file] })
     }
     return acc
   }, [] as GroupedFile[])
@@ -140,7 +142,7 @@ export function MediaFolders() {
         {groupedFiles.map((group) => (
           <div key={group.userId}>
             <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3">
-              {group.userId === "unknown" ? "Unsorted" : group.userId}
+              {group.displayName}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {group.files.map((file) => {
@@ -170,6 +172,15 @@ export function MediaFolders() {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    {/* Hover delete button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteFile(file) }}
+                      disabled={deleting}
+                      className="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600/80 disabled:opacity-50"
+                      title="Delete file"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-white" />
+                    </button>
                   </button>
                 )
               })}
