@@ -14,10 +14,18 @@ const HIGH_TRAFFIC_KEYWORDS = [
   'pilgrimage', 'procession', 'memorial', 'commemoration',
 ]
 
+// Small evening events: 1 ops + 1 security, no greeter needed
+const SMALL_EVENT_KEYWORDS = [
+  'bible study', 'bible', 'study group', 'book study',
+  'prayer group', 'prayer meeting', 'vespers', 'paraklesis',
+  'akathist', 'evening prayer', 'compline',
+]
+
 function classifyEvent(summary: string) {
   const lower = summary.toLowerCase()
   if (MAJOR_FEAST_KEYWORDS.some(kw => lower.includes(kw))) return 'major_feast'
   if (HIGH_TRAFFIC_KEYWORDS.some(kw => lower.includes(kw))) return 'high_traffic'
+  if (SMALL_EVENT_KEYWORDS.some(kw => lower.includes(kw))) return 'small_event'
   return 'standard'
 }
 
@@ -58,7 +66,7 @@ export async function GET() {
         category,
         required_ops: category === 'major_feast' ? 3 : category === 'high_traffic' ? 2 : 1,
         required_security: category === 'major_feast' ? 2 : 1,
-        required_greeter: category === 'major_feast' ? 2 : 1,
+        required_greeter: category === 'major_feast' ? 2 : category === 'small_event' ? 0 : 1,
         director_mandatory: category === 'major_feast',
       }, { onConflict: 'title,start_time' })
 
