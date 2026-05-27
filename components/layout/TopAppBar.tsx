@@ -14,29 +14,28 @@ const ROLE_BADGES: Record<string, { label: string; color: string }> = {
   council: { label: "Council", color: "bg-purple-600" },
 }
 
-type NavGroup = "all" | "manager" | "employee" | "general"
+type NavGroup = "all" | "manager" | "staff" | "council" | "general"
 
 type NavItem = { href: string; label: string; groups: NavGroup[] }
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", groups: ["all"] },
-  { href: "/tickets", label: "Tickets", groups: ["all"] },
-  { href: "/sops", label: "SOPs", groups: ["all"] },
-  { href: "/recognition", label: "Recognition", groups: ["all"] },
+  { href: "/tickets", label: "Tickets", groups: ["staff", "manager"] },
+  { href: "/sops", label: "SOPs", groups: ["staff", "manager"] },
+  { href: "/recognition", label: "Recognition", groups: ["staff", "manager"] },
   { href: "/manager", label: "Command Center", groups: ["manager"] },
   { href: "/operations-brief", label: "Monthly Brief", groups: ["manager"] },
   { href: "/daily-brief", label: "Daily Brief", groups: ["manager"] },
-  { href: "/calendar", label: "Calendar", groups: ["all"] },
-  { href: "/messages", label: "Chat", groups: ["all"] },
-  { href: "/audio-test", label: "Audio", groups: ["all"] },
-  { href: "/settings", label: "Settings", groups: ["all"] },
-  { href: "/profile", label: "Profile", groups: ["all"] },
+  { href: "/calendar", label: "Calendar", groups: ["all", "council"] },
+  { href: "/messages", label: "Chat", groups: ["all", "council"] },
+  { href: "/settings", label: "Settings", groups: ["staff", "manager"] },
+  { href: "/profile", label: "Account", groups: ["all", "council"] },
 ]
 
 function getNavGroup(role: string): NavGroup {
   if (role === "manager") return "manager"
-  if (role === "council") return "general"
-  if (["operations", "security"].includes(role)) return "employee"
+  if (role === "council") return "council"
+  if (["operations", "security"].includes(role)) return "staff"
   return "general"
 }
 

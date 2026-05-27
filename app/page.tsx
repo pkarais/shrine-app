@@ -1,25 +1,20 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { ArrowRight, Shield } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
-import { useTheme } from "@/components/theme/ThemeProvider"
 
 export default function LandingPage() {
   const router = useRouter()
-  const { isDarkMode } = useTheme()
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-surface transition-colors duration-300">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <Image
+        <img
           src="/images/shrine-hero.jpg"
           alt="St. Nicholas Greek Orthodox Church"
-          fill
-          priority
-          className="object-cover opacity-15 dark:opacity-10"
+          className="w-full h-full object-cover opacity-15 dark:opacity-10"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-surface/80 via-surface/60 to-surface/90 dark:from-surface/90 dark:via-surface/80 dark:to-surface/95" />
       </div>
@@ -32,28 +27,24 @@ export default function LandingPage() {
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-5xl px-6 flex flex-col items-center text-center">
         
-        {/* Frosted Glass Card with Hero Image */}
+        {/* Hero Card — Image fills card, frosted text panel at bottom */}
         <div className="w-full max-w-2xl mb-10 animate-fade-in">
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white/10 dark:bg-black/20 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl">
-            {/* Card Inner Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 dark:from-primary/10 dark:to-secondary/10" />
+          <div className="relative overflow-hidden rounded-[2.5rem] shadow-2xl border border-outline-variant/30">
             
-            {/* Image Container */}
-            <div className="relative aspect-[16/10] w-full overflow-hidden">
-              <Image
+            {/* Image fills entire card */}
+            <div className="relative aspect-[16/10] w-full">
+              <img
                 src="/images/shrine-hero.jpg"
                 alt="St. Nicholas Greek Orthodox Church"
-                fill
-                priority
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
-              {/* Image overlay for depth */}
-              <div className="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent dark:from-surface/90" />
+              {/* Bottom gradient so text is readable */}
+              <div className="absolute inset-0 bg-gradient-to-t from-surface/95 via-surface/40 to-transparent dark:from-surface dark:via-surface/50" />
             </div>
             
-            {/* Text Overlay on Image */}
+            {/* Frosted text panel at bottom */}
             <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-              <div className="bg-white/20 dark:bg-black/30 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/20 dark:border-white/10">
+              <div className="bg-white/20 dark:bg-black/40 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border border-white/30 dark:border-white/10 shadow-lg">
                 <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl font-extrabold text-on-surface leading-tight tracking-tight">
                   Shrine <span className="text-primary">Operations</span>
                 </h1>

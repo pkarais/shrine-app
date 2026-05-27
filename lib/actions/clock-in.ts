@@ -14,9 +14,14 @@ export const clockIn = async (eventId: number, lat: number, lon: number) => {
     throw new Error("Profile not found. Please contact an administrator to set up your account.")
   }
 
-  const fence = checkGeofence(lat, lon, GEOFENCE.LIBERTY_PARK.LAT, GEOFENCE.LIBERTY_PARK.LON, GEOFENCE.LIBERTY_PARK.RADIUS_METERS)
-  if (!fence.inRange) {
-    throw new Error(`You are ${Math.round(fence.distance)}m outside the Liberty Park geofence. Clock-in requires being within ${GEOFENCE.LIBERTY_PARK.RADIUS_METERS}m of the landmark.`)
+  const isManager = profile.role === "manager"
+
+  // Managers can clock in off-site; staff must be within geofence
+  if (!isManager) {
+    const fence = checkGeofence(lat, lon, GEOFENCE.LIBERTY_PARK.LAT, GEOFENCE.LIBERTY_PARK.LON, GEOFENCE.LIBERTY_PARK.RADIUS_METERS)
+    if (!fence.inRange) {
+      throw new Error(`You are ${Math.round(fence.distance)}m outside the Liberty Park geofence. Clock-in requires being within ${GEOFENCE.LIBERTY_PARK.RADIUS_METERS}m of the landmark.`)
+    }
   }
 
   const { data, error } = await supabase.from("shifts").insert({

@@ -510,6 +510,13 @@ function ManagerAppSettings() {
               <p className="text-xs text-on-surface-variant">Monthly briefings</p>
             </div>
           </a>
+          <a href="/manager/payroll" className="flex items-center gap-3 p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors">
+            <span className="material-symbols-outlined text-primary">payments</span>
+            <div>
+              <p className="font-bold text-sm text-on-surface">Payroll</p>
+              <p className="text-xs text-on-surface-variant">Biweekly payroll reports</p>
+            </div>
+          </a>
         </div>
       </div>
     </div>

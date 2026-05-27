@@ -59,6 +59,22 @@ export default async function CouncilDashboardPage() {
     supabase.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
   ])
 
+  // Current week events only
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 6)
+  endOfWeek.setHours(23, 59, 59, 999)
+
+  const { data: weekEvents } = await supabase
+    .from("events")
+    .select("*")
+    .gte("start_time", startOfWeek.toISOString())
+    .lte("start_time", endOfWeek.toISOString())
+    .order("start_time", { ascending: true })
+
   const chapelUrl = "https://www.goarch.org/chapel"
   const today = new Date()
   const dcsUrl = `https://dcs.goarch.org/goa/dcs/indexes/${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}.html`
@@ -71,31 +87,50 @@ export default async function CouncilDashboardPage() {
           <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Council Portal</p>
           <h1 className="font-headline text-4xl font-extrabold text-primary">Council Dashboard</h1>
           <p className="text-on-surface-variant mt-2">
-            Submit maintenance tickets, send messages to staff, review event schedule and staffing, and monitor live visitor counts.
+            Submit maintenance requests, message the manager, review this week&apos;s events, and monitor visitor counts.
           </p>
           <div className="mt-6 flex flex-wrap gap-3 items-start">
-            <details className="relative w-full sm:w-auto">
-              <summary className="btn-primary w-full sm:w-auto px-5 py-3 inline-flex items-center justify-center gap-2 cursor-pointer list-none">
-                <span className="material-symbols-outlined">chat</span>
-                Message Staff
-                <span className="material-symbols-outlined text-base">expand_more</span>
-              </summary>
-              <div className="absolute left-0 right-0 sm:right-auto mt-2 w-full sm:w-56 rounded-xl border border-outline-variant/20 bg-white shadow-lg z-20 overflow-hidden">
-                <Link href="/messages?dept=operations" className="block px-4 py-3 text-sm text-on-surface hover:bg-surface-container-low">
-                  Message Operations
-                </Link>
-                <Link href="/messages?dept=security" className="block px-4 py-3 text-sm text-on-surface hover:bg-surface-container-low border-t border-outline-variant/10">
-                  Message Security
-                </Link>
-              </div>
-            </details>
+            <Link
+              href="/messages"
+              className="btn-primary px-5 py-3 inline-flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined">chat</span>
+              Message Manager
+            </Link>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card-surface p-6">
-            <h2 className="font-headline text-2xl font-bold text-primary mb-4">Submit Maintenance Ticket</h2>
+            <h2 className="font-headline text-2xl font-bold text-primary mb-4">Submit Maintenance Request</h2>
+            <p className="text-xs text-on-surface-variant mb-4">
+              Create a ticket with photos that goes to the staff pool for assignment.
+            </p>
             <MaintenanceTicketForm eventId={currentEvent?.id || null} />
+          </div>
+
+          <div className="card-surface p-6">
+            <h2 className="font-headline text-xl font-bold text-primary mb-4">This Week&apos;s Events</h2>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {(weekEvents || []).length > 0 ? (
+                (weekEvents || []).map((event: any) => (
+                  <div key={event.id} className="p-3 bg-surface-container-low rounded-xl">
+                    <p className="font-bold text-sm text-on-surface">{event.title}</p>
+                    <p className="text-xs text-on-surface-variant">
+                      {new Date(event.start_time).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant italic">No events scheduled this week.</p>
+              )}
+            </div>
           </div>
         </section>
 

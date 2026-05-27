@@ -235,3 +235,158 @@ export async function getEventAssignments(eventId: number) {
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))
   return data.map(s => ({ ...s, profiles: profileMap.get(s.user_id) || null }))
 }
+
+// ─── Week Schedule Assignments (for RecurringScheduleCalendar) ───
+
+export type WeekScheduleAssignment = {
+  date: string
+  staffName: string
+  userId: string
+  shiftStart: string | null
+  shiftEnd: string | null
+  role: string
+  assignmentId: string
+}
+
+export async function getWeekScheduleAssignments(weekStart: string, weekEnd: string): Promise<WeekScheduleAssignment[]> {
+  const admin = createAdminClient()
+  if (!admin) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured")
+
+  // Find all events in the week (including synthetic day-shift events)
+  const { data: events } = await admin
+    .from("events")
+    .select("id, start_time")
+    .gte("start_time", `${weekStart}T00:00:00-05:00`)
+    .lt("start_time", `${weekEnd}T23:59:59-05:00`)
+
+  const eventIds = (events || []).map(e => e.id)
+  if (eventIds.length === 0) return []
+
+  const { data: assignments, error } = await admin
+    .from("staff_assignments")
+    .select("id, event_id, user_id, role_assigned, shift_start, shift_end")
+    .in("event_id", eventIds)
+
+  if (error) throw new Error(error.message)
+  if (!assignments || assignments.length === 0) return []
+
+  const userIds = Array.from(new Set(assignments.map(a => a.user_id).filter(Boolean)))
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("id, full_name")
+    .in("id", userIds)
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p.full_name || ""]))
+  const eventDateMap = new Map((events || []).map(e => [e.id, e.start_time]))
+
+  return assignments.map(a => {
+    const eventDate = eventDateMap.get(a.event_id)
+    const dateStr = eventDate ? new Date(eventDate).toISOString().split("T")[0] : ""
+    return {
+      date: dateStr,
+      staffName: profileMap.get(a.user_id) || "",
+      userId: a.user_id,
+      shiftStart: a.shift_start ? new Date(a.shift_start).toISOString().slice(11, 16) : null,
+      shiftEnd: a.shift_end ? new Date(a.shift_end).toISOString().slice(11, 16) : null,
+      role: a.role_assigned || "",
+      assignmentId: a.id,
+    }
+  }).filter(a => a.staffName && a.date)
+}
+
+export async function updateScheduleCell(
+  dateStr: string,
+  staffName: string,
+  shiftStart: string | null,
+  shiftEnd: string | null,
+  role: string
+) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const hasDevBypass = cookies().get("shrine_dev_session")?.value === "true"
+
+  if (!user && !hasDevBypass) throw new Error("Unauthorized")
+
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    if (profile?.role !== "manager") throw new Error("Only managers can edit the schedule")
+  }
+
+  const admin = createAdminClient()
+  if (!admin) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured")
+
+  // Find staff profile by name (case-insensitive)
+  const { data: staffProfile } = await admin
+    .from("profiles")
+    .select("id, full_name")
+    .ilike("full_name", `%${staffName}%`)
+    .single()
+
+  if (!staffProfile) {
+    throw new Error(`Staff member "${staffName}" not found in profiles. Please ensure their profile exists with a matching full_name.`)
+  }
+
+  const normalizedUserId = normalizeAssigneeId(staffProfile.id)
+
+  // Find or create a daily shift event for this date
+  const eventTitle = `Daily Shift ${dateStr}`
+  const { data: existingEvent } = await admin
+    .from("events")
+    .select("id")
+    .eq("title", eventTitle)
+    .maybeSingle()
+
+  let eventId = existingEvent?.id
+
+  if (!eventId) {
+    const eventStart = shiftStart
+      ? new Date(`${dateStr}T${shiftStart}:00-05:00`)
+      : new Date(`${dateStr}T09:00:00-05:00`)
+    const eventEnd = shiftEnd
+      ? new Date(`${dateStr}T${shiftEnd}:00-05:00`)
+      : new Date(`${dateStr}T17:00:00-05:00`)
+
+    const { data: created, error: createErr } = await admin.from("events").insert({
+      title: eventTitle,
+      start_time: eventStart.toISOString(),
+      end_time: eventEnd.toISOString(),
+      description: `Daily operations shift — ${dateStr}`,
+      required_ops: 1,
+      required_security: 1,
+      required_greeter: 0,
+      director_mandatory: false,
+      category: "standard",
+    }).select("id").single()
+
+    if (createErr) throw new Error("Event insert failed: " + createErr.message)
+    eventId = created?.id
+  }
+
+  if (!eventId) throw new Error("Failed to create or find day shift event")
+
+  // Delete existing assignment for this user + event
+  await admin
+    .from("staff_assignments")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", normalizedUserId)
+
+  // If marking OFF (no shift times), we're done after deleting
+  if (!shiftStart || !shiftEnd) {
+    return { success: true, markedOff: true }
+  }
+
+  const shiftStartIso = new Date(`${dateStr}T${shiftStart}:00-05:00`).toISOString()
+  const shiftEndIso = new Date(`${dateStr}T${shiftEnd}:00-05:00`).toISOString()
+
+  const { data, error } = await admin.from("staff_assignments").insert({
+    event_id: eventId,
+    user_id: normalizedUserId,
+    role_assigned: role,
+    shift_start: shiftStartIso,
+    shift_end: shiftEndIso,
+  }).select("*").single()
+
+  if (error) throw new Error("Assignment insert failed: " + error.message)
+  return { success: true, assignment: data }
+}

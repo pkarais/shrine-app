@@ -116,6 +116,13 @@ export default async function DashboardPage() {
               <MessagingPreview />
               <QuickSubmit />
               <MapContext />
+              <div className="card-surface overflow-hidden rounded-3xl">
+                <img
+                  src="/images/chatpg.jpg"
+                  alt="Shrine chat view"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
             </aside>
           </div>
         </DashboardMotion>

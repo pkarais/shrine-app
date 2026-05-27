@@ -6,6 +6,7 @@ import { CalendarEventTimeline } from "@/components/calendar/CalendarEventTimeli
 import { injectSundayOrthros } from "@/lib/calendar-defaults"
 import { RecurringScheduleCalendar } from "@/components/calendar/RecurringScheduleCalendar"
 import { getScheduleForDateRange } from "@/data/employee-schedules"
+import { getWeekScheduleAssignments } from "@/lib/actions/staffing"
 
 type AssignmentRow = {
   event_id: number
@@ -230,6 +231,11 @@ export default async function CalendarPage({
 
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
+  // Fetch real schedule assignments for the week from Supabase
+  const weekStartStr = formatLocalDate(weekDays[0])
+  const weekEndStr = formatLocalDate(weekDays[6])
+  const weekAssignments = await getWeekScheduleAssignments(weekStartStr, weekEndStr)
+
   return (
     <>
       <TopAppBar showProfile={false} />
@@ -354,7 +360,11 @@ export default async function CalendarPage({
       </div>
 
       <section className="mt-12">
-        <RecurringScheduleCalendar selectedDate={selectedDateStr} />
+        <RecurringScheduleCalendar
+          selectedDate={selectedDateStr}
+          weekAssignments={weekAssignments}
+          canEdit={profileRole === "manager"}
+        />
       </section>
 
       </main>

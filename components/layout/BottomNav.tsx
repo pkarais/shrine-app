@@ -36,16 +36,24 @@ export function BottomNav() {
 
   const isManager = currentRole === "manager"
   const isCouncil = currentRole === "council"
+  const isStaff = ["operations", "security"].includes(currentRole)
 
-  const navItems = [
-    { href: isCouncil ? "/council" : "/dashboard", icon: "dashboard", label: "Dashboard" },
-    { href: "/tickets", icon: "assignment", label: "Tickets" },
-    { href: "/recognition", icon: "workspace_premium", label: "Recognition" },
-    ...(isManager ? [{ href: "/manager", icon: "admin_panel_settings", label: "Command" }] : []),
-    { href: "/calendar", icon: "calendar_today", label: "Calendar" },
-    { href: "/messages", icon: "chat_bubble", label: "Chat" },
-    { href: "/profile", icon: "person", label: "Profile" },
-  ]
+  const navItems = isCouncil
+    ? [
+        { href: "/council", icon: "dashboard", label: "Dashboard" },
+        { href: "/calendar", icon: "calendar_today", label: "Calendar" },
+        { href: "/messages", icon: "chat_bubble", label: "Chat" },
+        { href: "/profile", icon: "person", label: "Account" },
+      ]
+    : [
+        { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
+        ...(isStaff ? [{ href: "/tickets", icon: "assignment", label: "Tickets" }] : []),
+        ...(isStaff ? [{ href: "/recognition", icon: "workspace_premium", label: "Recognition" }] : []),
+        ...(isManager ? [{ href: "/manager", icon: "admin_panel_settings", label: "Command" }] : []),
+        { href: "/calendar", icon: "calendar_today", label: "Calendar" },
+        { href: "/messages", icon: "chat_bubble", label: "Chat" },
+        { href: "/profile", icon: "person", label: "Profile" },
+      ]
 
   return (
     <nav className="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-[0px_0px_24px_rgba(25,28,29,0.06)] border-t border-slate-200/15 dark:border-slate-700/15">

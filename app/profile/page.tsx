@@ -1,5 +1,5 @@
 import { createServerClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers" // Add this
+import { cookies } from "next/headers"
 import { ProfileCard } from "@/components/profile/ProfileCard"
 import { ScheduleList } from "@/components/profile/ScheduleList"
 import { ShiftHistory } from "@/components/profile/ShiftHistory"
@@ -26,7 +26,6 @@ export default async function ProfilePage() {
     )
   }
 
-  // Use real user or a role-aware dev identity when bypass mode is active.
   const effectiveUser = user || {
     id: "00000000-0000-0000-0000-000000000000",
     email: devEmail,
@@ -40,83 +39,51 @@ export default async function ProfilePage() {
     : { data: null }
 
   const currentRole = ((profileForRole?.role || effectiveUser.role || devRole || "") as string).toLowerCase()
+  const isCouncil = currentRole === "council"
+  const isStaff = ["operations", "security"].includes(currentRole)
 
-  const { data: events } = await supabase
-    .from("events")
-    .select("*")
-    .gte("start_time", new Date().toISOString())
-    .order("start_time", { ascending: true })
-    .limit(5)
+  let enrichedEvents: any[] = []
+  let completedShifts: any[] = []
 
-  const eventIds = (events || []).map((event: any) => event.id)
-  const { data: assignments } = eventIds.length
-    ? await supabase
-        .from("staff_assignments")
-        .select("event_id, user_id, role_assigned")
-        .in("event_id", eventIds)
-    : { data: [] as any[] }
+  if (isStaff) {
+    // Staff: upcoming events where they are assigned
+    const { data: myAssignments } = await supabase
+      .from("staff_assignments")
+      .select("event_id, role_assigned")
+      .eq("user_id", effectiveUser.id)
 
-  const assignmentsByEvent = new Map<number, any[]>()
-  for (const assignment of assignments || []) {
-    const key = Number(assignment.event_id)
-    const list = assignmentsByEvent.get(key) || []
-    list.push(assignment)
-    assignmentsByEvent.set(key, list)
-  }
+    const myEventIds = (myAssignments || []).map((a: any) => a.event_id)
 
-  const normalizeRequired = (raw: any, fallback: number) => {
-    const value = Number(raw)
-    if (!Number.isFinite(value) || value <= 0) return fallback
-    return value
-  }
+    if (myEventIds.length > 0) {
+      const { data: events } = await supabase
+        .from("events")
+        .select("*")
+        .in("id", myEventIds)
+        .gte("start_time", new Date().toISOString())
+        .order("start_time", { ascending: true })
+        .limit(10)
 
-  const getRoleRequirement = (event: any, role: string) => {
-    if (role === "operations") return normalizeRequired(event.required_ops, 1)
-    if (role === "security") return normalizeRequired(event.required_security, 1)
-    if (role === "greeter") return normalizeRequired(event.required_greeter, 0)
-    if (role === "director") return event.director_mandatory ? 1 : 0
-    return 0
-  }
-
-  const enrichedEvents = (events || []).map((event: any) => {
-    const eventAssignments = assignmentsByEvent.get(Number(event.id)) || []
-    const counts: Record<string, number> = { operations: 0, security: 0, greeter: 0, director: 0 }
-
-    for (const assignment of eventAssignments) {
-      const role = String(assignment.role_assigned || "").toLowerCase()
-      if (counts[role] !== undefined) counts[role] += 1
+      enrichedEvents = (events || []).map((event: any) => {
+        const myAssignment = (myAssignments || []).find((a: any) => a.event_id === event.id)
+        return {
+          ...event,
+          assigned_to_me: true,
+          my_assignment_role: myAssignment?.role_assigned || null,
+        }
+      })
     }
 
-    const myAssignment = eventAssignments.find(
-      (assignment) => String(assignment.user_id) === String(effectiveUser.id),
-    )
+    // Staff: completed shifts only (clock_out not null)
+    const { data: shifts } = await supabase
+      .from("shifts")
+      .select("*, events(title)")
+      .eq("user_id", effectiveUser.id)
+      .not("clock_out", "is", null)
+      .order("clock_in", { ascending: false })
+      .limit(20)
 
-    const requiredForRole = getRoleRequirement(event, currentRole)
-
-    const assignedForRole = counts[currentRole] || 0
-    const remainingForRole = Math.max(requiredForRole - assignedForRole, 0)
-
-    return {
-      ...event,
-      required_total:
-        getRoleRequirement(event, "operations") +
-        getRoleRequirement(event, "security") +
-        getRoleRequirement(event, "greeter") +
-        getRoleRequirement(event, "director"),
-      assigned_to_me: Boolean(myAssignment),
-      my_assignment_role: myAssignment?.role_assigned || null,
-      required_for_my_role: requiredForRole,
-      assigned_for_my_role: assignedForRole,
-      remaining_for_my_role: remainingForRole,
-    }
-  })
-
-  const { data: shifts } = await supabase
-    .from("shifts")
-    .select("*, events(title)")
-    .eq("user_id", effectiveUser.id)
-    .order("clock_in", { ascending: false })
-    .limit(10)
+    completedShifts = shifts || []
+  }
 
   return (
     <>
@@ -129,8 +96,12 @@ export default async function ProfilePage() {
 
       <div className="space-y-8">
         <ProfileCard user={effectiveUser} />
-        <ScheduleList events={enrichedEvents ?? []} />
-        <ShiftHistory shifts={shifts ?? []} />
+        {isStaff && (
+          <>
+            <ScheduleList events={enrichedEvents} />
+            <ShiftHistory shifts={completedShifts} />
+          </>
+        )}
       </div>
 
       </main>

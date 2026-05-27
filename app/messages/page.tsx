@@ -14,6 +14,7 @@ function MessagesContent() {
   const [selectedGroup, setSelectedGroup] = useState<{ id: string; name: string } | null>(null)
   const [activeTab, setActiveTab] = useState<"direct" | "groups">("direct")
   const [isManager, setIsManager] = useState(false)
+  const [isCouncil, setIsCouncil] = useState(false)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [staffList, setStaffList] = useState<any[]>([])
   const searchParams = useSearchParams()
@@ -26,8 +27,10 @@ function MessagesContent() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-        setIsManager(profile?.role === "manager")
-        if (profile?.role === "manager") {
+        const role = profile?.role || ""
+        setIsManager(role === "manager")
+        setIsCouncil(role === "council")
+        if (role === "manager") {
           const { data: staff } = await supabase.from("profiles").select("id, full_name, email, role").in("role", ["operations", "security"])
           setStaffList(staff || [])
         }
@@ -50,6 +53,11 @@ function MessagesContent() {
                   Department filter: {departmentFilter}
                 </p>
               ) : null}
+              {isCouncil && (
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Messages are routed to the Manager
+                </p>
+              )}
               {isManager && (
                 <div className="flex gap-1 mt-3 bg-surface-container-high rounded-lg p-1">
                   <button
@@ -74,7 +82,7 @@ function MessagesContent() {
             <div className="flex-1 overflow-y-auto">
               {activeTab === "direct" ? (
                 <ConversationList
-                  filterRole={departmentFilter}
+                  filterRole={isCouncil ? "manager" : departmentFilter}
                   onSelect={(id, name) => { setSelectedUser({ id, name }); setSelectedGroup(null) }}
                 />
               ) : (
@@ -102,7 +110,7 @@ function MessagesContent() {
               />
             ) : (
               <div className="flex-1 flex items-center justify-center text-on-surface-variant body-md">
-                Select a conversation to start messaging
+                {isCouncil ? "Select Manager to send a message" : "Select a conversation to start messaging"}
               </div>
             )}
           </div>

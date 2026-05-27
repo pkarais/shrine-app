@@ -206,6 +206,33 @@ export default function LoginPage() {
 
             </form>
 
+            {/* Dev Bypass — Mock User Accounts */}
+            <div className="mt-6 pt-6 border-t border-dashed border-outline-variant/30">
+              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold mb-3 text-center">Mock User Accounts (Dev Mode)</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { role: "manager", label: "Manager", color: "bg-amber-600" },
+                  { role: "operations", label: "Staff", color: "bg-blue-600" },
+                  { role: "council", label: "Council", color: "bg-purple-600" },
+                ].map((mock) => (
+                  <button
+                    key={mock.role}
+                    type="button"
+                    onClick={() => {
+                      document.cookie = `shrine_dev_session=true; path=/; max-age=86400`
+                      document.cookie = `shrine_dev_role=${mock.role}; path=/; max-age=86400`
+                      document.cookie = `shrine_dev_name=${encodeURIComponent(mock.label + ' (Dev)')}; path=/; max-age=86400`
+                      window.location.href = mock.role === "council" ? "/council" : "/dashboard"
+                    }}
+                    className="flex flex-col items-center gap-1 px-2 py-2 rounded-xl bg-surface-container-low dark:bg-slate-700/50 hover:bg-surface-container-highest dark:hover:bg-slate-600/50 transition-colors text-center"
+                  >
+                    <span className={`w-2 h-2 rounded-full ${mock.color}`} />
+                    <span className="text-[10px] font-bold text-on-surface-variant dark:text-white/70">{mock.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-10 pt-8 border-t border-outline-variant/30 text-center">
               <p className="text-on-surface-variant dark:text-white/60 text-sm mb-6">Credentialed staff and managers only.</p>
               <div className="grid grid-cols-2 gap-4">

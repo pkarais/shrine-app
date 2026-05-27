@@ -205,6 +205,37 @@ CREATE TABLE IF NOT EXISTS staff_directory (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Staff Pay Rates (hourly wages by role/person)
+CREATE TABLE IF NOT EXISTS staff_pay_rates (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  staff_id        UUID NOT NULL REFERENCES staff_directory(id) ON DELETE CASCADE,
+  hourly_rate     NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  role            TEXT NOT NULL DEFAULT 'operations',
+  effective_date  DATE NOT NULL DEFAULT CURRENT_DATE,
+  notes           TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pay_rates_staff ON staff_pay_rates (staff_id);
+
+-- Payroll Reports (archived biweekly payroll summaries)
+CREATE TABLE IF NOT EXISTS payroll_reports (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  period_start    DATE NOT NULL,
+  period_end      DATE NOT NULL,
+  title           TEXT NOT NULL,
+  slug            TEXT NOT NULL UNIQUE,
+  status          TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
+  content         JSONB NOT NULL DEFAULT '{}',
+  pdf_url         TEXT,
+  website_url     TEXT,
+  prepared_by     UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  prepared_by_name TEXT,
+  published_at    TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Group Conversations (used by the chat module)
 CREATE TABLE IF NOT EXISTS group_conversations (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -741,3 +772,27 @@ SELECT
 FROM daily_brief_issues i
 LEFT JOIN profiles p ON p.id = i.prepared_by
 WHERE i.archive_enabled = true;
+
+-- ────────────────────────────────────────────────────────────
+-- Payroll & Pay Rates RLS
+-- ────────────────────────────────────────────────────────────
+ALTER TABLE staff_pay_rates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payroll_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "pay_rates_select_auth" ON staff_pay_rates FOR SELECT TO authenticated
+  USING (true);
+CREATE POLICY "pay_rates_insert_manager" ON staff_pay_rates FOR INSERT TO authenticated
+  WITH CHECK (auth.jwt()->>'role' = 'manager');
+CREATE POLICY "pay_rates_update_manager" ON staff_pay_rates FOR UPDATE TO authenticated
+  USING (auth.jwt()->>'role' = 'manager');
+CREATE POLICY "pay_rates_delete_manager" ON staff_pay_rates FOR DELETE TO authenticated
+  USING (auth.jwt()->>'role' = 'manager');
+
+CREATE POLICY "payroll_reports_select_auth" ON payroll_reports FOR SELECT TO authenticated
+  USING (true);
+CREATE POLICY "payroll_reports_insert_manager" ON payroll_reports FOR INSERT TO authenticated
+  WITH CHECK (auth.jwt()->>'role' = 'manager');
+CREATE POLICY "payroll_reports_update_manager" ON payroll_reports FOR UPDATE TO authenticated
+  USING (auth.jwt()->>'role' = 'manager');
+CREATE POLICY "payroll_reports_delete_manager" ON payroll_reports FOR DELETE TO authenticated
+  USING (auth.jwt()->>'role' = 'manager');
