@@ -2,6 +2,9 @@
   "name": "shrine-ops",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "dev": "node -e \"try { require('child_process').execSync('node scripts/sync-google-calendar.js', { stdio: 'inherit', timeout: 20000 }) } catch(e) { console.log('[sync] failed, continuing...') }\" && next dev",
     "build": "next build",
