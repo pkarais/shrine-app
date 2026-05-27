@@ -198,7 +198,7 @@ CREATE INDEX IF NOT EXISTS idx_visitor_volume_recorded ON visitor_volume (record
 -- Staff Directory (with UUID ID and profile connection for badge awarding)
 CREATE TABLE IF NOT EXISTS staff_directory (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id    UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  profile_id    UUID,
   name          TEXT NOT NULL,
   role          TEXT NOT NULL,
   status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'off')),
