@@ -111,8 +111,26 @@ export default async function ManagerPage() {
   let totalUpcomingAssignments = 0
   let nextUncoveredEventDate: string | null = null
 
+  // Check today's staff assignments (covers events already started — not just future)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
+  const { data: todayEvents } = await admin.from("events")
+    .select("id")
+    .gte("start_time", todayStart.toISOString())
+    .lte("start_time", todayEnd.toISOString())
+  const todayEventIds = (todayEvents || []).map((e: any) => e.id)
+  let todayAssignmentCount = 0
+  if (todayEventIds.length > 0) {
+    const { count: todayCount } = await admin.from("staff_assignments")
+      .select("id", { count: "exact", head: true })
+      .in("event_id", todayEventIds)
+    todayAssignmentCount = todayCount || 0
+  }
+
   if (upcomingEventIds.length > 0) {
-    const { data: upcomingAssignments } = await supabase
+    const { data: upcomingAssignments } = await admin
       .from("staff_assignments")
       .select("event_id")
       .in("event_id", upcomingEventIds)
@@ -133,7 +151,7 @@ export default async function ManagerPage() {
       nextUncoveredEventDate = `${year}-${month}-${day}`
     }
 
-    const { count } = await supabase
+    const { count } = await admin
       .from("staff_assignments")
       .select("id", { count: "exact", head: true })
       .in("event_id", upcomingEventIds)
@@ -144,7 +162,8 @@ export default async function ManagerPage() {
 
   const redFlags: Array<{ id: string; title: string; message: string }> = []
 
-  if (activeShiftCount === 0) {
+  // Only flag staffing gap if nobody clocked in AND nobody is scheduled today
+  if (activeShiftCount === 0 && todayAssignmentCount === 0) {
     redFlags.push({
       id: "staffing-none-active",
       title: "Staffing Gap",
