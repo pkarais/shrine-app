@@ -418,6 +418,13 @@ const badgePalette = [
 
 function BadgesGrid({ data, onSelect }: { data: any[]; onSelect: (badge: any) => void }) {
   if (!data?.length) return <EmptyState icon={Award} message="No badges configured yet." />
+  
+  // Helper to map badge names to the public/badges files
+  const getBadgeIconPath = (badgeName: string) => {
+    const filename = badgeName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    return `/badges/${filename}.png`;
+  };
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
       {data.map((badge: any, i: number) => (
@@ -427,7 +434,7 @@ function BadgesGrid({ data, onSelect }: { data: any[]; onSelect: (badge: any) =>
           className="card-surface p-4 border border-[var(--outline-variant)]/30 hover:shadow-lg hover:border-[var(--outline-variant)]/50 transition-all text-left w-full cursor-pointer group"
         >
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg mb-3 ${badgePalette[i % badgePalette.length]} group-hover:scale-110 transition-transform`}>
-            {badge.icon_url ? <Image src={badge.icon_url} alt={badge.name} width={32} height={32} className="w-8 h-8" /> : <Award className="w-6 h-6" />}
+            {badge.icon_url || getBadgeIconPath(badge.name) ? <Image src={badge.icon_url || getBadgeIconPath(badge.name)} alt={badge.name} width={32} height={32} className="w-8 h-8" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Award className="w-6 h-6" />}
           </div>
           <p className="font-bold text-sm">{badge.name}</p>
           <p className="text-xs text-[var(--on-surface-variant)] mt-1 line-clamp-2 leading-relaxed">{badge.description}</p>
@@ -439,6 +446,12 @@ function BadgesGrid({ data, onSelect }: { data: any[]; onSelect: (badge: any) =>
 
 function BadgeDetailModal({ badge, onClose }: { badge: any; onClose: () => void }) {
   if (!badge) return null
+
+  const getBadgeIconPath = (badgeName: string) => {
+    const filename = badgeName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    return `/badges/${filename}.png`;
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="card-surface max-w-md w-full p-6 sm:p-8 relative shadow-2xl border border-[var(--outline-variant)]/30" onClick={e => e.stopPropagation()}>
@@ -447,7 +460,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: any; onClose: () => void 
         </button>
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-20 h-20 rounded-2xl bg-[var(--primary)]/5 flex items-center justify-center mb-4">
-            {badge.icon_url ? <Image src={badge.icon_url} alt={badge.name} width={64} height={64} className="w-16 h-16" /> : <Award className="w-10 h-10 text-[var(--primary)]" />}
+            {badge.icon_url || getBadgeIconPath(badge.name) ? <Image src={badge.icon_url || getBadgeIconPath(badge.name)} alt={badge.name} width={64} height={64} className="w-16 h-16" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <Award className="w-10 h-10 text-[var(--primary)]" />}
           </div>
           <h3 className="text-xl font-bold" style={{ fontFamily: "'Manrope', system-ui, sans-serif" }}>{badge.name}</h3>
           <p className="body-md mt-1.5">{badge.description}</p>
@@ -470,13 +483,20 @@ function BadgeDetailModal({ badge, onClose }: { badge: any; onClose: () => void 
 
 function BadgeAwardsGrid({ data, isManager, onDeleteAward }: { data: any[]; isManager?: boolean; onDeleteAward?: (id: string) => void }) {
   if (!data?.length) return <EmptyState icon={Medal} message="No badge awards yet. Managers can award badges from this page." />
+
+  const getBadgeIconPath = (badgeName: string) => {
+    if (!badgeName) return null;
+    const filename = badgeName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    return `/badges/${filename}.png`;
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {data.map((award: any) => (
         <div key={award.id} className="card-surface p-4 border border-[var(--outline-variant)]/30 flex items-start gap-3 relative group">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-            {award.recognition_badges?.icon_url ? (
-              <Image src={award.recognition_badges.icon_url} alt="" width={24} height={24} className="w-6 h-6" />
+            {award.recognition_badges?.icon_url || getBadgeIconPath(award.recognition_badges?.name) ? (
+              <Image src={award.recognition_badges?.icon_url || getBadgeIconPath(award.recognition_badges?.name) as string} alt="" width={24} height={24} className="w-6 h-6" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             ) : (
               <Medal className="w-5 h-5 text-amber-500" />
             )}
