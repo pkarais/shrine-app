@@ -14,7 +14,7 @@ import { RoleActionCenter } from "@/components/dashboard/RoleActionCenter"
 import { OperationsActionCards } from "@/components/dashboard/OperationsActionCards"
 import { LiveVisitorCountCard } from "@/components/dashboard/LiveVisitorCountCard"
 import { TopAppBar } from "@/components/layout/TopAppBar"
-import { getCurrentOrNextEvent, getOperationsSummary, getStaffForEvent } from "@/lib/actions/event-context"
+import { getCurrentOrNextEvent, getOperationsSummary, getStaffForEvent, getTodayEvents } from "@/lib/actions/event-context"
 import { DashboardMotion } from "@/components/layout/DashboardMotion"
 
 export default async function DashboardPage() {
@@ -55,8 +55,11 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
 
   // Fetch Context
-  const currentEvent = await getCurrentOrNextEvent()
-  const summary = await getOperationsSummary()
+  const [currentEvent, summary, todayEvents] = await Promise.all([
+    getCurrentOrNextEvent(),
+    getOperationsSummary(),
+    getTodayEvents(),
+  ])
   const staffAssignments = currentEvent ? await getStaffForEvent(currentEvent.id) : []
   const role = (profile?.role || "").toLowerCase()
   const showVisitorTally = role !== "council"
@@ -117,6 +120,72 @@ export default async function DashboardPage() {
             {/* Sidebar */}
             <aside className="md:col-span-4 space-y-8">
               <MessagingPreview />
+
+              {/* Today's full schedule — visible to all staff */}
+              {todayEvents.length > 0 && (
+                <div className="card-surface p-6 space-y-4">
+                  <h3 className="font-headline font-bold text-base text-primary flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">today</span>
+                    Today&apos;s Schedule
+                  </h3>
+                  <div className="space-y-2">
+                    {todayEvents.map((evt) => {
+                      const startFmt = new Date(evt.start_time).toLocaleTimeString("en-US", {
+                        timeZone: "America/New_York",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })
+                      const endFmt = evt.end_time
+                        ? new Date(evt.end_time).toLocaleTimeString("en-US", {
+                            timeZone: "America/New_York",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                        : null
+                      const isMajor = evt.category === "major_feast"
+                      const isSmall = (evt as any).category === "small_event"
+                      return (
+                        <div
+                          key={evt.id}
+                          className={`flex items-start gap-3 p-3 rounded-xl ${
+                            isMajor
+                              ? "bg-tertiary-container/30 border-l-2 border-tertiary"
+                              : isSmall
+                              ? "bg-secondary-container/20 border-l-2 border-secondary"
+                              : "bg-surface-container-low"
+                          }`}
+                        >
+                          <div className="text-[10px] font-bold text-on-surface-variant min-w-[52px] pt-0.5">
+                            {startFmt}
+                            {endFmt && <><br />{endFmt}</>}
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold leading-tight ${
+                              isMajor ? "text-tertiary" : "text-on-surface"
+                            }`}>
+                              {evt.title}
+                            </p>
+                            {(evt.required_ops > 0 || evt.required_security > 0) && (
+                              <p className="text-[10px] text-on-surface-variant mt-0.5">
+                                {[evt.required_security > 0 && `${evt.required_security} sec`,
+                                  evt.required_ops > 0 && `${evt.required_ops} ops`]
+                                  .filter(Boolean).join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <a
+                    href="/calendar"
+                    className="block text-center text-xs font-bold text-primary hover:underline pt-1"
+                  >
+                    View full calendar →
+                  </a>
+                </div>
+              )}
+
               <QuickSubmit />
               <MapContext />
               <div className="card-surface overflow-hidden rounded-3xl">

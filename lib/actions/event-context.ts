@@ -41,6 +41,49 @@ export async function getCurrentOrNextEvent() {
   return orthros
 }
 
+export async function getTodayEvents(): Promise<CalendarEvent[]> {
+  const admin = createAdminClient()
+  const now = new Date()
+
+  // Resolve today's date in Eastern time
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now)
+  const todayStr = `${parts.find(p => p.type === "year")?.value}-${parts.find(p => p.type === "month")?.value}-${parts.find(p => p.type === "day")?.value}`
+
+  // Wide UTC window to catch Eastern-time events regardless of UTC offset
+  const queryStart = new Date(`${todayStr}T00:00:00.000Z`)
+  queryStart.setTime(queryStart.getTime() - 12 * 60 * 60 * 1000)
+  const queryEnd = new Date(`${todayStr}T00:00:00.000Z`)
+  queryEnd.setTime(queryEnd.getTime() + 36 * 60 * 60 * 1000)
+
+  const { data } = await admin
+    .from("events")
+    .select("*")
+    .gte("start_time", queryStart.toISOString())
+    .lt("start_time", queryEnd.toISOString())
+    .order("start_time", { ascending: true })
+
+  const localDateKey = (value: string) => {
+    const p = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(new Date(value))
+    return `${p.find(x => x.type === "year")?.value}-${p.find(x => x.type === "month")?.value}-${p.find(x => x.type === "day")?.value}`
+  }
+
+  let events = (data || []).filter((e: any) =>
+    localDateKey(e.start_time) === todayStr &&
+    e.title !== "Staff Operational Window" &&
+    e.title !== "Open for Tourism"
+  ) as CalendarEvent[]
+
+  events = injectSundayOrthros(todayStr, events)
+  events.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+  return events
+}
+
 export async function getStaffForEvent(eventId: number) {
   const supabase = await getClient()
   const admin = createAdminClient()
