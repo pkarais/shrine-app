@@ -20,8 +20,8 @@ export default function ResetPasswordPage() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSessionValid(!!data.session)
+    supabase.auth.getSession().then((result) => {
+      setSessionValid(!!result.data.session)
       setSessionChecking(false)
     })
 
