@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 
 export async function getManagerShiftReport(shiftId?: string) {
   const supabase = createServerClient()
@@ -10,13 +10,15 @@ export async function getManagerShiftReport(shiftId?: string) {
   const { data: profile } = await supabase.from("profiles").select("role, full_name").eq("id", user.id).single()
   if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Manager access required")
 
+  const admin = createAdminClient()
+
   // Get the shift — either specified or active one
   let shift: any = null
   if (shiftId) {
-    const { data } = await supabase.from("shifts").select("*").eq("id", shiftId).eq("user_id", user.id).single()
+    const { data } = await admin.from("shifts").select("*").eq("id", shiftId).eq("user_id", user.id).single()
     shift = data
   } else {
-    const { data } = await supabase
+    const { data } = await admin
       .from("shifts")
       .select("*")
       .eq("user_id", user.id)

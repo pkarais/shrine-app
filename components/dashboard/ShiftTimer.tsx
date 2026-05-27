@@ -246,15 +246,13 @@ export function ShiftTimer() {
                 return
               }
               const csv = await generateShiftReportCSV(report)
-              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-              const url = URL.createObjectURL(blob)
+              const dataUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv)
               const link = document.createElement("a")
-              link.href = url
+              link.setAttribute("href", dataUri)
               link.setAttribute("download", `manager-shift-report-${new Date().toISOString().slice(0, 10)}.csv`)
               document.body.appendChild(link)
               link.click()
               document.body.removeChild(link)
-              URL.revokeObjectURL(url)
             } catch (e: any) {
               alert("Failed to generate report: " + e.message)
             } finally {
