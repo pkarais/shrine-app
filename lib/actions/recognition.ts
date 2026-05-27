@@ -303,15 +303,12 @@ export async function getStaffForBadgeAwarding() {
     return []
   }
 
-  const activeUserIds = await getActiveUserIds(supabase)
-
   // Filter to active operations/security staff and deduplicate by profile_id
   const seenProfileIds = new Set<string>()
   const eligibleStaff = (staffDir || [])
     .filter((row: any) => {
       if (!row.profile_id || !row.name) return false
       if (row.status !== "active" && row.status) return false
-      if (!activeUserIds.has(row.profile_id)) return false
       
       const role = (row.role || "").toLowerCase()
       if (!["operations", "security"].includes(role)) return false
