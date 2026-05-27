@@ -15,7 +15,7 @@ export async function signUpWithEmail(email: string, password: string, role: "op
 export async function resetPassword(email: string) {
   const supabase = createServerClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/auth/callback?next=/reset-password`,
   })
   if (error) throw new Error(error.message)
   return { success: true }
