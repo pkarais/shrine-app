@@ -59,10 +59,11 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
   }
 
   return (
-    <div>
-      <div className="space-y-4">
-        {items.slice(0, 10).map((wt) => (
-          <div key={wt.id} className="bg-surface-container rounded-xl p-4 flex items-center justify-between gap-4">
+    <>
+      <div>
+        <div className="space-y-4">
+          {items.slice(0, 10).map((wt) => (
+            <div key={wt.id} className="bg-surface-container rounded-xl p-4 flex items-center justify-between gap-4">
             <button
               className="min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
               onClick={() => handleViewDetail(wt.id)}
@@ -213,5 +214,6 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
         </div>
       </div>
     )}
-    
+    </>
+  )
 }
