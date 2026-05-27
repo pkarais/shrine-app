@@ -19,6 +19,7 @@ function MessagesContent() {
   const [isCouncil, setIsCouncil] = useState(false)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [staffList, setStaffList] = useState<any[]>([])
+  const [groupRefreshKey, setGroupRefreshKey] = useState(0)
   const searchParams = useSearchParams()
   const deptParam = (searchParams.get("dept") || "").toLowerCase()
   const departmentFilter = deptParam === "operations" || deptParam === "security" ? deptParam : null
@@ -91,6 +92,7 @@ function MessagesContent() {
                 <GroupChatList
                   onSelect={(id, name) => { setSelectedGroup({ id, name }); setSelectedUser(null) }}
                   onCreate={() => setShowCreateGroup(true)}
+                  refreshKey={groupRefreshKey}
                 />
               )}
             </div>
@@ -124,7 +126,7 @@ function MessagesContent() {
           open={showCreateGroup}
           onClose={() => setShowCreateGroup(false)}
           staffList={staffList}
-          onCreated={() => {}}
+          onCreated={() => setGroupRefreshKey((k) => k + 1)}
         />
       )}
     </>

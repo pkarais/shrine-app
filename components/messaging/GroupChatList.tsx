@@ -16,9 +16,11 @@ interface GroupConversation {
 export function GroupChatList({
   onSelect,
   onCreate,
+  refreshKey,
 }: {
   onSelect: (id: string, name: string) => void
   onCreate: () => void
+  refreshKey?: number
 }) {
   const [conversations, setConversations] = useState<GroupConversation[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +39,7 @@ export function GroupChatList({
 
   useEffect(() => {
     load()
-  }, [load])
+  }, [load, refreshKey])
 
   if (loading) {
     return (
