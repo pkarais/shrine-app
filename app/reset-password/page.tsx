@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/Button"
@@ -13,8 +13,26 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [sessionChecking, setSessionChecking] = useState(true)
+  const [sessionValid, setSessionValid] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSessionValid(!!session)
+      setSessionChecking(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setSessionValid(true)
+        setSessionChecking(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,6 +86,17 @@ export default function ResetPasswordPage() {
             <p className="text-on-surface-variant">Enter your new password below.</p>
           </div>
 
+          {sessionChecking ? (
+            <div className="text-center text-on-surface-variant py-8">Verifying reset link…</div>
+          ) : !sessionValid ? (
+            <div className="bg-error-container text-error text-sm p-6 rounded-xl text-center">
+              <p className="font-bold mb-1">Reset link expired or invalid</p>
+              <p>Please request a new password reset link.</p>
+              <a href="/forgot-password" className="inline-block mt-4 text-sm font-semibold text-primary hover:underline">
+                Request new link
+              </a>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="font-label text-xs font-bold text-primary tracking-widest uppercase ml-1 block">New Password</label>
@@ -123,6 +152,7 @@ export default function ResetPasswordPage() {
               {loading ? "Updating..." : "Update Password"}
             </Button>
           </form>
+          )}
 
           <div className="mt-8 text-center">
             <a href="/login" className="text-sm font-semibold text-primary hover:text-primary-container transition-colors">
