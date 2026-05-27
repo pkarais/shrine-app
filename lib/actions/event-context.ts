@@ -19,10 +19,10 @@ async function getClient() {
 }
 
 export async function getCurrentOrNextEvent() {
-  const supabase = await getClient()
+  const admin = createAdminClient()
   const now = new Date().toISOString()
-  
-  const { data, error } = await supabase
+
+  const { data, error } = await admin
     .from("events")
     .select("*")
     .or(`end_time.gte.${now},end_time.is.null`)

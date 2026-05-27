@@ -76,7 +76,9 @@ export default async function CalendarPage({
   const queryStart = new Date(selectedDateUtc.getTime() - 24 * 60 * 60 * 1000).toISOString()
   const queryEnd = new Date(selectedDateUtc.getTime() + 48 * 60 * 60 * 1000).toISOString()
 
-  const { data: eventsRaw, error } = await supabase
+  // Use admin client for events — RLS on events table blocks newly-synced events for auth users
+  const admin = createAdminClient()
+  const { data: eventsRaw, error } = await admin
     .from("events")
     .select("*")
     .gte("start_time", queryStart)
@@ -94,7 +96,6 @@ export default async function CalendarPage({
       ? devRole
       : null
 
-  const admin = createAdminClient()
   const { data: staffProfiles } = await admin
     .from("profiles")
     .select("id, full_name, email, role")
