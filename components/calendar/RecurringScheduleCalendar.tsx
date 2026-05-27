@@ -271,7 +271,7 @@ export function RecurringScheduleCalendar({
             <span className="material-symbols-outlined text-on-surface-variant">event_note</span>
             <div>
               <p className="text-sm font-medium text-on-surface">No schedule yet for this week.</p>
-              <p className="text-xs text-on-surface-variant">Copy last week's schedule to get started, or click any cell to add individual shifts.</p>
+              <p className="text-xs text-on-surface-variant">Copy last week&apos;s schedule to get started, or click any cell to add individual shifts.</p>
             </div>
           </div>
           <button
