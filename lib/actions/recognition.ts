@@ -289,37 +289,26 @@ export async function awardBadgeToEmployee(
 }
 
 // Get staff members for manager badge awarding
-// ONLY staff in staff_directory with profile_id can receive badges
 export async function getStaffForBadgeAwarding() {
   const supabase = getClient()
   
-  // Get staff_directory with profile_id - this is the SOURCE OF TRUTH
-  const { data: staffDir, error: staffError } = await supabase
-    .from("staff_directory")
-    .select("name, role, status, profile_id")
-    .order("name", { ascending: true })
+  // Fetches from profiles per AGENTS.md convention and role filter
+  const { data: profiles, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, role")
+    .in("role", ["operations", "security"])
+    .order("full_name", { ascending: true })
   
-  if (staffError) {
-    console.error("Error fetching staff_directory:", staffError)
+  if (error) {
+    console.error("Error fetching profiles:", error)
     return []
   }
 
   const activeUserIds = await getActiveUserIds(supabase)
 
-  // Filter to only active staff with profile_id who have logged in at least once
-  const eligibleStaff = (staffDir || [])
-    .filter((row: any) => 
-      (row.status === "active" || !row.status) && 
-      row.profile_id && 
-      row.name &&
-      activeUserIds.has(row.profile_id)
-    )
-    .map((row: any) => ({
-      id: row.profile_id,        // User ID from profiles (for badge award)
-      full_name: row.name,        // Name from staff_directory
-      role: row.role,
-    }))
-
+  const eligibleStaff = (profiles || [])
+    .filter((row: any) => row.full_name && activeUserIds.has(row.id))
+    
   return eligibleStaff
 }
 
