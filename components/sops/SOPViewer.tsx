@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { getSOPs, getSOPSignedUrl, deleteSOP, getSOPCategories } from "@/lib/actions/sops"
-import { FileText, Search, X, FolderOpen, Trash2, Download, ChevronDown, ChevronRight } from "lucide-react"
+import { FileText, Search, X, FolderOpen, Trash2, Download, ChevronDown, ChevronRight, ExternalLink } from "lucide-react"
 
 interface SOPDocument {
   id: string
   title: string
   category: string
   description: string | null
-  file_name: string
+  source_type: string
+  file_path: string | null
+  external_link: string | null
+  file_name: string | null
   file_size: number | null
   uploader_name: string
   created_at: string
@@ -51,10 +54,18 @@ export function SOPViewer({ isManager = false }: SOPViewerProps) {
   }, [load])
 
   async function handleView(sop: SOPDocument) {
+    // External links open directly in new tab
+    if (sop.source_type === "external" && sop.external_link) {
+      window.open(sop.external_link, "_blank", "noopener,noreferrer")
+      return
+    }
+
     setViewingSop(sop)
     try {
-      const url = await getSOPSignedUrl(`${sop.category.toLowerCase().replace(/\s+/g, "-")}/${sop.file_name}`)
-      setPdfUrl(url)
+      if (sop.file_path) {
+        const url = await getSOPSignedUrl(sop.file_path)
+        setPdfUrl(url)
+      }
     } catch (e) {
       console.error("Failed to get PDF URL:", e)
     }
@@ -186,11 +197,16 @@ export function SOPViewer({ isManager = false }: SOPViewerProps) {
                           onClick={() => handleView(sop)}
                           className="text-left"
                         >
-                          <p className="font-medium text-on-surface text-sm hover:text-primary transition-colors">
+                          <p className="font-medium text-on-surface text-sm hover:text-primary transition-colors flex items-center gap-2">
                             {sop.title}
+                            {sop.source_type === "external" && (
+                              <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full font-bold uppercase">
+                                Link
+                              </span>
+                            )}
                           </p>
                           <p className="text-xs text-on-surface-variant mt-0.5">
-                            {formatFileSize(sop.file_size)} · Uploaded {new Date(sop.created_at).toLocaleDateString()} by {sop.uploader_name}
+                            {sop.source_type === "external" ? "External link" : formatFileSize(sop.file_size)} · Uploaded {new Date(sop.created_at).toLocaleDateString()} by {sop.uploader_name}
                           </p>
                           {sop.description && (
                             <p className="text-xs text-on-surface-variant/70 mt-1 line-clamp-1">
@@ -203,9 +219,9 @@ export function SOPViewer({ isManager = false }: SOPViewerProps) {
                         <button
                           onClick={() => handleView(sop)}
                           className="p-2 rounded-xl bg-primary text-on-primary hover:bg-primary/90 transition-colors"
-                          title="View PDF"
+                          title={sop.source_type === "external" ? "Open Link" : "View PDF"}
                         >
-                          <FileText className="w-4 h-4" />
+                          {sop.source_type === "external" ? <ExternalLink className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
                         </button>
                         {isManager && (
                           <button

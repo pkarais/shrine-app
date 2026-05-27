@@ -1,0 +1,261 @@
+"use client"
+
+import { useState, useEffect, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { TopAppBar } from "@/components/layout/TopAppBar"
+import { generateDailyBriefDraft, updateDailyBriefStatus, updateDailyBriefField, updateDailySectionContent, fetchDailyBriefBySlug } from "@/lib/actions/daily-brief"
+import { FileText, RefreshCw, Send, Save, Archive, CheckCircle, AlertTriangle, Clock, Users, ClipboardCheck, ShieldAlert, Wrench, CalendarDays, Award, Edit3, Loader2 } from "lucide-react"
+
+const SECTION_ICONS: Record<string, any> = {
+  at_a_glance: Clock,
+  scheduling_shifts: Users,
+  site_readiness: ClipboardCheck,
+  incidents_safety: ShieldAlert,
+  maintenance_tickets: Wrench,
+  team_building: Award,
+  upcoming_events: CalendarDays,
+  manager_notes: Edit3,
+}
+
+export default function DailyBriefPage() {
+  const router = useRouter()
+  const [briefDate, setBriefDate] = useState(new Date().toISOString().slice(0, 10))
+  const [issue, setIssue] = useState<any>(null)
+  const [sections, setSections] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [saving, setSaving] = useState<string | null>(null)
+  const [publishing, setPublishing] = useState(false)
+
+  async function loadBrief() {
+    setLoading(true)
+    try {
+      const slug = `daily-brief-${briefDate}`
+      const result = await fetchDailyBriefBySlug(slug)
+      if (result) {
+        setIssue(result.issue)
+        setSections(result.sections || [])
+      } else {
+        setIssue(null)
+        setSections([])
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleGenerate() {
+    setGenerating(true)
+    try {
+      const result = await generateDailyBriefDraft(briefDate)
+      if (result.success) {
+        await loadBrief()
+      }
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  async function handlePublish() {
+    if (!issue) return
+    setPublishing(true)
+    try {
+      await updateDailyBriefStatus(issue.id, "published")
+      await loadBrief()
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function handleUpdateField(field: string, value: string) {
+    if (!issue) return
+    await updateDailyBriefField(issue.id, field, value)
+  }
+
+  async function handleUpdateSection(sectionId: string, markdown: string) {
+    setSaving(sectionId)
+    try {
+      await updateDailySectionContent(sectionId, markdown)
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  useEffect(() => {
+    loadBrief()
+  }, [briefDate])
+
+  const metrics = issue?.content?.metrics || {}
+
+  return (
+    <>
+      <TopAppBar />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-16">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="font-headline text-2xl sm:text-3xl font-bold text-on-surface flex items-center gap-2">
+              <FileText className="w-6 h-6 text-primary" />
+              Daily Operations Brief
+            </h1>
+            <p className="text-sm text-on-surface-variant mt-1">
+              Generate and manage daily manager briefs
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={briefDate}
+              onChange={(e) => setBriefDate(e.target.value)}
+              className="px-4 py-2 bg-surface-container-high rounded-xl text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="px-4 py-2 bg-primary text-on-primary rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {generating ? "Generating..." : issue ? "Regenerate" : "Generate"}
+            </button>
+          </div>
+        </div>
+
+        {!issue && !loading && (
+          <div className="text-center py-20 bg-surface-container-low rounded-2xl">
+            <FileText className="w-12 h-12 mx-auto text-on-surface-variant opacity-30 mb-4" />
+            <p className="text-on-surface-variant mb-4">No brief found for this date.</p>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="px-6 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {generating ? "Generating..." : "Generate Daily Brief"}
+            </button>
+          </div>
+        )}
+
+        {loading && (
+          <div className="space-y-4 animate-pulse">
+            <div className="h-32 bg-surface-container rounded-2xl" />
+            <div className="h-64 bg-surface-container rounded-2xl" />
+          </div>
+        )}
+
+        {issue && (
+          <div className="space-y-6">
+            {/* Status Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-low rounded-2xl p-4">
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                  issue.status === "published" ? "bg-emerald-500/20 text-emerald-500" :
+                  issue.status === "draft" ? "bg-amber-500/20 text-amber-500" :
+                  "bg-surface-container-high text-on-surface-variant"
+                }`}>
+                  {issue.status}
+                </span>
+                <span className="text-sm text-on-surface-variant">
+                  {new Date(issue.brief_date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                {issue.status !== "published" && (
+                  <button
+                    onClick={handlePublish}
+                    disabled={publishing}
+                    className="px-4 py-2 bg-primary text-on-primary rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    {publishing ? "Publishing..." : "Publish"}
+                  </button>
+                )}
+                <button
+                  onClick={() => router.push("/daily-brief/archive")}
+                  className="px-4 py-2 bg-surface-container-highest text-on-surface rounded-xl font-bold text-sm hover:bg-surface-dim transition-colors flex items-center gap-2"
+                >
+                  <Archive className="w-4 h-4" /> Archive
+                </button>
+              </div>
+            </div>
+
+            {/* Metrics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {Object.entries(metrics).map(([key, value]: [string, any]) => (
+                <div key={key} className="bg-surface-container-low rounded-xl p-4 text-center">
+                  <p className="text-2xl font-black text-on-surface">{value}</p>
+                  <p className="text-[10px] font-bold uppercase text-on-surface-variant tracking-wider mt-1">
+                    {key.replace(/_/g, " ")}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Opening Message */}
+            <div className="bg-surface-container-low rounded-2xl p-6">
+              <label className="text-xs font-bold uppercase text-on-surface-variant tracking-wider mb-2 block">
+                Opening Message
+              </label>
+              <textarea
+                defaultValue={issue.opening_message || ""}
+                onBlur={(e) => handleUpdateField("opening_message", e.target.value)}
+                className="w-full px-4 py-3 bg-surface-container-high rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                rows={3}
+              />
+            </div>
+
+            {/* Sections */}
+            <div className="space-y-4">
+              {sections.map((section) => {
+                const Icon = SECTION_ICONS[section.section_key] || FileText
+                return (
+                  <div key={section.id} className="bg-surface-container-low rounded-2xl overflow-hidden">
+                    <div className="flex items-center gap-3 p-4 border-b border-[var(--outline-variant)]/20">
+                      <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-on-primary-container" />
+                      </div>
+                      <h3 className="font-bold text-on-surface">{section.section_title}</h3>
+                    </div>
+                    <div className="p-4">
+                      <textarea
+                        defaultValue={section.markdown_body || ""}
+                        onBlur={(e) => handleUpdateSection(section.id, e.target.value)}
+                        className="w-full px-4 py-3 bg-surface-container-high rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none font-mono leading-relaxed"
+                        rows={6}
+                      />
+                      {saving === section.id && (
+                        <p className="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              {issue.status !== "published" && (
+                <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="px-6 py-3 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  {publishing ? "Publishing..." : "Publish Brief"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+    </>
+  )
+}
