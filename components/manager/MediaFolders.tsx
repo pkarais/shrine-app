@@ -25,6 +25,15 @@ export function MediaFolders() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (lightboxFile) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [lightboxFile])
+
+  useEffect(() => {
     async function fetchFiles() {
       try {
         setError(null)
@@ -158,14 +167,14 @@ export function MediaFolders() {
           >
             <X className="w-6 h-6 text-white" />
           </button>
-          <div className="max-w-4xl max-h-[80vh] w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-4xl w-full max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             {getFileType(lightboxFile.mimetype) === "image" ? (
               <Image
                 src={lightboxFile.signedUrl}
                 alt={lightboxFile.name}
                 width={1200}
                 height={800}
-                className="object-contain w-full h-full rounded-xl"
+                className="object-contain max-h-[85vh] w-auto rounded-xl"
               />
             ) : getFileType(lightboxFile.mimetype) === "video" ? (
               <video src={lightboxFile.signedUrl} controls className="w-full rounded-xl" />
