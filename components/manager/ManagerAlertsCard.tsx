@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Bell, CheckCircle, AlertTriangle, AlertOctagon, Clock, User, MapPin, Volume2, Play } from "lucide-react"
 import { getManagerAlerts, acknowledgeAlert } from "@/lib/actions/manager-alerts"
 import { useAlertAudio } from "@/hooks/useAlertAudio"
@@ -28,12 +28,23 @@ export default function ManagerAlertsCard() {
   const [lastAlertCount, setLastAlertCount] = useState(0)
   const { play } = useAlertAudio()
 
+  const loadAlerts = useCallback(async () => {
+    try {
+      const data = await getManagerAlerts(!showAcknowledged)
+      setAlerts(data)
+    } catch (err) {
+      console.error("Failed to load alerts:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [showAcknowledged])
+
   useEffect(() => {
     loadAlerts()
     // Poll for new alerts every 10 seconds
     const interval = setInterval(loadAlerts, 10000)
     return () => clearInterval(interval)
-  }, [showAcknowledged])
+  }, [loadAlerts])
 
   useEffect(() => {
     // Play alert sound if new unacknowledged alerts arrive
@@ -50,17 +61,6 @@ export default function ManagerAlertsCard() {
     }
     setLastAlertCount(unacknowledgedCount)
   }, [alerts, lastAlertCount, play])
-
-  async function loadAlerts() {
-    try {
-      const data = await getManagerAlerts(!showAcknowledged)
-      setAlerts(data)
-    } catch (err) {
-      console.error("Failed to load alerts:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function handleAcknowledge(alertId: string) {
     setAcknowledging(alertId)

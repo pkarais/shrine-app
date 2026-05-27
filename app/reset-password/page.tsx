@@ -18,6 +18,7 @@ export default function ResetPasswordPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSessionValid(!!session)

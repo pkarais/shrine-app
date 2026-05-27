@@ -155,6 +155,7 @@ export function RecognitionMonitor() {
     } catch {}
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const setup = setTimeout(() => {
       check()
