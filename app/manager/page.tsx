@@ -15,6 +15,7 @@ import { OvertimeAlerts } from "@/components/manager/OvertimeAlerts"
 import { analyzeOvertime } from "@/lib/overtime-analysis"
 import { getManagerIncidents } from "@/lib/actions/incidents"
 import { WalkthroughActivity } from "@/components/manager/WalkthroughActivity"
+import { ExportDataButton } from "@/components/manager/ExportDataButton"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 
 export default async function ManagerPage() {
@@ -244,10 +245,10 @@ export default async function ManagerPage() {
                 <h2 className="text-display-lg text-on-surface">Manager&apos;s Command Center</h2>
               </div>
               <div className="flex flex-wrap gap-3">
-                <button className="bg-surface-container-highest px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-dim transition-colors text-on-surface">
-                  <span className="material-symbols-outlined">ios_share</span>
-                  Export Data
-                </button>
+                <ExportDataButton
+                  data={shiftsWithProfiles || []}
+                  filename={`shifts-export-${new Date().toISOString().slice(0, 10)}.csv`}
+                />
                 <a
                   href="/calendar"
                   className="gold-accents text-on-secondary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-sm transition-transform active:scale-95"

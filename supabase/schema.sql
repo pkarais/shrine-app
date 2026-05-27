@@ -271,6 +271,7 @@ CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON maintenance_tickets (assig
 -- 4. ROW LEVEL SECURITY
 -- ────────────────────────────────────────────────────────────
 
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shifts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE walkthroughs ENABLE ROW LEVEL SECURITY;
@@ -393,6 +394,22 @@ CREATE POLICY "breaks_update_own" ON breaks
     )
   );
 
+-- ── Profiles policies ─────────────────────────────────────
+-- All authenticated users can read profiles (staff directory)
+CREATE POLICY "profiles_select_auth" ON profiles
+  FOR SELECT TO authenticated
+  USING (true);
+
+-- Users can update their own profile
+CREATE POLICY "profiles_update_own" ON profiles
+  FOR UPDATE TO authenticated
+  USING (id = auth.uid());
+
+-- Managers can update any profile
+CREATE POLICY "profiles_update_manager" ON profiles
+  FOR UPDATE TO authenticated
+  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'manager');
+
 -- ── Maintenance tickets policies ────────────────────────────
 -- Managers see ALL tickets
 -- Operations see: unassigned open tickets + tickets assigned to them + tickets they created
@@ -476,6 +493,51 @@ CREATE POLICY "visitor_volume_select_auth" ON visitor_volume FOR SELECT TO authe
   USING (true);
 CREATE POLICY "visitor_volume_insert_auth" ON visitor_volume FOR INSERT TO authenticated
   WITH CHECK (true);
+
+-- ── Staff Directory policies ───────────────────────────────
+ALTER TABLE staff_directory ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "staff_directory_select_auth" ON staff_directory FOR SELECT TO authenticated
+  USING (true);
+CREATE POLICY "staff_directory_insert_manager" ON staff_directory FOR INSERT TO authenticated
+  WITH CHECK (auth.jwt()->>'role' = 'manager');
+CREATE POLICY "staff_directory_update_manager" ON staff_directory FOR UPDATE TO authenticated
+  USING (auth.jwt()->>'role' = 'manager');
+
+-- ── Group Conversations policies ───────────────────────────
+ALTER TABLE group_conversations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "group_conversations_select_participant" ON group_conversations FOR SELECT TO authenticated
+  USING (
+    created_by = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM conversation_participants cp
+      WHERE cp.conversation_id = group_conversations.id AND cp.user_id = auth.uid()
+    )
+  );
+CREATE POLICY "group_conversations_insert_auth" ON group_conversations FOR INSERT TO authenticated
+  WITH CHECK (true);
+
+-- ── Conversation Participants policies ─────────────────────
+ALTER TABLE conversation_participants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "conversation_participants_select_own" ON conversation_participants FOR SELECT TO authenticated
+  USING (user_id = auth.uid() OR EXISTS (
+    SELECT 1 FROM conversation_participants cp2
+    WHERE cp2.conversation_id = conversation_participants.conversation_id AND cp2.user_id = auth.uid()
+  ));
+CREATE POLICY "conversation_participants_insert_manager" ON conversation_participants FOR INSERT TO authenticated
+  WITH CHECK (auth.jwt()->>'role' = 'manager');
+
+-- ── Group Messages policies ────────────────────────────────
+ALTER TABLE group_messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "group_messages_select_participant" ON group_messages FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM conversation_participants cp
+    WHERE cp.conversation_id = group_messages.conversation_id AND cp.user_id = auth.uid()
+  ));
+CREATE POLICY "group_messages_insert_participant" ON group_messages FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM conversation_participants cp
+    WHERE cp.conversation_id = group_messages.conversation_id AND cp.user_id = auth.uid()
+  ));
 
 -- ────────────────────────────────────────────────────────────
 -- 5. TRIGGERS (auto-update updated_at on events)

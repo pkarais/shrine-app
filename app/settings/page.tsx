@@ -406,6 +406,116 @@ function StaffWakeUpAlarm() {
 }
 
 export default function SettingsPage() {
+function ManagerAppSettings() {
+  const [aiProvider, setAiProvider] = useState("none")
+  const [aiKey, setAiKey] = useState("")
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem("shrine_ai_provider") || "none"
+    const storedKey = localStorage.getItem("shrine_ai_key") || ""
+    setAiProvider(stored)
+    setAiKey(storedKey)
+  }, [])
+
+  const handleSaveAI = () => {
+    localStorage.setItem("shrine_ai_provider", aiProvider)
+    if (aiKey) localStorage.setItem("shrine_ai_key", aiKey)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleClearAI = () => {
+    localStorage.removeItem("shrine_ai_provider")
+    localStorage.removeItem("shrine_ai_key")
+    setAiProvider("none")
+    setAiKey("")
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* AI Provider */}
+      <div className="bg-surface-container-low rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary">automation</span>
+          <h3 className="font-headline font-bold text-lg text-on-surface">AI Provider</h3>
+        </div>
+        <p className="text-sm text-on-surface-variant">
+          Connect an AI service to enhance shift optimization and scheduling recommendations.
+        </p>
+        <div className="space-y-3">
+          <label className="text-xs font-bold uppercase text-on-surface-variant tracking-wider block">Provider</label>
+          <select
+            value={aiProvider}
+            onChange={(e) => setAiProvider(e.target.value)}
+            className="w-full px-4 py-3 bg-surface-container-high rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="none">None (Built-in Optimizer)</option>
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="openrouter">OpenRouter</option>
+          </select>
+        </div>
+        {aiProvider !== "none" && (
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase text-on-surface-variant tracking-wider block">API Key</label>
+            <input
+              type="password"
+              value={aiKey}
+              onChange={(e) => setAiKey(e.target.value)}
+              placeholder="sk-..."
+              className="w-full px-4 py-3 bg-surface-container-high rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+        )}
+        <div className="flex gap-3">
+          <button onClick={handleSaveAI} className="px-4 py-2 bg-primary text-on-primary rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors">
+            {saved ? "Saved!" : "Save"}
+          </button>
+          <button onClick={handleClearAI} className="px-4 py-2 bg-surface-container-highest text-on-surface rounded-xl font-bold text-sm hover:bg-surface-dim transition-colors">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Links */}
+      <div className="bg-surface-container-low rounded-2xl p-6 space-y-4">
+        <h3 className="font-headline font-bold text-lg text-on-surface">Manager Tools</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <a href="/manager" className="flex items-center gap-3 p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors">
+            <span className="material-symbols-outlined text-primary">dashboard</span>
+            <div>
+              <p className="font-bold text-sm text-on-surface">Command Center</p>
+              <p className="text-xs text-on-surface-variant">Manager dashboard</p>
+            </div>
+          </a>
+          <a href="/manager/reports" className="flex items-center gap-3 p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors">
+            <span className="material-symbols-outlined text-primary">analytics</span>
+            <div>
+              <p className="font-bold text-sm text-on-surface">Reports</p>
+              <p className="text-xs text-on-surface-variant">Analytics and exports</p>
+            </div>
+          </a>
+          <a href="/calendar" className="flex items-center gap-3 p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors">
+            <span className="material-symbols-outlined text-primary">calendar_month</span>
+            <div>
+              <p className="font-bold text-sm text-on-surface">Calendar</p>
+              <p className="text-xs text-on-surface-variant">Schedule shifts</p>
+            </div>
+          </a>
+          <a href="/operations-brief" className="flex items-center gap-3 p-4 bg-surface-container rounded-xl hover:bg-surface-container-high transition-colors">
+            <span className="material-symbols-outlined text-primary">article</span>
+            <div>
+              <p className="font-bold text-sm text-on-surface">Operations Brief</p>
+              <p className="text-xs text-on-surface-variant">Monthly briefings</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
   const [role, setRole] = useState<string | null>(null)
   const [checkingRole, setCheckingRole] = useState(true)
 
@@ -435,7 +545,7 @@ export default function SettingsPage() {
           <div>
             <h1 className="font-headline text-2xl font-bold text-on-surface">Settings</h1>
             <p className="text-sm text-on-surface-variant">
-              {isManager ? "Configure alert preferences for the team" : "Set your personal wake-up alarm"}
+              {isManager ? "Configure app and team preferences" : "Set your personal preferences"}
             </p>
           </div>
         </div>
@@ -446,7 +556,10 @@ export default function SettingsPage() {
             <div className="h-32 bg-surface-container rounded-2xl" />
           </div>
         ) : isManager ? (
-          <ManagerAlertControls />
+          <div className="space-y-8">
+            <ManagerAlertControls />
+            <ManagerAppSettings />
+          </div>
         ) : (
           <StaffWakeUpAlarm />
         )}

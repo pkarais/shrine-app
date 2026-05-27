@@ -26,12 +26,14 @@ export function ShiftOptimizerPanel({
     setStatus(null)
     startTransition(async () => {
       try {
+        const provider = localStorage.getItem("shrine_ai_provider") || "none"
+        const apiKey = localStorage.getItem("shrine_ai_key") || ""
         const response = await fetch("/api/manager/optimizer", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ mode: "auto" }),
+          body: JSON.stringify({ provider, apiKey: provider !== "none" ? apiKey : undefined }),
         })
 
         if (!response.ok) {

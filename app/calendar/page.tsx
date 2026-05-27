@@ -98,92 +98,13 @@ export default async function CalendarPage({
     .in("role", ["operations", "security"])
     .order("full_name", { ascending: true })
 
-  const { data: staffDirectory } = await admin
-    .from("staff_directory")
-    .select("*")
-    .limit(500)
-
-  const profileByEmail = new Map(
-    (staffProfiles || [])
-      .filter((p) => p.email)
-      .map((p) => [String(p.email).toLowerCase(), p])
-  )
-  const profileById = new Map((staffProfiles || []).map((p) => [String(p.id), p]))
-  const profileByName = new Map(
-    (staffProfiles || [])
-      .filter((p) => p.full_name)
-      .map((p) => [String(p.full_name).toLowerCase(), p])
-  )
-
-  const mergedDirectoryStaff = (staffDirectory || []).map((row: any, idx: number) => {
-    const name = row.full_name || row.name || row.staff_name || null
-    const email = row.email || row.staff_email || null
-    const role = row.role || row.department || null
-    const candidateId =
-      row.profile_id ||
-      row.user_id ||
-      row.auth_user_id ||
-      (typeof row.id === "string" ? row.id : null)
-    const looksLikeUuid = typeof candidateId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(candidateId)
-    const matchedProfile =
-      (looksLikeUuid ? profileById.get(String(candidateId)) : null) ||
-      (email ? profileByEmail.get(String(email).toLowerCase()) : null) ||
-      (name ? profileByName.get(String(name).toLowerCase()) : null) ||
-      null
-
-    if (matchedProfile) {
-      return {
-        id: matchedProfile.id,
-        full_name: matchedProfile.full_name,
-        email: matchedProfile.email,
-        role: matchedProfile.role,
-        assignable: true,
-      }
-    }
-
-    if (looksLikeUuid) {
-      return {
-        id: String(candidateId),
-        full_name: name,
-        email,
-        role,
-        assignable: true,
-      }
-    }
-
-    const syntheticId = `directory:${name || email || idx}`
-    return {
-      id: syntheticId,
-      full_name: name,
-      email,
-      role,
-      assignable: true,
-    }
-  })
-
-  const unmatchedProfiles = (staffProfiles || [])
-    .filter((profile) => {
-      const byEmail = profile.email ? (staffDirectory || []).some((r: any) => String(r.email || r.staff_email || "").toLowerCase() === String(profile.email).toLowerCase()) : false
-      const byName = profile.full_name ? (staffDirectory || []).some((r: any) => String(r.full_name || r.name || r.staff_name || "").toLowerCase() === String(profile.full_name).toLowerCase()) : false
-      return !byEmail && !byName
-    })
-    .map((profile) => ({
-      id: profile.id,
-      full_name: profile.full_name,
-      email: profile.email,
-      role: profile.role,
-      assignable: true,
-    }))
-
-  const staffOptions = [...mergedDirectoryStaff, ...unmatchedProfiles].reduce((acc: any[], item: any) => {
-    if (!acc.some((existing) => existing.id === item.id)) {
-      acc.push(item)
-    }
-    return acc
-  }, []).filter((item: any) => {
-    const r = String(item.role || "").toLowerCase()
-    return r === "operations" || r === "security" || r === "ops" || !r
-  })
+  const staffOptions = (staffProfiles || []).map((profile) => ({
+    id: profile.id,
+    full_name: profile.full_name,
+    email: profile.email,
+    role: profile.role,
+    assignable: true,
+  }))
 
   const filteredEventsRaw = (events || []).filter((event) => {
     if (roleFilter === "all") return true

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
+import { NotificationBell } from "./NotificationBell"
 
 const ROLE_BADGES: Record<string, { label: string; color: string }> = {
   manager: { label: "Manager", color: "bg-amber-600" },
@@ -153,16 +154,7 @@ export function TopAppBar({ showProfile = true }: { showProfile?: boolean }) {
           })}
         </nav>
 
-        {navGroup === "manager" && (
-          <button
-            onClick={() => window.location.href = "/manager"}
-            className="p-2 rounded-full hover:bg-[var(--surface-container)] dark:hover:bg-slate-700/50 transition-colors relative"
-            aria-label="Notifications"
-          >
-            <span className="material-symbols-outlined text-[var(--on-surface-variant)] dark:text-white/60">notifications_active</span>
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-tertiary-container" />
-          </button>
-        )}
+        <NotificationBell />
 
         {/* Theme Toggle */}
         <ThemeToggle />

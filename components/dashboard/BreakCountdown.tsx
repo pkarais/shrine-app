@@ -1,90 +1,145 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { getActiveShift } from "@/lib/actions/clock-in"
+
+interface Break {
+  label: string
+  startOffsetMinutes: number
+  durationMinutes: number
+}
+
+const BREAKS: Break[] = [
+  { label: "First Break", startOffsetMinutes: 105, durationMinutes: 15 },   // 1:45 after clock-in
+  { label: "Lunch Break", startOffsetMinutes: 180, durationMinutes: 30 },    // 3:00 after clock-in
+  { label: "Final Break", startOffsetMinutes: 270, durationMinutes: 15 },   // 1:30 after lunch ends (4:30 total)
+]
 
 export function BreakCountdown() {
   const [timeRemaining, setTimeRemaining] = useState(0)
   const [progress, setProgress] = useState(0)
   const [nextBreak, setNextBreak] = useState("")
+  const [clockInTime, setClockInTime] = useState<Date | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const now = new Date()
-    const breakTimes = [
-      { label: "First Break", hour: 13.5 },
-      { label: "Second Break", hour: 17.5 },
-      { label: "Final Break", hour: 20.5 },
-    ]
-
-    const currentHour = now.getHours() + now.getMinutes() / 60
-    const upcoming = breakTimes.find((b) => b.hour > currentHour)
-
-    if (upcoming) {
-      const breakTime = new Date(now)
-      breakTime.setHours(Math.floor(upcoming.hour), (upcoming.hour % 1) * 60, 0, 0)
-      const diff = breakTime.getTime() - now.getTime()
-      setTimeRemaining(diff)
-      setNextBreak(upcoming.label)
-
-      const totalWorkTime = (upcoming.hour - 8) * 3600000
-      const elapsed = now.getTime() - new Date(now).setHours(8, 0, 0, 0)
-      setProgress(Math.min(100, Math.max(0, (elapsed / totalWorkTime) * 100)))
-    }
-
-    const interval = setInterval(() => {
-      const n = new Date()
-      const ch = n.getHours() + n.getMinutes() / 60
-      const up = breakTimes.find((b) => b.hour > ch)
-      if (up) {
-        const bt = new Date(n)
-        bt.setHours(Math.floor(up.hour), (up.hour % 1) * 60, 0, 0)
-        setTimeRemaining(bt.getTime() - n.getTime())
-        const tw = (up.hour - 8) * 3600000
-        const el = n.getTime() - new Date(n).setHours(8, 0, 0, 0)
-        setProgress(Math.min(100, Math.max(0, (el / tw) * 100)))
+    async function fetchShift() {
+      try {
+        const shift = await getActiveShift()
+        if (shift?.clock_in) {
+          setClockInTime(new Date(shift.clock_in))
+        }
+      } catch (e) {
+        console.error("Failed to fetch active shift:", e)
+      } finally {
+        setLoading(false)
       }
-    }, 60000)
-
-    return () => clearInterval(interval)
+    }
+    fetchShift()
   }, [])
 
-  const hours = Math.floor(timeRemaining / 3600000)
-  const minutes = Math.floor((timeRemaining % 3600000) / 60000)
-  const display = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+  useEffect(() => {
+    if (!clockInTime) return
+    const startTime = clockInTime
+
+    function updateCountdown() {
+      const now = new Date()
+      const elapsedMinutes = (now.getTime() - startTime.getTime()) / (1000 * 60)
+
+      // Find the next upcoming break
+      const upcoming = BREAKS.find((b) => elapsedMinutes < b.startOffsetMinutes)
+
+      if (upcoming) {
+        const breakStartMinutes = upcoming.startOffsetMinutes
+        const minutesUntilBreak = breakStartMinutes - elapsedMinutes
+        const totalWorkTime = breakStartMinutes * 60 * 1000
+        const elapsed = elapsedMinutes * 60 * 1000
+
+        setTimeRemaining(minutesUntilBreak * 60 * 1000)
+        setNextBreak(upcoming.label)
+        setProgress(Math.min(100, Math.max(0, (elapsed / totalWorkTime) * 100)))
+      } else {
+        // All breaks passed
+        setTimeRemaining(0)
+        setNextBreak("All breaks completed")
+        setProgress(100)
+      }
+    }
+
+    updateCountdown()
+    const interval = setInterval(updateCountdown, 1000)
+    return () => clearInterval(interval)
+  }, [clockInTime])
+
+  const formatTime = (ms: number) => {
+    if (ms <= 0) return "00:00"
+    const totalSeconds = Math.floor(ms / 1000)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+    }
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-surface-container rounded-xl p-6">
+        <p className="text-sm text-on-surface-variant">Loading break schedule...</p>
+      </div>
+    )
+  }
+
+  if (!clockInTime) {
+    return (
+      <div className="bg-surface-container rounded-xl p-6">
+        <h3 className="font-headline font-bold text-lg text-on-surface mb-2">Break Schedule</h3>
+        <p className="text-sm text-on-surface-variant">Clock in to see your break schedule.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-surface-container-low rounded-[2rem] p-8 flex flex-col justify-between min-h-[320px]">
-      <div>
-        <span className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-4 block">
-          Next Scheduled Break
+    <div className="bg-surface-container rounded-xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-headline font-bold text-lg text-on-surface">{nextBreak || "Break Schedule"}</h3>
+        <span className="text-xs text-on-surface-variant">
+          Clock-in: {clockInTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
-        <div className="flex items-baseline gap-1">
-          <span className="font-headline text-6xl font-extrabold text-primary">{display}</span>
-          <span className="font-headline text-xl text-on-surface-variant">remaining</span>
-        </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-on-surface-variant font-medium">Progress to {nextBreak}</span>
-          <span className="text-primary font-bold">{Math.round(progress)}%</span>
-        </div>
-        <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-1000"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="flex gap-2">
-          <span className="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-bold rounded-full uppercase tracking-tighter">
-            {Math.round(progress / 20) * 2.5}H Done
-          </span>
-          <span className="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">
-            5.5H Next
-          </span>
-          <span className="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">
-            8.5H Final
-          </span>
-        </div>
+      <div className="relative h-2 bg-surface-container-high rounded-full overflow-hidden mb-4">
+        <div
+          className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-1000"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="text-center">
+        <p className="text-3xl font-black text-on-surface tabular-nums">{formatTime(timeRemaining)}</p>
+        <p className="text-xs text-on-surface-variant mt-1">
+          {timeRemaining > 0 ? "until next break" : "break time or completed"}
+        </p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {BREAKS.map((b) => {
+          const breakTime = new Date(clockInTime.getTime() + b.startOffsetMinutes * 60 * 1000)
+          const isPast = new Date() > breakTime
+          return (
+            <div
+              key={b.label}
+              className={`text-center p-2 rounded-lg ${isPast ? "bg-primary/10" : "bg-surface-container-high"}`}
+            >
+              <p className="text-[10px] font-bold uppercase text-on-surface-variant">{b.label}</p>
+              <p className={`text-sm font-bold ${isPast ? "text-primary" : "text-on-surface"}`}>
+                {breakTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+              <p className="text-[10px] text-on-surface-variant">{b.durationMinutes} min</p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

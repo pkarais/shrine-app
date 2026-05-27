@@ -29,6 +29,23 @@ export const clockIn = async (eventId: number, lat: number, lon: number) => {
   return { success: true, shift: data }
 }
 
+export const getActiveShift = async () => {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data } = await supabase
+    .from("shifts")
+    .select("id, clock_in, clock_out, event_id")
+    .eq("user_id", user.id)
+    .is("clock_out", null)
+    .order("clock_in", { ascending: false })
+    .limit(1)
+    .single()
+
+  return data
+}
+
 export const clockOut = async (shiftId: string) => {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

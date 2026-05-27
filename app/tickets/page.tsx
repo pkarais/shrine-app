@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import { TopAppBar } from "@/components/layout/TopAppBar"
-import { Wrench, Clock, CheckCircle2, RefreshCw, Inbox, User, Plus } from "lucide-react"
+import { Wrench, Clock, CheckCircle2, RefreshCw, Inbox, User, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { TicketCard, TicketCardGroup } from "@/components/shared/TicketCard"
 import { MaintenanceTicketForm } from "@/components/forms/MaintenanceTicketForm"
@@ -42,6 +42,22 @@ export default function TicketsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filterTickets = (tickets: Ticket[]) => {
+    if (!searchQuery.trim()) return tickets
+    const q = searchQuery.toLowerCase()
+    return tickets.filter((t) =>
+      t.title?.toLowerCase().includes(q) ||
+      t.description?.toLowerCase().includes(q) ||
+      t.profiles?.full_name?.toLowerCase().includes(q) ||
+      t.assigned_profile?.full_name?.toLowerCase().includes(q)
+    )
+  }
+
+  const filteredPool = filterTickets(unassignedTickets)
+  const filteredAssigned = filterTickets(assignedTickets)
+  const filteredMy = filterTickets(myTickets)
 
   const fetchData = () => {
     setLoading(true)
@@ -200,6 +216,20 @@ export default function TicketsPage() {
           )}
         </div>
 
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tickets by title, description, or assignee..."
+              className="w-full pl-10 pr-4 py-3 bg-surface-container-high rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant/60 outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+        </div>
+
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {(isManager || isOperations) && (
@@ -260,16 +290,18 @@ export default function TicketsPage() {
         <div className="space-y-4">
           {activeTab === "pool" && (
             <>
-              {unassignedTickets.length === 0 ? (
+              {filteredPool.length === 0 ? (
                 <div className="text-center py-16 bg-surface-container-low rounded-2xl">
                   <Inbox className="w-12 h-12 mx-auto text-on-surface-variant opacity-30 mb-3" />
-                  <p className="text-sm text-on-surface-variant font-medium">No unassigned tickets</p>
+                  <p className="text-sm text-on-surface-variant font-medium">
+                    {searchQuery ? "No matching tickets" : "No unassigned tickets"}
+                  </p>
                   <p className="text-xs text-on-surface-variant opacity-60 mt-1">
-                    All tickets have been assigned
+                    {searchQuery ? "Try a different search term" : "All tickets have been assigned"}
                   </p>
                 </div>
               ) : (
-                unassignedTickets.map((ticket) => (
+                filteredPool.map((ticket) => (
                   <TicketCard
                     key={ticket.id}
                     ticket={ticket}
@@ -286,16 +318,18 @@ export default function TicketsPage() {
 
           {activeTab === "assigned" && (
             <>
-              {assignedTickets.length === 0 ? (
+              {filteredAssigned.length === 0 ? (
                 <div className="text-center py-16 bg-surface-container-low rounded-2xl">
                   <CheckCircle2 className="w-12 h-12 mx-auto text-on-surface-variant opacity-30 mb-3" />
-                  <p className="text-sm text-on-surface-variant font-medium">No tickets assigned to you</p>
+                  <p className="text-sm text-on-surface-variant font-medium">
+                    {searchQuery ? "No matching tickets" : "No tickets assigned to you"}
+                  </p>
                   <p className="text-xs text-on-surface-variant opacity-60 mt-1">
-                    Browse the unassigned pool to claim work
+                    {searchQuery ? "Try a different search term" : "Browse the unassigned pool to claim work"}
                   </p>
                 </div>
               ) : (
-                assignedTickets.map((ticket) => (
+                filteredAssigned.map((ticket) => (
                   <TicketCard
                     key={ticket.id}
                     ticket={ticket}
@@ -310,18 +344,20 @@ export default function TicketsPage() {
 
           {activeTab === "my" && (
             <>
-              {myTickets.length === 0 ? (
+              {filteredMy.length === 0 ? (
                 <div className="text-center py-16 bg-surface-container-low rounded-2xl">
                   <Wrench className="w-12 h-12 mx-auto text-on-surface-variant opacity-30 mb-3" />
-                  <p className="text-sm text-on-surface-variant font-medium">No tickets submitted</p>
-                  {canCreateTicket && (
+                  <p className="text-sm text-on-surface-variant font-medium">
+                    {searchQuery ? "No matching tickets" : "No tickets submitted"}
+                  </p>
+                  {canCreateTicket && !searchQuery && (
                     <Button onClick={() => { setIsFormOpen(true); setIsCreating(true); }} className="mt-4">
                       <Plus className="w-4 h-4 mr-1" /> Create First Ticket
                     </Button>
                   )}
                 </div>
               ) : (
-                myTickets.map((ticket) => (
+                filteredMy.map((ticket) => (
                   <TicketCard
                     key={ticket.id}
                     ticket={ticket}

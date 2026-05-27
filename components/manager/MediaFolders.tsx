@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
 import Image from "next/image"
-import { FileText, Video, Play, X, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react"
+import { FileText, Video, X, Image as ImageIcon } from "lucide-react"
 
 interface StorageFile {
   name: string
@@ -26,11 +26,14 @@ export function MediaFolders() {
   const [selectedFile, setSelectedFile] = useState<StorageFile | null>(null)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     async function fetchFiles() {
       try {
+        setError(null)
+        // List recursively to get nested files
         const { data, error } = await supabase
           .storage
           .from("employee-uploads")
@@ -39,16 +42,29 @@ export function MediaFolders() {
             offset: 0,
             sortBy: { column: "updated_at", order: "desc" },
           })
-        if (error) throw error
-        setFiles((data as StorageFile[]) || [])
-      } catch (err) {
+        if (error) {
+          // Bucket might not exist
+          if (error.message?.includes("bucket") || error.message?.includes("not found")) {
+            setError("Storage bucket not configured. Please create 'employee-uploads' bucket in Supabase.")
+            setFiles([])
+            return
+          }
+          throw error
+        }
+
+        // Filter out folders (they have no metadata.mimetype)
+        const allItems = (data as StorageFile[]) || []
+        const fileItems = allItems.filter((item) => item.metadata?.mimetype)
+        setFiles(fileItems)
+      } catch (err: any) {
         console.error("Failed to fetch media:", err)
+        setError(err.message || "Failed to load media")
       } finally {
         setLoading(false)
       }
     }
     fetchFiles()
-  }, [supabase.storage])
+  }, [supabase])
 
   const groupedFiles: GroupedFile[] = files.reduce((acc, file) => {
     const userKey = file.name.split("/")[0] || "Unknown"
@@ -68,16 +84,24 @@ export function MediaFolders() {
     return "document"
   }
 
-  function getPublicUrl(file: StorageFile): string {
-    const { data } = supabase.storage
+  async function getSignedUrl(file: StorageFile): Promise<string> {
+    const { data, error } = await supabase.storage
       .from("employee-uploads")
-      .getPublicUrl(file.name)
-    return data.publicUrl
+      .createSignedUrl(file.name, 60 * 60) // 1 hour
+    if (error || !data?.signedUrl) {
+      // Fallback to public URL
+      const { data: publicData } = supabase.storage
+        .from("employee-uploads")
+        .getPublicUrl(file.name)
+      return publicData.publicUrl
+    }
+    return data.signedUrl
   }
 
-  function openLightbox(file: StorageFile) {
+  async function openLightbox(file: StorageFile) {
     setSelectedFile(file)
-    setLightboxUrl(getPublicUrl(file))
+    const url = await getSignedUrl(file)
+    setLightboxUrl(url)
     setLightboxOpen(true)
   }
 
@@ -95,160 +119,125 @@ export function MediaFolders() {
 
   if (loading) {
     return (
-      <section className="section-wrapper p-8">
-        <p className="text-xs label-text text-[var(--on-surface-variant)] mb-6">Staff Media</p>
+      <section className="bg-surface-container-low rounded-xl p-6">
+        <h3 className="font-headline font-bold text-xl mb-4">Staff Media</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-[var(--surface-container-low)] rounded-xl h-32 animate-pulse" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="aspect-square bg-surface-container-high rounded-xl animate-pulse" />
           ))}
         </div>
       </section>
     )
   }
 
-  return (
-    <>
-      <section className="section-wrapper p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-xs label-text text-[var(--on-surface-variant)] mb-1">Staff Media</p>
-            <p className="body-md">{files.length} files from {groupedFiles.length} staff members</p>
-          </div>
+  if (error) {
+    return (
+      <section className="bg-surface-container-low rounded-xl p-6">
+        <h3 className="font-headline font-bold text-xl mb-4">Staff Media</h3>
+        <div className="p-4 bg-red-500/10 rounded-xl text-sm text-red-400">
+          <p className="font-bold">Error loading media</p>
+          <p className="mt-1">{error}</p>
         </div>
-
-        {groupedFiles.length === 0 ? (
-          <div className="text-center py-12 text-[var(--on-surface-variant)] body-md">
-            No media uploads yet
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {groupedFiles.map((group) => (
-              <div key={group.user}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full sacred-gradient flex items-center justify-center text-white font-bold text-sm">
-                    {group.user[0]?.toUpperCase() ?? "S"}
-                  </div>
-                  <h4 className="font-semibold text-[var(--on-surface)]">{group.user}</h4>
-                  <span className="badge-task">{group.files.length}</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {group.files.map((file) => {
-                    const type = getFileType(file)
-                    const url = getPublicUrl(file)
-                    return (
-                      <button
-                        key={file.id || file.name}
-                        onClick={() => openLightbox(file)}
-                        className="group relative bg-[var(--surface-container-lowest)] rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200 text-left"
-                      >
-                        {type === "image" ? (
-                          <div className="relative aspect-square">
-                            <Image
-                              src={url}
-                              alt={file.name}
-                              fill
-                              className="object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
-                            />
-                            <div className="absolute top-2 right-2">
-                              <span className="bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                {type}
-                              </span>
-                            </div>
-                          </div>
-                        ) : type === "video" ? (
-                          <div className="relative aspect-square bg-[var(--surface-container)] flex flex-col items-center justify-center">
-                            <div className="w-12 h-12 rounded-full bg-[var(--primary)]/80 flex items-center justify-center group-hover:bg-[var(--primary)] transition-colors">
-                              <Play className="w-5 h-5 text-white ml-0.5" />
-                            </div>
-                            <span className="text-xs text-[var(--on-surface-variant)] mt-2">Video</span>
-                          </div>
-                        ) : (
-                          <div className="relative aspect-square bg-[var(--surface-container)] flex flex-col items-center justify-center">
-                            <FileIcon type={type} />
-                            <span className="text-xs text-[var(--on-surface-variant)] mt-2">Document</span>
-                          </div>
-                        )}
-                        <div className="p-3">
-                          <p className="text-xs font-medium text-[var(--on-surface)] truncate">
-                            {file.name.split("/").pop()}
-                          </p>
-                          <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">
-                            {new Date(file.updated_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
+    )
+  }
 
+  if (files.length === 0) {
+    return (
+      <section className="bg-surface-container-low rounded-xl p-6">
+        <h3 className="font-headline font-bold text-xl mb-4">Staff Media</h3>
+        <p className="text-sm text-on-surface-variant">No media uploads yet.</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="bg-surface-container-low rounded-xl p-6">
+      <h3 className="font-headline font-bold text-xl mb-4">Staff Media</h3>
+      <div className="space-y-6">
+        {groupedFiles.map((group) => (
+          <div key={group.user}>
+            <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-3">
+              {group.user === "Unknown" ? "Unsorted" : group.user}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {group.files.map((file) => {
+                const type = getFileType(file)
+                return (
+                  <button
+                    key={file.id}
+                    onClick={() => openLightbox(file)}
+                    className="group relative aspect-square bg-surface-container-high rounded-xl overflow-hidden hover:ring-2 hover:ring-primary transition-all"
+                  >
+                    {type === "image" ? (
+                      <Image
+                        src={`/api/storage/employee-uploads/${file.name}`}
+                        alt={file.name}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none"
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                        <FileIcon type={type} />
+                        <span className="text-xs text-on-surface-variant px-2 truncate max-w-full">
+                          {file.name.split("/").pop()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lightbox */}
       {lightboxOpen && selectedFile && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={closeLightbox}
         >
-          <div
-            className="relative max-w-4xl max-h-[90vh] w-full mx-4"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
           >
-            <button
-              onClick={closeLightbox}
-              className="absolute -top-12 right-0 text-white hover:text-[var(--secondary)] transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {lightboxUrl && getFileType(selectedFile) === "image" && (
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <div className="max-w-4xl max-h-[80vh] w-full" onClick={(e) => e.stopPropagation()}>
+            {getFileType(selectedFile) === "image" && lightboxUrl ? (
               <Image
                 src={lightboxUrl}
                 alt={selectedFile.name}
-                width={800}
-                height={600}
-                className="w-full h-auto rounded-xl"
+                width={1200}
+                height={800}
+                className="object-contain w-full h-full rounded-xl"
               />
-            )}
-
-            {lightboxUrl && getFileType(selectedFile) === "video" && (
-              <video
-                src={lightboxUrl}
-                controls
-                className="w-full h-auto rounded-xl"
-                autoPlay
-              />
-            )}
-
-            {getFileType(selectedFile) === "document" && (
-              <div className="bg-[var(--surface-container-lowest)] rounded-xl p-12 text-center">
-                <FileText className="w-16 h-16 mx-auto text-[var(--on-surface-variant)] mb-4" />
-                <p className="font-semibold text-[var(--on-surface)] mb-2">
-                  {selectedFile.name.split("/").pop()}
-                </p>
-                <a
-                  href={lightboxUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-white rounded-xl font-semibold hover:bg-[var(--primary-container)] transition-colors"
-                >
-                  Open Document
-                </a>
+            ) : getFileType(selectedFile) === "video" && lightboxUrl ? (
+              <video src={lightboxUrl} controls className="w-full rounded-xl" />
+            ) : (
+              <div className="bg-surface p-8 rounded-xl text-center">
+                <FileIcon type={getFileType(selectedFile)} />
+                <p className="mt-4 text-lg font-bold">{selectedFile.name.split("/").pop()}</p>
+                {lightboxUrl && (
+                  <a
+                    href={lightboxUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-xl"
+                  >
+                    Open File
+                  </a>
+                )}
               </div>
             )}
-
-            <div className="mt-4 text-center">
-              <p className="text-sm text-white/80">
-                {selectedFile.name.split("/").pop()}
-              </p>
-              <p className="text-xs text-white/50 mt-1">
-                Uploaded {new Date(selectedFile.updated_at).toLocaleString()}
-              </p>
-            </div>
           </div>
         </div>
       )}
-    </>
+    </section>
   )
 }

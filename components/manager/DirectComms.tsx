@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 interface Message {
   id: string
@@ -15,12 +16,17 @@ interface Message {
 }
 
 export function DirectComms({ messages }: { messages: Message[] }) {
+  const router = useRouter()
 
   return (
     <div className="bg-surface-container-low rounded-xl p-6 flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-headline font-bold text-xl">Direct Comms</h3>
-        <button className="text-primary hover:bg-primary-fixed p-2 rounded-full transition-colors">
+        <button
+          onClick={() => router.push("/messages")}
+          className="text-primary hover:bg-primary-fixed p-2 rounded-full transition-colors"
+          title="New message"
+        >
           <span className="material-symbols-outlined">edit_square</span>
         </button>
       </div>
