@@ -53,7 +53,11 @@ export async function recordVisitorCount(eventId: number | null, count: number) 
 
 export async function getVisitorVolumeForEvent(eventId: number) {
   const supabase = createServerClient()
-  const { data, error } = await supabase
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from("visitor_volume")
     .select("*")
     .eq("event_id", eventId)
@@ -64,8 +68,12 @@ export async function getVisitorVolumeForEvent(eventId: number) {
 
 export async function getVisitorVolumeToday() {
   const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
   const today = new Date().toISOString().split("T")[0]
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("visitor_volume")
     .select("*")
     .gte("recorded_at", today)

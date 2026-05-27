@@ -1,13 +1,14 @@
 "use server"
 
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 
 export async function getWakeUpAlarm() {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from("staff_wake_up_alarms")
     .select("*")
     .eq("user_id", user.id)
@@ -21,7 +22,8 @@ export async function setWakeUpAlarm(wakeUpTime: string, enabled: boolean) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Not authenticated")
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from("staff_wake_up_alarms")
     .upsert({
       user_id: user.id,
@@ -41,7 +43,8 @@ export async function deleteWakeUpAlarm() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Not authenticated")
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from("staff_wake_up_alarms")
     .delete()
     .eq("user_id", user.id)
@@ -55,7 +58,8 @@ export async function markAlarmTriggered() {
   if (!user) return
 
   const today = new Date().toISOString().split("T")[0]
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from("staff_wake_up_alarms")
     .update({ last_triggered_date: today, updated_at: new Date().toISOString() })
     .eq("user_id", user.id)

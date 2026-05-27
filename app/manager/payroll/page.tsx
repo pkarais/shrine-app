@@ -16,7 +16,7 @@ export default async function ManagerPayrollPage({
   const { data: { user } } = await supabaseAuth.auth.getUser()
   const hasDevBypass = cookies().get('shrine_dev_session')?.value === 'true'
   const devRole = cookies().get('shrine_dev_role')?.value || 'manager'
-  const supabase = (!user && hasDevBypass) ? createAdminClient() : supabaseAuth
+  const supabase = createAdminClient()
 
   if (!user && !hasDevBypass) {
     return (

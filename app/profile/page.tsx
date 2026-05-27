@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { ProfileCard } from "@/components/profile/ProfileCard"
 import { ScheduleList } from "@/components/profile/ScheduleList"
@@ -37,7 +37,7 @@ export default async function ProfilePage() {
   }
 
   const { data: profileForRole } = user
-    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    ? await createAdminClient().from("profiles").select("role").eq("id", user.id).single()
     : { data: null }
 
   const currentRole = ((profileForRole?.role || effectiveUser.role || devRole || "") as string).toLowerCase()

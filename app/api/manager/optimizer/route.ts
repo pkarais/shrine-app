@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { analyzeOvertime } from "@/lib/overtime-analysis"
 
 export async function POST(req: Request) {
@@ -14,7 +14,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
+    const admin = createAdminClient()
+    const { data: profile } = await admin
       .from("profiles")
       .select("role")
       .eq("id", user.id)
@@ -27,14 +28,26 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}))
     const { provider, apiKey } = body
 
-    const { data: shifts } = await supabase
+    const { data: shifts } = await admin
       .from("shifts")
-      .select("id, clock_in, clock_out, events(title)")
+      .select("id, clock_in, clock_out, event_id")
       .not("clock_out", "is", null)
       .order("clock_in", { ascending: false })
       .limit(100)
 
-    const overtimeShifts = analyzeOvertime(shifts || []).filter((shift: any) => shift.isOvertime)
+    // Batch fetch event titles (no FK joins per convention)
+    const eventIds = Array.from(new Set((shifts || []).map((s: any) => s.event_id).filter(Boolean)))
+    const { data: events } = eventIds.length > 0
+      ? await admin.from("events").select("id, title").in("id", eventIds)
+      : { data: [] }
+    const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
+
+    const shiftsWithEvents = (shifts || []).map((s: any) => ({
+      ...s,
+      events: eventMap.get(s.event_id) || null,
+    }))
+
+    const overtimeShifts = analyzeOvertime(shiftsWithEvents || []).filter((shift: any) => shift.isOvertime)
 
     const totalExcessHours = overtimeShifts.reduce(
       (sum: number, shift: any) => sum + Math.max(0, shift.paidHours - 8),

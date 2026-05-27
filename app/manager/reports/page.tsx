@@ -53,7 +53,7 @@ export default async function ManagerReportsPage() {
   }
 
   const profileRole = user
-    ? (await supabase.from("profiles").select("role").eq("id", user.id).single()).data?.role || null
+    ? (await createAdminClient().from("profiles").select("role").eq("id", user.id).single()).data?.role || null
     : hasDevBypass
       ? devRole
       : null

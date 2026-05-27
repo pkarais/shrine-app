@@ -1,5 +1,5 @@
 "use server"
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 
 export function isAfterHours(startTime: string, endTime: string): boolean {
   const start = new Date(startTime)
@@ -9,10 +9,14 @@ export function isAfterHours(startTime: string, endTime: string): boolean {
 
 export async function validateAfterHoursStaffing(eventId: number) {
   const supabase = createServerClient()
-  const { data: event } = await supabase.from("events").select("*").eq("id", eventId).single()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
+  const admin = createAdminClient()
+  const { data: event } = await admin.from("events").select("*").eq("id", eventId).single()
   if (!event) throw new Error("Event not found")
   if (!isAfterHours(event.start_time, event.end_time)) return { isAfterHours: false, sufficient: true, gaps: [] }
-  const { data: assignments } = await supabase.from("staff_assignments").select("role_assigned").eq("event_id", eventId)
+  const { data: assignments } = await admin.from("staff_assignments").select("role_assigned").eq("event_id", eventId)
   const counts = { operations: 0, security: 0 }
   assignments?.forEach((a: any) => { if (a.role_assigned === "operations") counts.operations++; if (a.role_assigned === "security") counts.security++ })
   const gaps = []

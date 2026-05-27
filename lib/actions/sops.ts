@@ -42,7 +42,8 @@ export async function uploadSOPFile(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
   if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Manager access required")
 
   const file = formData.get("file") as File
@@ -65,7 +66,7 @@ export async function uploadSOPFile(
   const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
   const filePath = `${category.toLowerCase().replace(/\s+/g, "-")}/${Date.now()}-${sanitizedName}`
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await admin.storage
     .from("operations-sops")
     .upload(filePath, file, {
       contentType: "application/pdf",
@@ -74,7 +75,7 @@ export async function uploadSOPFile(
 
   if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`)
 
-  const { data: doc, error: dbError } = await supabase
+  const { data: doc, error: dbError } = await admin
     .from("sop_documents")
     .insert({
       title,
@@ -91,7 +92,7 @@ export async function uploadSOPFile(
     .single()
 
   if (dbError) {
-    await supabase.storage.from("operations-sops").remove([filePath])
+    await admin.storage.from("operations-sops").remove([filePath])
     throw new Error(`Database error: ${dbError.message}`)
   }
 
@@ -108,7 +109,8 @@ export async function addSOPExternalLink(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
   if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Manager access required")
 
   if (!title || !category || !externalLink) {
@@ -123,7 +125,7 @@ export async function addSOPExternalLink(
     throw new Error("Please provide a valid URL (Google Drive, Dropbox, OneDrive, or any HTTPS link)")
   }
 
-  const { data: doc, error: dbError } = await supabase
+  const { data: doc, error: dbError } = await admin
     .from("sop_documents")
     .insert({
       title,
@@ -148,12 +150,12 @@ export async function getSOPs(category?: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
   if (!profile || !["operations", "manager", "admin"].includes(profile.role)) {
     throw new Error("Access restricted to operations staff")
   }
 
-  const admin = createAdminClient()
   let query = admin
     .from("sop_documents")
     .select("*")
@@ -185,7 +187,8 @@ export async function getSOPSignedUrl(filePath: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { data, error } = await supabase.storage
+  const admin = createAdminClient()
+  const { data, error } = await admin.storage
     .from("operations-sops")
     .createSignedUrl(filePath, 60 * 60)
 
@@ -198,18 +201,19 @@ export async function deleteSOP(id: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
   if (!profile || !["manager", "admin"].includes(profile.role)) throw new Error("Manager access required")
 
-  const { data: doc } = await supabase.from("sop_documents").select("file_path, source_type").eq("id", id).single()
+  const { data: doc } = await admin.from("sop_documents").select("file_path, source_type").eq("id", id).single()
   if (!doc) throw new Error("Document not found")
 
   // Only delete from storage if it's a supabase file
   if (doc.source_type === "supabase" && doc.file_path) {
-    await supabase.storage.from("operations-sops").remove([doc.file_path])
+    await admin.storage.from("operations-sops").remove([doc.file_path])
   }
 
-  const { error } = await supabase.from("sop_documents").delete().eq("id", id)
+  const { error } = await admin.from("sop_documents").delete().eq("id", id)
   if (error) throw new Error(error.message)
 
   return { success: true }
@@ -220,7 +224,8 @@ export async function getSOPUploadsForShift(clockIn: string, clockOut?: string |
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  let query = supabase
+  const admin = createAdminClient()
+  let query = admin
     .from("sop_documents")
     .select("title, category, file_name, source_type, external_link, created_at")
     .eq("uploaded_by", user.id)

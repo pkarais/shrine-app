@@ -30,10 +30,10 @@ export const createTicket = async (
 
   if (!user) throw new Error("Unauthorized. Please log in to your Supabase account to save operational data.")
 
-  const db = user === authUser ? supabase : createAdminClient()
+  const admin = createAdminClient()
 
   if (!userRole) {
-    const { data: profile } = await db
+    const { data: profile } = await admin
       .from("profiles")
       .select("role")
       .eq("id", user.id)
@@ -46,7 +46,7 @@ export const createTicket = async (
     throw new Error("You must be a staff member to create maintenance tickets")
   }
 
-  const { data, error } = await db.from("maintenance_tickets").insert({
+  const { data, error } = await admin.from("maintenance_tickets").insert({
     user_id: user.id,
     event_id: eventId,
     title: title.trim(),
@@ -56,7 +56,7 @@ export const createTicket = async (
   }).select("*").single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: await enrichWithEvents(db, data) }
+  return { success: true, ticket: await enrichWithEvents(admin, data) }
 }
 
 export const claimTicket = async (ticketId: string) => {
@@ -80,10 +80,10 @@ export const claimTicket = async (ticketId: string) => {
 
   if (!user) throw new Error("Unauthorized")
 
-  const db = user === authUser ? supabase : createAdminClient()
+  const admin = createAdminClient()
 
   if (!userRole) {
-    const { data: profile } = await db.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
     userRole = profile?.role || ""
   }
 
@@ -91,7 +91,7 @@ export const claimTicket = async (ticketId: string) => {
     throw new Error("Only operations staff can claim tickets")
   }
 
-  const { data: ticket } = await db
+  const { data: ticket } = await admin
     .from("maintenance_tickets")
     .select("assigned_to, status")
     .eq("id", ticketId)
@@ -105,7 +105,7 @@ export const claimTicket = async (ticketId: string) => {
     throw new Error("Can only claim open tickets")
   }
 
-  const { data, error } = await db
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .update({ assigned_to: user.id, status: "in_progress" })
     .eq("id", ticketId)
@@ -113,7 +113,7 @@ export const claimTicket = async (ticketId: string) => {
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: await enrichWithEvents(db, data) }
+  return { success: true, ticket: await enrichWithEvents(admin, data) }
 }
 
 export const completeTicket = async (ticketId: string) => {
@@ -137,10 +137,10 @@ export const completeTicket = async (ticketId: string) => {
 
   if (!user) throw new Error("Unauthorized")
 
-  const db = user === authUser ? supabase : createAdminClient()
+  const admin = createAdminClient()
 
   if (!userRole) {
-    const { data: profile } = await db.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
     userRole = profile?.role || ""
   }
 
@@ -148,7 +148,7 @@ export const completeTicket = async (ticketId: string) => {
     throw new Error("Only operations staff can complete tickets")
   }
 
-  const { data: ticket } = await db
+  const { data: ticket } = await admin
     .from("maintenance_tickets")
     .select("assigned_to")
     .eq("id", ticketId)
@@ -158,7 +158,7 @@ export const completeTicket = async (ticketId: string) => {
     throw new Error("You can only complete tickets assigned to you")
   }
 
-  const { data, error } = await db
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .update({ status: "resolved", resolved_at: new Date().toISOString() })
     .eq("id", ticketId)
@@ -166,7 +166,7 @@ export const completeTicket = async (ticketId: string) => {
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: await enrichWithEvents(db, data) }
+  return { success: true, ticket: await enrichWithEvents(admin, data) }
 }
 
 export const assignTicket = async (ticketId: string, assigneeId: string) => {
@@ -190,10 +190,10 @@ export const assignTicket = async (ticketId: string, assigneeId: string) => {
 
   if (!user) throw new Error("Unauthorized")
 
-  const db = user === authUser ? supabase : createAdminClient()
+  const admin = createAdminClient()
 
   if (!userRole) {
-    const { data: profile } = await db.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
     userRole = profile?.role || ""
   }
 
@@ -201,7 +201,7 @@ export const assignTicket = async (ticketId: string, assigneeId: string) => {
     throw new Error("Only managers can assign tickets")
   }
 
-  const { data, error } = await db
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .update({ assigned_to: assigneeId, status: "in_progress" })
     .eq("id", ticketId)
@@ -209,7 +209,7 @@ export const assignTicket = async (ticketId: string, assigneeId: string) => {
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: await enrichWithEvents(db, data) }
+  return { success: true, ticket: await enrichWithEvents(admin, data) }
 }
 
 export const unassignTicket = async (ticketId: string) => {
@@ -233,10 +233,10 @@ export const unassignTicket = async (ticketId: string) => {
 
   if (!user) throw new Error("Unauthorized")
 
-  const db = user === authUser ? supabase : createAdminClient()
+  const admin = createAdminClient()
 
   if (!userRole) {
-    const { data: profile } = await db.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
     userRole = profile?.role || ""
   }
 
@@ -244,7 +244,7 @@ export const unassignTicket = async (ticketId: string) => {
     throw new Error("Only managers can unassign tickets")
   }
 
-  const { data, error } = await db
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .update({ assigned_to: null, status: "open" })
     .eq("id", ticketId)
@@ -252,7 +252,7 @@ export const unassignTicket = async (ticketId: string) => {
     .single()
 
   if (error) throw new Error(error.message)
-  return { success: true, ticket: await enrichWithEvents(db, data) }
+  return { success: true, ticket: await enrichWithEvents(admin, data) }
 }
 
 export const getUserTickets = async (limit = 20) => {
@@ -275,7 +275,8 @@ export const getUserTickets = async (limit = 20) => {
     return []
   }
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient()
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
@@ -283,7 +284,7 @@ export const getUserTickets = async (limit = 20) => {
 
   if (!profile) return []
 
-  let query = supabase
+  let query = admin
     .from("maintenance_tickets")
     .select("*")
     .order("created_at", { ascending: false })
@@ -304,8 +305,8 @@ export const getUserTickets = async (limit = 20) => {
 
   const userIds = Array.from(new Set(data.flatMap(t => [t.user_id, t.assigned_to]).filter(Boolean)))
   const [{ data: profiles }, enriched] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
-    enrichTicketsWithEvents(supabase, data),
+    admin.from("profiles").select("id, full_name, email").in("id", userIds),
+    enrichTicketsWithEvents(admin, data),
   ])
 
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))
@@ -321,7 +322,8 @@ export const getAssignedTickets = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .select("*")
     .eq("assigned_to", user.id)
@@ -334,9 +336,9 @@ export const getAssignedTickets = async () => {
   const userIds = Array.from(new Set(data.map(t => t.user_id).filter(Boolean)))
   const eventIds = Array.from(new Set(data.map(t => t.event_id).filter(Boolean)))
   const [{ data: profiles }, { data: events }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
+    admin.from("profiles").select("id, full_name, email").in("id", userIds),
     eventIds.length > 0
-      ? supabase.from("events").select("id, title").in("id", eventIds)
+      ? admin.from("events").select("id, title").in("id", eventIds)
       : Promise.resolve({ data: [] }),
   ])
 
@@ -355,7 +357,8 @@ export const getUnassignedTickets = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient()
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
@@ -363,7 +366,7 @@ export const getUnassignedTickets = async () => {
 
   if (profile?.role !== "manager" && profile?.role !== "operations") return []
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .select("*")
     .is("assigned_to", null)
@@ -375,8 +378,8 @@ export const getUnassignedTickets = async () => {
 
   const userIds = Array.from(new Set(data.map(t => t.user_id).filter(Boolean)))
   const [{ data: profiles }, enriched] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
-    enrichTicketsWithEvents(supabase, data),
+    admin.from("profiles").select("id, full_name, email").in("id", userIds),
+    enrichTicketsWithEvents(admin, data),
   ])
 
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))
@@ -388,7 +391,8 @@ export const getTicketCounts = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { unassigned: 0, assignedToMe: 0, open: 0 }
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient()
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
@@ -401,17 +405,17 @@ export const getTicketCounts = async () => {
     { count: assignedToMe },
     { count: open },
   ] = await Promise.all([
-    supabase
+    admin
       .from("maintenance_tickets")
       .select("id", { count: "exact", head: true })
       .is("assigned_to", null)
       .in("status", ["open"]),
-    supabase
+    admin
       .from("maintenance_tickets")
       .select("id", { count: "exact", head: true })
       .eq("assigned_to", user.id)
       .in("status", ["open", "in_progress"]),
-    supabase
+    admin
       .from("maintenance_tickets")
       .select("id", { count: "exact", head: true })
       .in("status", ["open", "in_progress"]),
@@ -429,10 +433,11 @@ export const getManagerTickets = async (limit = 50) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
   if (profile?.role !== "manager") return []
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("maintenance_tickets")
     .select("*")
     .order("created_at", { ascending: false })
@@ -443,8 +448,8 @@ export const getManagerTickets = async (limit = 50) => {
 
   const userIds = Array.from(new Set(data.flatMap(t => [t.user_id, t.assigned_to]).filter(Boolean)))
   const [{ data: profiles }, enriched] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email").in("id", userIds),
-    enrichTicketsWithEvents(supabase, data),
+    admin.from("profiles").select("id, full_name, email").in("id", userIds),
+    enrichTicketsWithEvents(admin, data),
   ])
 
   const profileMap = new Map((profiles || []).map(p => [p.id, p]))

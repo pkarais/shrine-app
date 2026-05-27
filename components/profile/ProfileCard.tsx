@@ -1,11 +1,10 @@
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export async function ProfileCard({ user }: { user: any }) {
-  const supabase = createServerClient()
   const { data: profile } = user
-    ? await supabase.from("profiles").select("*").eq("id", user.id).single()
+    ? await createAdminClient().from("profiles").select("*").eq("id", user.id).single()
     : { data: null }
 
   const effectiveRole = profile?.role || user?.role || null

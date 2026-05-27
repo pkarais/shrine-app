@@ -43,7 +43,7 @@ export default async function ManagerPage() {
   }
 
   const profileRole = user
-    ? (await supabase.from("profiles").select("role").eq("id", user.id).single()).data?.role || null
+    ? (await createAdminClient().from("profiles").select("role").eq("id", user.id).single()).data?.role || null
     : hasDevBypass
       ? devRole
       : null
@@ -76,7 +76,7 @@ export default async function ManagerPage() {
 
   const [incidentsData, { data: shifts }, { data: profiles }, { data: visitorVolume }, { data: recentMessages }, { data: upcomingEvents }, { data: recentWalkthroughs }] = await Promise.all([
     getManagerIncidents(20),
-    supabase.from("shifts").select("*").order("clock_in", { ascending: false }).limit(50),
+    admin.from("shifts").select("*").order("clock_in", { ascending: false }).limit(50),
     admin.from("profiles").select("id, full_name, email, role"),
     supabase.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
     supabase.from("messages").select("id, sender_id, content, created_at, read_at").order("created_at", { ascending: false }).limit(10),

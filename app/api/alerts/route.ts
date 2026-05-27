@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 
 export async function GET() {
   try {
@@ -9,12 +9,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const admin = createAdminClient()
     const alerts: { type: string; message: string; severity: string; id?: string }[] = []
 
     // Check staffing gaps for upcoming events (next 7 days)
     const now = new Date().toISOString()
     const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: events } = await supabase
+    const { data: events } = await admin
       .from("events")
       .select("id, title, start_time, required_ops, required_security, required_greeter, director_mandatory")
       .gte("start_time", now)
@@ -22,7 +23,7 @@ export async function GET() {
       .order("start_time", { ascending: true })
 
     for (const event of events || []) {
-      const { data: assignments } = await supabase
+      const { data: assignments } = await admin
         .from("staff_assignments")
         .select("role_assigned")
         .eq("event_id", event.id)
@@ -43,7 +44,7 @@ export async function GET() {
     }
 
     // Check unread notifications
-    const { count: unreadNotifs } = await supabase
+    const { count: unreadNotifs } = await admin
       .from("notifications")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
@@ -53,7 +54,7 @@ export async function GET() {
     }
 
     // Check open tickets assigned to user
-    const { data: openTickets } = await supabase
+    const { data: openTickets } = await admin
       .from("maintenance_tickets")
       .select("id, title, status, priority")
       .eq("assigned_to", user.id)
@@ -83,7 +84,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     const body = await request.json()
-    const { data, error } = await supabase.from("notifications").insert({
+    const admin = createAdminClient()
+    const { data, error } = await admin.from("notifications").insert({
       user_id: user.id,
       title: body.title || body.type || "Alert",
       body: body.message || body.body || "",

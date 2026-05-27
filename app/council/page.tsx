@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from "next/link"
 import { cookies } from "next/headers"
-import { createServerClient } from "@/utils/supabase/server"
+import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import { MaintenanceTicketForm } from "@/components/forms/MaintenanceTicketForm"
 import { RunningVisitorCountCard } from "@/components/council/RunningVisitorCountCard"
@@ -33,7 +33,7 @@ export default async function CouncilDashboardPage() {
   }
 
   const profileRole = user
-    ? (await supabase.from("profiles").select("role").eq("id", user.id).single()).data?.role || null
+    ? (await createAdminClient().from("profiles").select("role").eq("id", user.id).single()).data?.role || null
     : hasDevBypass
       ? devRole
       : null
@@ -57,9 +57,10 @@ export default async function CouncilDashboardPage() {
     )
   }
 
+  const admin = createAdminClient()
   const [currentEvent, visitorVolume] = await Promise.all([
     getCurrentOrNextEvent(),
-    supabase.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
+    admin.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
   ])
 
   // Current week events only
@@ -71,7 +72,7 @@ export default async function CouncilDashboardPage() {
   endOfWeek.setDate(startOfWeek.getDate() + 6)
   endOfWeek.setHours(23, 59, 59, 999)
 
-  const { data: weekEvents } = await supabase
+  const { data: weekEvents } = await admin
     .from("events")
     .select("*")
     .gte("start_time", startOfWeek.toISOString())
