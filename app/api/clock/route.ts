@@ -37,6 +37,10 @@ async function parseJsonBody(request: Request) {
       error: NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 }),
     }
   }
+
+  function getErrorDetails(error: unknown) {
+    return error instanceof Error ? error.message : String(error)
+  }
 }
 
 export async function GET() {
@@ -64,7 +68,7 @@ export async function GET() {
     return NextResponse.json({ shift: data ?? null })
   } catch (error: unknown) {
     return NextResponse.json(
-      { error: "Failed to fetch active shift", details: String(error?.message || error) },
+      { error: "Failed to fetch active shift", details: getErrorDetails(error) },
       { status: 500 }
     )
   }
@@ -106,7 +110,7 @@ export async function POST(request: Request) {
     return NextResponse.json(result, { status: 201 })
   } catch (error: unknown) {
     return NextResponse.json(
-      { error: "Clock action failed", details: String(error?.message || error) },
+      { error: "Clock action failed", details: getErrorDetails(error) },
       { status: 500 }
     )
   }
@@ -123,7 +127,7 @@ export async function PATCH(request: Request) {
     return handleClockOutAction(body?.shiftId)
   } catch (error: unknown) {
     return NextResponse.json(
-      { error: "Clock-out failed", details: String(error?.message || error) },
+      { error: "Clock-out failed", details: getErrorDetails(error) },
       { status: 500 }
     )
   }
