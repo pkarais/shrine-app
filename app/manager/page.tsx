@@ -78,9 +78,9 @@ export default async function ManagerPage() {
     getManagerIncidents(20),
     admin.from("shifts").select("*").order("clock_in", { ascending: false }).limit(50),
     admin.from("profiles").select("id, full_name, email, role"),
-    supabase.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
-    supabase.from("messages").select("id, sender_id, content, created_at, read_at").order("created_at", { ascending: false }).limit(10),
-    supabase
+    admin.from("visitor_volume").select("count, recorded_at").order("recorded_at", { ascending: false }).limit(7),
+    admin.from("messages").select("id, sender_id, content, created_at, read_at").order("created_at", { ascending: false }).limit(10),
+    admin
       .from("events")
       .select("id, title, start_time")
       .gte("start_time", nowIso)

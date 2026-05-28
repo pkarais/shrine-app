@@ -34,10 +34,10 @@ function normalizeAssigneeId(rawId: string) {
 
 export async function validateStaffingForEvent(eventId: number) {
   await requireManager()
-  const supabase = createServerClient()
-  const { data: event } = await supabase.from("events").select("*").eq("id", eventId).single()
+  const admin = createAdminClient()
+  const { data: event } = await admin.from("events").select("*").eq("id", eventId).single()
   if (!event) throw new Error("Event not found")
-  const { data: assignments } = await supabase
+  const { data: assignments } = await admin
     .from("staff_assignments")
     .select("role_assigned")
     .eq("event_id", eventId)
@@ -69,8 +69,8 @@ export async function validateStaffingForEvent(eventId: number) {
 
 export async function getStaffingGaps(dateFrom?: string, dateTo?: string) {
   await requireManager()
-  const supabase = createServerClient()
-  let query = supabase.from("events").select("*").order("start_time", { ascending: true })
+  const admin = createAdminClient()
+  let query = admin.from("events").select("*").order("start_time", { ascending: true })
   if (dateFrom) query = query.gte("start_time", dateFrom)
   if (dateTo) query = query.lte("start_time", dateTo)
   const { data: events } = await query
@@ -78,7 +78,7 @@ export async function getStaffingGaps(dateFrom?: string, dateTo?: string) {
 
   // Fetch ALL assignments in one batch
   const eventIds = events.map((e: any) => e.id)
-  const { data: allAssignments } = await supabase
+  const { data: allAssignments } = await admin
     .from("staff_assignments")
     .select("event_id, role_assigned, user_id")
     .in("event_id", eventIds)

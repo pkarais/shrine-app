@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/server"
 import { LABOR } from "@/constants"
 
 export interface OptimizationSuggestion {
@@ -13,12 +13,12 @@ export interface OptimizationSuggestion {
 }
 
 export async function analyzeOvertimeReduction(): Promise<OptimizationSuggestion[]> {
-  const supabase = createServerClient()
+  const admin = createAdminClient()
   
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   
-  const { data: shifts } = await supabase
+  const { data: shifts } = await admin
     .from("shifts")
     .select("*")
     .gte("clock_in", thirtyDaysAgo.toISOString())
@@ -29,7 +29,7 @@ export async function analyzeOvertimeReduction(): Promise<OptimizationSuggestion
   const userIds: string[] = Array.from(new Set(shifts.map((s: any) => s.user_id).filter(Boolean)))
   let profileMap = new Map<string, { full_name: string; email: string }>()
   if (userIds.length > 0) {
-    const { data: profiles } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds)
+    const { data: profiles } = await admin.from("profiles").select("id, full_name, email").in("id", userIds)
     profileMap = new Map((profiles || []).map(p => [p.id, p]))
   }
   
@@ -65,12 +65,12 @@ export async function analyzeOvertimeReduction(): Promise<OptimizationSuggestion
 }
 
 export async function getStaffUtilization() {
-  const supabase = createServerClient()
+  const admin = createAdminClient()
   
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   
-  const { data: shifts } = await supabase
+  const { data: shifts } = await admin
     .from("shifts")
     .select("*")
     .gte("clock_in", thirtyDaysAgo.toISOString())
@@ -80,7 +80,7 @@ export async function getStaffUtilization() {
   const userIds: string[] = Array.from(new Set(shifts.map((s: any) => s.user_id).filter(Boolean)))
   let profileMap = new Map<string, { full_name: string; email: string; role: string }>()
   if (userIds.length > 0) {
-    const { data: profiles } = await supabase.from("profiles").select("id, full_name, email, role").in("id", userIds)
+    const { data: profiles } = await admin.from("profiles").select("id, full_name, email, role").in("id", userIds)
     profileMap = new Map((profiles || []).map(p => [p.id, p]))
   }
   

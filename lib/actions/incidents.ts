@@ -84,10 +84,11 @@ export const submitIncident = async (data: IncidentData) => {
   return { success: true, incident: result }
 }
 
-const enrichIncidentsWithEvents = async (supabase: any, incidents: any[]) => {
+const enrichIncidentsWithEvents = async (incidents: any[]) => {
   const eventIds: number[] = Array.from(new Set(incidents.map((i: any) => i.event_id).filter(Boolean)))
   if (eventIds.length === 0) return incidents
-  const { data: events } = await supabase.from("events").select("id, title").in("id", eventIds)
+  const admin = createAdminClient()
+  const { data: events } = await admin.from("events").select("id, title").in("id", eventIds)
   const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
   return incidents.map((i: any) => ({ ...i, events: eventMap.get(i.event_id) || null }))
 }
@@ -97,7 +98,8 @@ export const getUserIncidents = async (limit = 20) => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from("incidents")
     .select("*")
     .eq("user_id", user.id)
@@ -105,7 +107,7 @@ export const getUserIncidents = async (limit = 20) => {
     .limit(limit)
 
   if (error) throw new Error(error.message)
-  return enrichIncidentsWithEvents(supabase, data || [])
+  return enrichIncidentsWithEvents(data || [])
 }
 
 export const getManagerIncidents = async (limit = 50) => {
@@ -116,12 +118,13 @@ export const getManagerIncidents = async (limit = 50) => {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
   if (profile?.role !== "manager") return []
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from("incidents")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(limit)
 
   if (error) throw new Error(error.message)
-  return enrichIncidentsWithEvents(supabase, data || [])
+  return enrichIncidentsWithEvents(data || [])
 }

@@ -1,16 +1,16 @@
 "use server"
-import { createServerClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/server"
 
 export async function analyzeOvertimeReductionByEvent(eventId?: number) {
-  const supabase = createServerClient()
-  let query = supabase.from("shifts").select("*")
+  const admin = createAdminClient()
+  let query = admin.from("shifts").select("*")
   if (eventId) query = query.eq("event_id", eventId)
   const { data: shifts } = await query
 
   const eventIds: number[] = Array.from(new Set((shifts || []).map((s: any) => s.event_id).filter(Boolean)))
   let eventMap = new Map<number, any>()
   if (eventIds.length > 0) {
-    const { data: events } = await supabase.from("events").select("id, title").in("id", eventIds)
+    const { data: events } = await admin.from("events").select("id, title").in("id", eventIds)
     eventMap = new Map((events || []).map(e => [e.id, e]))
   }
 

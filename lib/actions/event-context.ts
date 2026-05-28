@@ -1,22 +1,8 @@
 "use server"
 
-import { createServerClient, createAdminClient } from "@/utils/supabase/server"
-import { cookies } from "next/headers"
+import { createAdminClient } from "@/utils/supabase/server"
 import { injectSundayOrthros, type CalendarEvent } from "@/lib/calendar-defaults"
 import { getScheduleForDate } from "@/data/employee-schedules"
-
-/** Returns admin client in dev-bypass mode (no auth user), otherwise normal server client */
-async function getClient() {
-  const supabase = createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user) return supabase
-
-  const hasDevBypass = cookies().get('shrine_dev_session')?.value === 'true'
-  if (hasDevBypass && process.env.NODE_ENV === 'development') {
-    return createAdminClient()
-  }
-  return supabase
-}
 
 export async function getCurrentOrNextEvent() {
   const admin = createAdminClient()
@@ -85,11 +71,10 @@ export async function getTodayEvents(): Promise<CalendarEvent[]> {
 }
 
 export async function getStaffForEvent(eventId: number) {
-  const supabase = await getClient()
   const admin = createAdminClient()
 
   // 1. Get DB assignments for this event (with shift times)
-  const { data: assignments, error } = await supabase
+  const { data: assignments, error } = await admin
     .from("staff_assignments")
     .select("user_id, role_assigned, shift_start, shift_end")
     .eq("event_id", eventId)
@@ -147,7 +132,7 @@ export async function getStaffForEvent(eventId: number) {
 
   // 3. Fetch profile display info
   const userIds = Array.from(new Set(merged.map(s => s.user_id).filter(Boolean)))
-  const { data: profiles } = await supabase
+  const { data: profiles } = await admin
     .from("profiles")
     .select("id, full_name, email")
     .in("id", userIds)
@@ -165,23 +150,23 @@ export async function getStaffForEvent(eventId: number) {
 }
 
 export async function getOperationsSummary() {
-  const supabase = await getClient()
+  const admin = createAdminClient()
   
   const [
     { count: openTickets },
     { count: highPriorityTickets },
     { data: recentWalkthroughs }
   ] = await Promise.all([
-    supabase.from("maintenance_tickets").select("id", { count: "exact" }).eq("status", "open"),
-    supabase.from("maintenance_tickets").select("id", { count: "exact" }).in("priority", ["high", "urgent"]).eq("status", "open"),
-    supabase.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").order("completed_at", { ascending: false }).limit(10)
+    admin.from("maintenance_tickets").select("id", { count: "exact" }).eq("status", "open"),
+    admin.from("maintenance_tickets").select("id", { count: "exact" }).in("priority", ["high", "urgent"]).eq("status", "open"),
+    admin.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").order("completed_at", { ascending: false }).limit(10)
   ])
 
   // Enrich with profile names
   let enriched: any[] = recentWalkthroughs || []
   if (enriched.length > 0) {
     const uids = Array.from(new Set(enriched.map((w: any) => w.user_id).filter(Boolean)))
-    const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", uids)
+    const { data: profiles } = await admin.from("profiles").select("id, full_name").in("id", uids)
     const pmap = new Map((profiles || []).map((p: any) => [p.id, p.full_name]))
     enriched = enriched.map((w: any) => ({ ...w, user_name: pmap.get(w.user_id) || null }))
   }
