@@ -27,6 +27,18 @@ async function handleClockOutAction(shiftId: unknown) {
   return NextResponse.json(result)
 }
 
+async function parseJsonBody(request: Request) {
+  try {
+    const body = await request.json()
+    return { body, error: null as NextResponse | null }
+  } catch {
+    return {
+      body: null,
+      error: NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 }),
+    }
+  }
+}
+
 export async function GET() {
   try {
     const { user, unauthorized } = await requireUser()
@@ -63,7 +75,9 @@ export async function POST(request: Request) {
     const { user, unauthorized } = await requireUser()
     if (!user) return unauthorized!
 
-    const body = await request.json().catch(() => ({}))
+    const parsed = await parseJsonBody(request)
+    if (parsed.error) return parsed.error
+    const body = parsed.body || {}
     const action = String(body?.action || "clock_in").toLowerCase()
 
     if (action === "clock_out") {
@@ -103,7 +117,9 @@ export async function PATCH(request: Request) {
     const { user, unauthorized } = await requireUser()
     if (!user) return unauthorized!
 
-    const body = await request.json().catch(() => ({}))
+    const parsed = await parseJsonBody(request)
+    if (parsed.error) return parsed.error
+    const body = parsed.body || {}
     return handleClockOutAction(body?.shiftId)
   } catch (error: any) {
     return NextResponse.json(
