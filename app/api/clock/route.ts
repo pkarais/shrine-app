@@ -30,7 +30,7 @@ async function handleClockOutAction(shiftId: unknown) {
 async function parseJsonBody(request: Request) {
   try {
     const body = await request.json()
-    return { body, error: null as NextResponse | null }
+    return { body, error: null }
   } catch {
     return {
       body: null,
@@ -62,7 +62,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ shift: data ?? null })
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { error: "Failed to fetch active shift", details: String(error?.message || error) },
       { status: 500 }
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(result, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { error: "Clock action failed", details: String(error?.message || error) },
       { status: 500 }
@@ -121,7 +121,7 @@ export async function PATCH(request: Request) {
     if (parsed.error) return parsed.error
     const body = parsed.body || {}
     return handleClockOutAction(body?.shiftId)
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { error: "Clock-out failed", details: String(error?.message || error) },
       { status: 500 }
