@@ -18,6 +18,15 @@ async function requireUser() {
   return { user, unauthorized: null }
 }
 
+async function handleClockOutAction(shiftId: unknown) {
+  if (typeof shiftId !== "string" || !shiftId.trim()) {
+    return NextResponse.json({ error: "shiftId is required for clock_out" }, { status: 400 })
+  }
+
+  const result = await clockOut(shiftId)
+  return NextResponse.json(result)
+}
+
 export async function GET() {
   try {
     const { user, unauthorized } = await requireUser()
@@ -58,21 +67,14 @@ export async function POST(request: Request) {
     const action = String(body?.action || "clock_in").toLowerCase()
 
     if (action === "clock_out") {
-      const shiftId = body?.shiftId
-      if (typeof shiftId !== "string" || !shiftId.trim()) {
-        return NextResponse.json({ error: "shiftId is required for clock_out" }, { status: 400 })
-      }
-
-      const result = await clockOut(shiftId)
-      return NextResponse.json(result)
+      return handleClockOutAction(body?.shiftId)
     }
 
     const eventId = Number(body?.eventId)
     const lat = Number(body?.lat)
     const lon = Number(body?.lon)
-    const accuracyMeters = Number.isFinite(Number(body?.accuracyMeters))
-      ? Number(body.accuracyMeters)
-      : undefined
+    const accuracyValue = Number(body?.accuracyMeters)
+    const accuracyMeters = Number.isFinite(accuracyValue) ? accuracyValue : undefined
     const allowOffsiteManager = Boolean(body?.allowOffsiteManager)
 
     if (!Number.isInteger(eventId) || eventId <= 0) {
@@ -102,13 +104,7 @@ export async function PATCH(request: Request) {
     if (!user) return unauthorized!
 
     const body = await request.json().catch(() => ({}))
-    const shiftId = body?.shiftId
-    if (typeof shiftId !== "string" || !shiftId.trim()) {
-      return NextResponse.json({ error: "shiftId is required" }, { status: 400 })
-    }
-
-    const result = await clockOut(shiftId)
-    return NextResponse.json(result)
+    return handleClockOutAction(body?.shiftId)
   } catch (error: any) {
     return NextResponse.json(
       { error: "Clock-out failed", details: String(error?.message || error) },
