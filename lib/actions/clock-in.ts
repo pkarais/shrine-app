@@ -4,9 +4,21 @@ import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { checkGeofence } from "@/lib/geofence"
 import { GEOFENCE } from "@/constants"
 
-export const clockIn = async (eventId: number, lat: number, lon: number) => {
+type ClockInOptions = {
+  allowOffsiteManager?: boolean
+}
+
+export const clockIn = async (
+  eventId: number,
+  lat: number,
+  lon: number,
+  accuracyMeters?: number,
+  options?: ClockInOptions
+) => {
   const supabase = createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
@@ -14,21 +26,42 @@ export const clockIn = async (eventId: number, lat: number, lon: number) => {
     throw new Error("Profile not found. Please contact an administrator to set up your account.")
   }
 
-  const isManager = profile.role === "manager"
+  const isManager = String(profile.role || "").toLowerCase() === "manager"
+  const canUseManagerOffsite = Boolean(options?.allowOffsiteManager && isManager)
 
-  // Managers can clock in off-site; staff must be within geofence
-  if (!isManager) {
-    const fence = checkGeofence(lat, lon, GEOFENCE.LIBERTY_PARK.LAT, GEOFENCE.LIBERTY_PARK.LON, GEOFENCE.LIBERTY_PARK.RADIUS_METERS)
+  // Default path: geofence validation applies to all roles.
+  // Exception: manager off-site quick action explicitly requests bypass.
+  if (!canUseManagerOffsite) {
+    const gpsAccuracy = Number.isFinite(accuracyMeters as number) ? Math.max(0, Number(accuracyMeters)) : 0
+    const accuracyBuffer = Math.min(gpsAccuracy, 75)
+    const effectiveRadius = GEOFENCE.LIBERTY_PARK.RADIUS_METERS + accuracyBuffer
+    const fence = checkGeofence(
+      lat,
+      lon,
+      GEOFENCE.LIBERTY_PARK.LAT,
+      GEOFENCE.LIBERTY_PARK.LON,
+      effectiveRadius
+    )
+
     if (!fence.inRange) {
-      throw new Error(`You are ${Math.round(fence.distance)}m outside the Liberty Park geofence. Clock-in requires being within ${GEOFENCE.LIBERTY_PARK.RADIUS_METERS}m of the landmark.`)
+      const outsideBy = Math.max(0, Math.round(fence.distance - effectiveRadius))
+      throw new Error(
+        `You are about ${outsideBy}m outside the Liberty Park geofence. ` +
+          `Base radius is ${GEOFENCE.LIBERTY_PARK.RADIUS_METERS}m` +
+          `${gpsAccuracy ? ` (GPS accuracy +/- ${Math.round(gpsAccuracy)}m).` : "."}`
+      )
     }
   }
 
-  const { data, error } = await supabase.from("shifts").insert({
-    user_id: user.id,
-    event_id: eventId,
-    clock_in: new Date().toISOString(),
-  }).select().single()
+  const { data, error } = await supabase
+    .from("shifts")
+    .insert({
+      user_id: user.id,
+      event_id: eventId,
+      clock_in: new Date().toISOString(),
+    })
+    .select()
+    .single()
 
   if (error) throw new Error(error.message)
   return { success: true, shift: data }
@@ -36,7 +69,9 @@ export const clockIn = async (eventId: number, lat: number, lon: number) => {
 
 export const getActiveShift = async () => {
   const supabase = createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return null
 
   const { data } = await supabase
@@ -53,7 +88,9 @@ export const getActiveShift = async () => {
 
 export const clockOut = async (shiftId: string) => {
   const supabase = createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
   const admin = createAdminClient()
@@ -66,7 +103,8 @@ export const clockOut = async (shiftId: string) => {
     .from("shifts")
     .update({ clock_out: new Date().toISOString() })
     .eq("id", shiftId)
-    .select().single()
+    .select()
+    .single()
 
   if (error) throw new Error(error.message)
   return { success: true, shift: data }

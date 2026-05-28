@@ -51,7 +51,12 @@ export function ClockInCard({ eventId }: { eventId?: number | null }) {
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             try {
-              const result = await clockIn(eventId ?? 1, pos.coords.latitude, pos.coords.longitude)
+              const result = await clockIn(
+                eventId ?? 1,
+                pos.coords.latitude,
+                pos.coords.longitude,
+                pos.coords.accuracy
+              )
               
               // Play successful clock-in sound
               play("successful_clock_in")
@@ -92,6 +97,11 @@ export function ClockInCard({ eventId }: { eventId?: number | null }) {
           async (err) => {
             setError("Location access required for clock-in")
             setActionLoading(false)
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
           }
         )
       } else {
