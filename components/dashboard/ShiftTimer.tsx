@@ -106,6 +106,10 @@ export function ShiftTimer() {
 
       // Manager quick action explicitly allows off-site clock-in.
       const result = await clockIn(eventId, 0, 0, undefined, { allowOffsiteManager: true })
+      if (!result.success) {
+        setError(result.error || "Failed to clock in")
+        return
+      }
       setActiveShift(result.shift)
       setIsRunning(true)
       play("successful_clock_in")

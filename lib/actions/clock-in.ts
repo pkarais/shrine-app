@@ -8,25 +8,30 @@ type ClockInOptions = {
   allowOffsiteManager?: boolean
 }
 
+type ClockInResult =
+  | { success: true; shift: any }
+  | { success: false; error: string }
+
 export const clockIn = async (
   eventId: number,
   lat: number,
   lon: number,
   accuracyMeters?: number,
   options?: ClockInOptions
-) => {
+): Promise<ClockInResult> => {
   const supabase = createServerClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
+  if (!user) return { success: false, error: "Unauthorized. Please sign in again." }
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
   if (!profile) {
-    throw new Error("Profile not found. Please contact an administrator to set up your account.")
+    return { success: false, error: "Profile not found. Please contact an administrator to set up your account." }
   }
 
-  const isManager = String(profile.role || "").toLowerCase() === "manager"
+  const normalizedRole = String(profile.role || "").toLowerCase()
+  const isManager = ["manager", "admin", "director", "director of operations"].includes(normalizedRole)
   const canUseManagerOffsite = Boolean(options?.allowOffsiteManager && isManager)
 
   // Default path: geofence validation applies to all roles.
@@ -45,11 +50,13 @@ export const clockIn = async (
 
     if (!fence.inRange) {
       const outsideBy = Math.max(0, Math.round(fence.distance - effectiveRadius))
-      throw new Error(
-        `You are about ${outsideBy}m outside the Liberty Park geofence. ` +
+      return {
+        success: false,
+        error:
+          `You are about ${outsideBy}m outside the Liberty Park geofence. ` +
           `Base radius is ${GEOFENCE.LIBERTY_PARK.RADIUS_METERS}m` +
-          `${gpsAccuracy ? ` (GPS accuracy +/- ${Math.round(gpsAccuracy)}m).` : "."}`
-      )
+          `${gpsAccuracy ? ` (GPS accuracy +/- ${Math.round(gpsAccuracy)}m).` : "."}`,
+      }
     }
   }
 
@@ -63,7 +70,7 @@ export const clockIn = async (
     .select()
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) return { success: false, error: error.message || "Unable to clock in right now." }
   return { success: true, shift: data }
 }
 

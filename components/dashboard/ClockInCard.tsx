@@ -57,6 +57,24 @@ export function ClockInCard({ eventId }: { eventId?: number | null }) {
                 pos.coords.longitude,
                 pos.coords.accuracy
               )
+
+              if (!result.success) {
+                const errorMsg = result.error || "Unable to clock in."
+                setError(errorMsg)
+
+                if (errorMsg.toLowerCase().includes("geofence") || errorMsg.toLowerCase().includes("outside")) {
+                  play("geofence_warning")
+                  const supabase = createClient()
+                  const { data: { user } } = await supabase.auth.getUser()
+                  logAlertToManager({
+                    type: "geofence_violation",
+                    message: errorMsg,
+                    severity: "critical",
+                    userId: user?.id
+                  })
+                }
+                return
+              }
               
               // Play successful clock-in sound
               play("successful_clock_in")
