@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { assignStaff } from "@/lib/actions/staffing"
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+}
+
 type CalendarEvent = {
   id: number
   title: string
@@ -139,6 +143,14 @@ export function CalendarEventTimeline({
           const startTime = start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
           const endTime = end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
           const isSpecial = event.category === "major_feast"
+          const assignments = assignmentsByEvent?.[String(event.id)] || {}
+          const secAssigned = (assignments["security"] || []).length
+          const opsAssigned = (assignments["operations"] || []).length
+          const secRequired = event.required_security ?? 1
+          const opsRequired = event.required_ops ?? 1
+          const secCovered = secAssigned >= secRequired
+          const opsCovered = opsAssigned >= opsRequired
+          const desc = event.description ? stripHtml(event.description) : ""
 
           return (
             <div
@@ -161,15 +173,17 @@ export function CalendarEventTimeline({
 
               <div className="md:col-span-10">
                 <div className="flex flex-col sm:flex-row justify-between items-start">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h4 className={`font-headline font-bold text-lg mb-1 ${isSpecial ? "text-secondary" : "text-primary"}`}>
                       {event.title}
                     </h4>
-                    <p className="text-xs text-on-surface-variant line-clamp-1">
-                      {event.description || "No additional description."}
-                    </p>
+                    {desc && (
+                      <p className="text-xs text-on-surface-variant whitespace-pre-wrap break-words">
+                        {desc}
+                      </p>
+                    )}
                   </div>
-                  <div className="mt-2 sm:mt-0 flex gap-2">
+                  <div className="mt-2 sm:mt-0 flex gap-2 shrink-0">
                     {canAssign ? (
                       <>
                         <button
@@ -178,10 +192,14 @@ export function CalendarEventTimeline({
                             e.stopPropagation()
                             openAssign(event, "security")
                           }}
-                          className="bg-primary/5 px-3 py-1 rounded-full flex items-center gap-1.5 grayscale opacity-80 hover:opacity-100"
+                          className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
+                            secCovered
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-error-container/40 text-error"
+                          }`}
                         >
                           <span className="material-symbols-outlined text-[14px]">shield</span>
-                          <span className="text-[10px] font-bold">SEC: {event.required_security || 1}</span>
+                          <span className="text-[10px] font-bold">SEC: {secAssigned}/{secRequired}</span>
                         </button>
                         <button
                           type="button"
@@ -189,10 +207,14 @@ export function CalendarEventTimeline({
                             e.stopPropagation()
                             openAssign(event, "operations")
                           }}
-                          className="bg-secondary/5 px-3 py-1 rounded-full flex items-center gap-1.5 grayscale opacity-80 hover:opacity-100"
+                          className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
+                            opsCovered
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-error-container/40 text-error"
+                          }`}
                         >
                           <span className="material-symbols-outlined text-[14px]">settings</span>
-                          <span className="text-[10px] font-bold">OPS: {event.required_ops || 1}</span>
+                          <span className="text-[10px] font-bold">OPS: {opsAssigned}/{opsRequired}</span>
                         </button>
                       </>
                     ) : (
@@ -203,10 +225,14 @@ export function CalendarEventTimeline({
                             e.stopPropagation()
                             openRoster(event, "security")
                           }}
-                          className="bg-primary/5 px-3 py-1 rounded-full flex items-center gap-1.5 grayscale opacity-80 hover:opacity-100"
+                          className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
+                            secCovered
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-error-container/40 text-error"
+                          }`}
                         >
                           <span className="material-symbols-outlined text-[14px]">shield</span>
-                          <span className="text-[10px] font-bold">SEC: {event.required_security || 1}</span>
+                          <span className="text-[10px] font-bold">SEC: {secAssigned}/{secRequired}</span>
                         </button>
                         <button
                           type="button"
@@ -214,10 +240,14 @@ export function CalendarEventTimeline({
                             e.stopPropagation()
                             openRoster(event, "operations")
                           }}
-                          className="bg-secondary/5 px-3 py-1 rounded-full flex items-center gap-1.5 grayscale opacity-80 hover:opacity-100"
+                          className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
+                            opsCovered
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-error-container/40 text-error"
+                          }`}
                         >
                           <span className="material-symbols-outlined text-[14px]">settings</span>
-                          <span className="text-[10px] font-bold">OPS: {event.required_ops || 1}</span>
+                          <span className="text-[10px] font-bold">OPS: {opsAssigned}/{opsRequired}</span>
                         </button>
                       </>
                     )}

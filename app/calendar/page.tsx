@@ -227,6 +227,14 @@ export default async function CalendarPage({
   const startOfWeek = new Date(now)
   startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7))
 
+  // Determine if any visible event is actually short-staffed (for the legend)
+  const hasAnyGap = filteredEvents.some((event: any) => {
+    const byRole = assignmentsByEventForTimeline[String(event.id)] || {}
+    const secFilled = (byRole["security"] || []).length
+    const opsFilled = (byRole["operations"] || []).length
+    return secFilled < (event.required_security ?? 1) || opsFilled < (event.required_ops ?? 1)
+  })
+
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(startOfWeek)
     d.setDate(startOfWeek.getDate() + i)
@@ -303,10 +311,12 @@ export default async function CalendarPage({
                 <span className="w-3 h-3 rounded-full bg-primary" />
                 <span>Standard Operation</span>
               </div>
-              <div className="flex items-center gap-3 text-xs bg-error-container/40 p-2 rounded-lg text-error">
-                <span className="material-symbols-outlined text-sm">warning</span>
-                <span>Critical Staffing Gap</span>
-              </div>
+              {hasAnyGap && (
+                <div className="flex items-center gap-3 text-xs bg-error-container/40 p-2 rounded-lg text-error">
+                  <span className="material-symbols-outlined text-sm">warning</span>
+                  <span>Critical Staffing Gap</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
