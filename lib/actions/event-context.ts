@@ -4,6 +4,12 @@ import { createAdminClient } from "@/utils/supabase/server"
 import { injectSundayOrthros, type CalendarEvent } from "@/lib/calendar-defaults"
 import { getScheduleForDate } from "@/data/employee-schedules"
 
+const parseValidDate = (value: unknown): Date | null => {
+  if (!value) return null
+  const parsed = new Date(String(value))
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
 export async function getCurrentOrNextEvent() {
   const admin = createAdminClient()
   const now = new Date().toISOString()
@@ -52,10 +58,12 @@ export async function getTodayEvents(): Promise<CalendarEvent[]> {
     .order("start_time", { ascending: true })
 
   const localDateKey = (value: string) => {
+    const parsed = parseValidDate(value)
+    if (!parsed) return null
     const p = new Intl.DateTimeFormat("en-US", {
       timeZone: "America/New_York",
       year: "numeric", month: "2-digit", day: "2-digit",
-    }).formatToParts(new Date(value))
+    }).formatToParts(parsed)
     return `${p.find(x => x.type === "year")?.value}-${p.find(x => x.type === "month")?.value}-${p.find(x => x.type === "day")?.value}`
   }
 
@@ -66,7 +74,11 @@ export async function getTodayEvents(): Promise<CalendarEvent[]> {
   ) as CalendarEvent[]
 
   events = injectSundayOrthros(todayStr, events)
-  events.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+  events.sort((a, b) => {
+    const startA = parseValidDate(a.start_time)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    const startB = parseValidDate(b.start_time)?.getTime() ?? Number.MAX_SAFE_INTEGER
+    return startA - startB
+  })
   return events
 }
 

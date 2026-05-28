@@ -129,13 +129,17 @@ export default async function DashboardPage() {
                   </h3>
                   <div className="space-y-2">
                     {todayEvents.map((evt) => {
-                      const startFmt = new Date(evt.start_time).toLocaleTimeString("en-US", {
+                      const startDate = evt.start_time ? new Date(evt.start_time) : null
+                      const hasValidStart = Boolean(startDate && !Number.isNaN(startDate.getTime()))
+                      const endDate = evt.end_time ? new Date(evt.end_time) : null
+                      const hasValidEnd = Boolean(endDate && !Number.isNaN(endDate.getTime()))
+                      const startFmt = hasValidStart ? startDate!.toLocaleTimeString("en-US", {
                         timeZone: "America/New_York",
                         hour: "numeric",
                         minute: "2-digit",
-                      })
-                      const endFmt = evt.end_time
-                        ? new Date(evt.end_time).toLocaleTimeString("en-US", {
+                      }) : "Time TBA"
+                      const endFmt = hasValidEnd
+                        ? endDate!.toLocaleTimeString("en-US", {
                             timeZone: "America/New_York",
                             hour: "numeric",
                             minute: "2-digit",

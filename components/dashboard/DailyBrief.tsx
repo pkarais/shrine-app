@@ -59,8 +59,10 @@ export function DailyBrief({ event }: { event: any }) {
 
   const isMajorFeast = event.category === "major_feast"
   const hasStart = Boolean(event?.start_time)
-  const start = hasStart ? new Date(event.start_time) : null
-  const end = hasStart ? getEventEndTime(event.start_time, event.end_time) : null
+  const startCandidate = hasStart ? new Date(event.start_time) : null
+  const start = startCandidate && !Number.isNaN(startCandidate.getTime()) ? startCandidate : null
+  const endCandidate = start ? getEventEndTime(event.start_time, event.end_time) : null
+  const end = endCandidate && !Number.isNaN(endCandidate.getTime()) ? endCandidate : null
 
   return (
     <section className="card-surface p-8 space-y-4">
