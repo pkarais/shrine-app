@@ -7,6 +7,7 @@ import { CalendarControls } from "@/components/calendar/CalendarControls"
 import { CalendarEventTimeline } from "@/components/calendar/CalendarEventTimeline"
 import { injectSundayOrthros } from "@/lib/calendar-defaults"
 import { RecurringScheduleCalendar } from "@/components/calendar/RecurringScheduleCalendar"
+import { SyncCalendarButton } from "@/components/calendar/SyncCalendarButton"
 import { getScheduleForDateRange } from "@/data/employee-schedules"
 import { getWeekScheduleAssignments } from "@/lib/actions/staffing"
 
@@ -250,7 +251,9 @@ export default async function CalendarPage({
             <span className="font-label text-xs uppercase tracking-widest text-secondary mb-2 block">Operational Overview</span>
             <h2 className="font-headline text-5xl font-extrabold text-primary -ml-1">Operations Calendar</h2>
           </div>
-          <CalendarControls
+          <div className="flex flex-col items-end gap-3">
+            {profileRole === "manager" && <SyncCalendarButton />}
+            <CalendarControls
             date={selectedDateStr}
             role={roleFilter}
             canAssign={profileRole === "manager"}
@@ -259,6 +262,7 @@ export default async function CalendarPage({
             staff={staffOptions}
             roleRosterByDate={roleRosterByDate}
           />
+          </div>
         </div>
       </section>
 
