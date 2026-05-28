@@ -223,9 +223,13 @@ export default async function CalendarPage({
     }
   }
 
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  startOfWeek.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+  const selectedDateObj = new Date(selectedDateStr + "T12:00:00")
+  // Mon-start for the weekly nav header
+  const startOfWeek = new Date(selectedDateObj)
+  startOfWeek.setDate(selectedDateObj.getDate() - ((selectedDateObj.getDay() + 6) % 7))
+  // Sun-start for the schedule grid — must match RecurringScheduleCalendar's useMemo
+  const scheduleWeekStart = new Date(selectedDateObj)
+  scheduleWeekStart.setDate(selectedDateObj.getDate() - selectedDateObj.getDay())
 
   // Determine if any visible event is actually short-staffed (for the legend)
   const hasAnyGap = filteredEvents.some((event: any) => {
@@ -243,9 +247,11 @@ export default async function CalendarPage({
 
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-  // Fetch real schedule assignments for the week from Supabase
-  const weekStartStr = formatLocalDate(weekDays[0])
-  const weekEndStr = formatLocalDate(weekDays[6])
+  // Fetch real schedule assignments for the Sun–Sat week matching what RecurringScheduleCalendar displays
+  const scheduleWeekEnd = new Date(scheduleWeekStart)
+  scheduleWeekEnd.setDate(scheduleWeekStart.getDate() + 6)
+  const weekStartStr = formatLocalDate(scheduleWeekStart)
+  const weekEndStr = formatLocalDate(scheduleWeekEnd)
   const weekAssignments = await getWeekScheduleAssignments(weekStartStr, weekEndStr)
 
   return (
