@@ -2,12 +2,15 @@ import { createServerClient as createClient } from "@supabase/ssr"
 import { createClient as createAdmin } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 export const createServerClient = () => {
   const cookieStore = cookies()
 
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl!,
+    supabaseAnonKey!,
     {
       cookies: {
         get(name: string) {
@@ -38,13 +41,18 @@ export const createServerClient = () => {
 
 export const createAdminClient = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase environment variables are missing. Please configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.")
+  }
+
   if (!serviceRoleKey) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing from .env.local. This key is required for the Development Bypass to interact with the database.")
+    console.warn("SUPABASE_SERVICE_ROLE_KEY is missing. Falling back to anon client for server operations.")
+    return createAdmin(supabaseUrl, supabaseAnonKey)
   }
 
   return createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl,
     serviceRoleKey
   )
 }

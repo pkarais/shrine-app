@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 
-import { createServerClient, createAdminClient } from "@/utils/supabase/server"
+import { createServerClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers" // Add this
 import { redirect } from "next/navigation"
 import { ClockInCard } from "@/components/dashboard/ClockInCard"
@@ -39,8 +39,7 @@ export default async function DashboardPage() {
   // If bypassing, provide a mock profile
   let profile = null
   if (user) {
-    const admin = createAdminClient()
-    const { data } = await admin.from("profiles").select("*").eq("id", user.id).single()
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
     profile = data
   } else if (hasDevBypass) {
     profile = { full_name: devName, role: devRole }
