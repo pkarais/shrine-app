@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Manrope, Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme/ThemeProvider"
 import { WakeUpAlarmMonitor } from "@/components/WakeUpAlarmMonitor"
@@ -23,6 +23,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Shrine Ops - Landmark Management",
   description: "Operational management system for the National Shrine",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 }
 
 export default function RootLayout({
