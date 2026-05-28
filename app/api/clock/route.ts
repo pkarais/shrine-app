@@ -37,10 +37,10 @@ async function parseJsonBody(request: Request) {
       error: NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 }),
     }
   }
+}
 
-  function getErrorDetails(error: unknown) {
-    return error instanceof Error ? error.message : String(error)
-  }
+function getErrorDetails(error: unknown) {
+  return error instanceof Error ? error.message : String(error)
 }
 
 export async function GET() {
