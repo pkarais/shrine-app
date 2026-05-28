@@ -64,7 +64,7 @@ Council members are automatically redirected to `/council` when they hit `/dashb
 **How it works:**
 1. Staff tap **Clock In** on the dashboard
 2. The browser requests the device's GPS coordinates
-3. The coordinates are compared against the Liberty Park geofence center (configurable via env vars, defaulting to 40.7101341, -74.0132028) within a 65-meter radius
+3. The coordinates are compared against the Liberty Park geofence center (configurable via env vars, defaulting to 40.7101341, -74.0132028) within a 275-meter radius
 4. If inside the fence: the clock-in is recorded to the `shifts` table with `clock_in = now()` and a success chime plays
 5. If outside the fence: clock-in is rejected, a geofence warning audio alert fires, and a `geofence_violation` alert is automatically logged to the manager alert queue
 6. If after 9 AM at clock-in time: a `late_clock_in` alert is also logged for the manager
@@ -477,7 +477,7 @@ SUPABASE_SERVICE_ROLE_KEY=          # Service role key — server only, never ex
 # Geofence — Liberty Park, NYC defaults shown
 NEXT_PUBLIC_SITE_LAT=40.7101341
 NEXT_PUBLIC_SITE_LON=-74.0132028
-NEXT_PUBLIC_GEOFENCE_RADIUS=65      # Radius in meters. 65m covers the shrine entrance area.
+NEXT_PUBLIC_GEOFENCE_RADIUS=275     # Radius in meters.
 
 # Google integrations (required for calendar sync and maps)
 GOOGLE_MAPS_API_KEY=                # Used for the MapContext embed

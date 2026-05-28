@@ -131,8 +131,8 @@
 
 #### 1.4.1 Database — Site coordinates config
 - **File:** `supabase/schema.sql`
-- **Changes:** Add `site_config` table: `id (INT PK DEFAULT 1)`, `site_name (TEXT)`, `latitude (DOUBLE PRECISION)`, `longitude (DOUBLE PRECISION)`, `geofence_radius_meters (INT DEFAULT 100)`. Insert single row with actual shrine coordinates. Or simpler: store as env vars `SITE_LAT`, `SITE_LON`, `GEOFENCE_RADIUS`.
-- **Recommendation:** Use env vars to avoid DB round-trip. Add to `.env.local`: `SITE_LAT`, `SITE_LON`, `GEOFENCE_RADIUS=100`.
+- **Changes:** Add `site_config` table: `id (INT PK DEFAULT 1)`, `site_name (TEXT)`, `latitude (DOUBLE PRECISION)`, `longitude (DOUBLE PRECISION)`, `geofence_radius_meters (INT DEFAULT 275)`. Insert single row with actual shrine coordinates. Or simpler: store as env vars `SITE_LAT`, `SITE_LON`, `GEOFENCE_RADIUS`.
+- **Recommendation:** Use env vars to avoid DB round-trip. Add to `.env.local`: `SITE_LAT`, `SITE_LON`, `GEOFENCE_RADIUS=275`.
 - **Complexity:** S
 
 #### 1.4.2 Server Action — geofence-validated clock-in
