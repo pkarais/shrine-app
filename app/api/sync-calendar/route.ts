@@ -49,6 +49,20 @@ export async function GET() {
     const items = data.items || []
 
     const admin = createAdminClient()
+
+    // Build lookup of existing events in the sync window by (title, start_time)
+    // so we can tell inserts from updates without relying on a DB unique constraint.
+    const { data: existingEvents } = await admin
+      .from("events")
+      .select("id, title, start_time")
+      .gte("start_time", timeMin)
+      .lte("start_time", timeMax)
+
+    // Key: "title|||ISO-start" → existing row id
+    const existingMap = new Map<string, number>(
+      (existingEvents || []).map((e: any) => [`${e.title}|||${new Date(e.start_time).toISOString()}`, e.id])
+    )
+
     let upserted = 0
 
     for (const evt of items) {
@@ -58,7 +72,7 @@ export async function GET() {
       const end = evt.end?.dateTime || evt.end?.date || start
       const category = classifyEvent(summary)
 
-      const { error } = await admin.from("events").upsert({
+      const eventData = {
         title: summary,
         start_time: start,
         end_time: end,
@@ -68,9 +82,20 @@ export async function GET() {
         required_security: category === 'major_feast' ? 2 : 1,
         required_greeter: category === 'major_feast' ? 2 : category === 'small_event' ? 0 : 1,
         director_mandatory: category === 'major_feast',
-      }, { onConflict: 'title,start_time' })
+      }
 
-      if (!error) upserted++
+      const key = `${summary}|||${new Date(start).toISOString()}`
+      const existingId = existingMap.get(key)
+
+      if (existingId) {
+        // Update the existing row — preserves staff_assignments FK links
+        const { error } = await admin.from("events").update(eventData).eq("id", existingId)
+        if (!error) upserted++
+      } else {
+        // New event instance — insert fresh row
+        const { error } = await admin.from("events").insert(eventData)
+        if (!error) upserted++
+      }
     }
 
     return NextResponse.json({ success: true, synced: upserted, total: items.length })
