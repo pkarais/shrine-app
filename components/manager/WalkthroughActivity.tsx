@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { deleteWalkthrough, clearAllWalkthroughs, getWalkthroughDetail } from "@/lib/actions/walkthroughs"
+import { deleteWalkthrough, clearAllWalkthroughs, getWalkthroughDetail, markWalkthroughAsTest } from "@/lib/actions/walkthroughs"
 import { WalkthroughArchiveViewer } from "./WalkthroughArchiveViewer"
-import { Trash2, AlertTriangle, X, CheckCircle2, XCircle, Archive, Calendar } from "lucide-react"
+import { Trash2, AlertTriangle, X, CheckCircle2, XCircle, Archive, Calendar, FlaskConical } from "lucide-react"
 
 interface WalkthroughItem {
   id: string
@@ -21,6 +21,7 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
   const [viewDetail, setViewDetail] = useState<any | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [showArchive, setShowArchive] = useState(false)
+  const [markingTestId, setMarkingTestId] = useState<string | null>(null)
 
   async function handleViewDetail(id: string) {
     setLoadingId(id)
@@ -52,6 +53,16 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
       alert(e.message)
     }
     setConfirmClearAll(false)
+  }
+
+  async function handleMarkAsTest(id: string) {
+    try {
+      await markWalkthroughAsTest(id)
+      setItems((prev) => prev.filter((w) => w.id !== id))
+      setMarkingTestId(null)
+    } catch (e: any) {
+      alert(e.message)
+    }
   }
 
   if (items.length === 0) {
@@ -109,14 +120,38 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
                     Cancel
                   </button>
                 </div>
+              ) : markingTestId === wt.id ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleMarkAsTest(wt.id)}
+                    className="text-[10px] px-2 py-1 rounded bg-tertiary text-white font-bold"
+                  >
+                    Mark test
+                  </button>
+                  <button
+                    onClick={() => setMarkingTestId(null)}
+                    className="text-[10px] px-2 py-1 rounded bg-surface-container-high text-on-surface-variant"
+                  >
+                    Cancel
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={() => setConfirmDelete(wt.id)}
-                  className="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-red-500 transition-colors"
-                  title="Delete walkthrough"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setMarkingTestId(wt.id)}
+                    className="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-tertiary transition-colors"
+                    title="Mark as test data"
+                  >
+                    <FlaskConical className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(wt.id)}
+                    className="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-red-500 transition-colors"
+                    title="Delete walkthrough"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
           </div>

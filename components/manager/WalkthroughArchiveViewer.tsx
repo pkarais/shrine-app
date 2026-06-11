@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { getArchivedWalkthroughs, getArchivedWalkthroughDates } from "@/lib/actions/walkthroughs"
-import { Calendar, X, Printer, ChevronDown, ChevronUp, CheckCircle2, XCircle, Archive, Filter } from "lucide-react"
+import { getArchivedWalkthroughs, getArchivedWalkthroughDates, purgeTestWalkthroughs } from "@/lib/actions/walkthroughs"
+import { Calendar, X, Printer, ChevronDown, ChevronUp, CheckCircle2, XCircle, Archive, Filter, Trash2, AlertTriangle } from "lucide-react"
 
 interface ArchivedWalkthrough {
   id: string
@@ -17,6 +17,7 @@ interface ArchivedWalkthrough {
   completed_at: string
   archived_at: string
   user_name: string | null
+  is_test: boolean | null
 }
 
 interface Props {
@@ -30,12 +31,15 @@ export function WalkthroughArchiveViewer({ onClose }: Props) {
   })
   const [typeFilter, setTypeFilter] = useState<"all" | "opening" | "closing">("all")
   const [categoryFilter, setCategoryFilter] = useState<"all" | "facility" | "security">("all")
+  const [includeTest, setIncludeTest] = useState(false)
   const [items, setItems] = useState<ArchivedWalkthrough[]>([])
   const [pending, startTransition] = useTransition()
   const [selectedItem, setSelectedItem] = useState<ArchivedWalkthrough | null>(null)
   const [availableDates, setAvailableDates] = useState<string[]>([])
   const [datesPending, startDatesTransition] = useTransition()
   const [hasSearched, setHasSearched] = useState(false)
+  const [confirmPurge, setConfirmPurge] = useState(false)
+  const [purgePending, startPurge] = useTransition()
 
   // Load available dates on mount
   const loadDates = () => {
@@ -55,10 +59,23 @@ export function WalkthroughArchiveViewer({ onClose }: Props) {
       try {
         const type = typeFilter === "all" ? undefined : typeFilter
         const category = categoryFilter === "all" ? undefined : categoryFilter
-        const results = await getArchivedWalkthroughs(selectedDate, type, category)
+        const results = await getArchivedWalkthroughs(selectedDate, type, category, includeTest)
         setItems(results)
       } catch (err: any) {
         alert(err?.message || "Failed to load archived walkthroughs")
+      }
+    })
+  }
+
+  const handlePurgeTest = () => {
+    setConfirmPurge(false)
+    startPurge(async () => {
+      try {
+        const result = await purgeTestWalkthroughs()
+        alert(`Purged ${result.purged} test walkthrough(s) from the archive.`)
+        handleSearch()
+      } catch (err: any) {
+        alert(err?.message || "Failed to purge test data")
       }
     })
   }

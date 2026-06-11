@@ -62,14 +62,15 @@ export async function deleteWalkthrough(id: string) {
     if (wt?.user_id !== user.id) throw new Error("Unauthorized")
   }
 
-  // ─── Archive before deleting (duplicate-safe via ON CONFLICT original_id) ───
+  // ─── Archive real data before deleting; discard test data without archiving ───
   const { data: row } = await admin
     .from("walkthroughs")
-    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at")
+    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at, is_test")
     .eq("id", id)
     .single()
 
-  if (row) {
+  if (row && !row.is_test) {
+    // Real walkthrough: archive it first
     const archiveRow = {
       original_id: row.id,
       user_id: row.user_id,
@@ -81,16 +82,18 @@ export async function deleteWalkthrough(id: string) {
       media_urls: row.media_urls,
       completed_at: row.completed_at,
       archive_date: easternDate(row.completed_at),
+      is_test: false,
     }
     const { error: archiveErr } = await admin
       .from("walkthrough_archive")
       .upsert(archiveRow, { onConflict: "original_id" })
     if (archiveErr) throw new Error(archiveErr.message)
   }
+  // If is_test === true, we simply delete it without archiving
 
   const { error } = await admin.from("walkthroughs").delete().eq("id", id)
   if (error) throw new Error(error.message)
-  return { success: true }
+  return { success: true, archived: row && !row.is_test }
 }
 
 export async function getWalkthroughDetail(id: string) {
@@ -105,16 +108,17 @@ export async function clearAllWalkthroughs() {
   await requireManager()
   const admin = createAdminClient()
 
-  // 1. Fetch ALL walkthroughs from the live table to archive
+  // 1. Fetch ALL walkthroughs
   const { data: allRows, error: fetchError } = await admin
     .from("walkthroughs")
-    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at")
+    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at, is_test")
     .order("completed_at", { ascending: true })
 
   if (fetchError) throw new Error(fetchError.message)
 
-  // 2. Archive every walkthrough using its own Eastern Time date
-  const archiveRows = (allRows || []).map((row) => {
+  // 2. Archive only REAL walkthroughs (test data is discarded)
+  const realRows = (allRows || []).filter((row) => !row.is_test)
+  const archiveRows = realRows.map((row) => {
     const archiveDate = easternDate(row.completed_at)
     return {
       original_id: row.id,
@@ -127,6 +131,7 @@ export async function clearAllWalkthroughs() {
       media_urls: row.media_urls,
       completed_at: row.completed_at,
       archive_date: archiveDate,
+      is_test: false,
     }
   })
 
@@ -137,32 +142,34 @@ export async function clearAllWalkthroughs() {
     if (archiveError) throw new Error(archiveError.message)
   }
 
-  // 3. Delete ALL live rows (everything is now safely archived)
+  // 3. Delete ALL live rows (real data is archived, test data is discarded)
   const { error: deleteError } = await admin
     .from("walkthroughs")
     .delete()
     .not("id", "is", null)
 
   if (deleteError) throw new Error(deleteError.message)
-  return { success: true, archived: archiveRows.length }
+  return { success: true, archived: archiveRows.length, discarded: (allRows || []).filter((r) => r.is_test).length }
 }
 
 export async function getArchivedWalkthroughs(
   date: string,
   type?: "opening" | "closing",
-  category?: "facility" | "security"
+  category?: "facility" | "security",
+  includeTest = false
 ) {
   await requireManager()
   const admin = createAdminClient()
 
   let query = admin
     .from("walkthrough_archive")
-    .select("id, original_id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at, archived_at")
+    .select("id, original_id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at, archived_at, is_test")
     .eq("archive_date", date)
     .order("completed_at", { ascending: true })
 
   if (type) query = query.eq("walkthrough_type", type)
   if (category) query = query.eq("category", category)
+  if (!includeTest) query = query.eq("is_test", false)
 
   const { data, error } = await query
 
@@ -192,7 +199,7 @@ export async function backfillWalkthroughArchive() {
 
   const { data: allRows, error: fetchError } = await admin
     .from("walkthroughs")
-    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at")
+    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at, is_test")
     .order("completed_at", { ascending: true })
 
   if (fetchError) throw new Error(fetchError.message)
@@ -210,6 +217,7 @@ export async function backfillWalkthroughArchive() {
       media_urls: row.media_urls,
       completed_at: row.completed_at,
       archive_date: archiveDate,
+      is_test: row.is_test || false,
     }
   })
 
@@ -238,6 +246,40 @@ export async function getArchivedWalkthroughDates(limit = 30) {
   // Deduplicate dates
   const dates = Array.from(new Set((data || []).map((d: any) => d.archive_date)))
   return dates
+}
+
+/**
+ * Permanently delete test walkthroughs from the archive.
+ * Real staff walkthroughs (is_test = false) are never touched.
+ */
+export async function purgeTestWalkthroughs() {
+  await requireManager()
+  const admin = createAdminClient()
+
+  const { error, count } = await admin
+    .from("walkthrough_archive")
+    .delete({ count: "exact" })
+    .eq("is_test", true)
+
+  if (error) throw new Error(error.message)
+  return { purged: count || 0 }
+}
+
+/**
+ * Mark a live walkthrough as test data so it is discarded on clear.
+ * Only managers can do this.
+ */
+export async function markWalkthroughAsTest(id: string) {
+  await requireManager()
+  const admin = createAdminClient()
+
+  const { error } = await admin
+    .from("walkthroughs")
+    .update({ is_test: true })
+    .eq("id", id)
+
+  if (error) throw new Error(error.message)
+  return { success: true }
 }
 
 export const getTodayWalkthrough = async (eventId: number | null, type?: "opening" | "closing") => {
