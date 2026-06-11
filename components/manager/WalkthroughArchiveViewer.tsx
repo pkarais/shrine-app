@@ -173,7 +173,7 @@ export function WalkthroughArchiveViewer({ onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center p-4 pt-16 overflow-y-auto">
       <div className="w-full max-w-3xl bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-2xl my-8">
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-outline-variant/20">

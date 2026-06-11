@@ -74,7 +74,7 @@ export function WakeUpAlarmMonitor() {
   if (!notification) return null
 
   return (
-    <div className="fixed top-20 right-4 z-[9999] max-w-sm animate-in slide-in-from-top-2 duration-300">
+    <div className="fixed top-20 right-4 z-[100] max-w-sm animate-in slide-in-from-top-2 duration-300">
       <div className="bg-primary text-white rounded-2xl shadow-2xl p-4 border border-primary/20">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">

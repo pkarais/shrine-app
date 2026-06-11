@@ -123,7 +123,7 @@ export function TopAppBar({ showProfile = true }: { showProfile?: boolean }) {
   }
 
   return (
-    <header className="fixed top-0 left-0 w-full z-[9999] bg-surface/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-[var(--outline-variant)]/20 dark:border-slate-700/30">
+    <header className="fixed top-0 left-0 w-full z-[50] bg-surface/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center border-b border-[var(--outline-variant)]/20 dark:border-slate-700/30">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 focus:outline-none">
           <Image

@@ -48,7 +48,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-surface text-on-surface font-body min-h-screen selection:bg-secondary-container selection:text-on-secondary-container">
-        <div className="fixed top-0 left-0 w-full h-1 gold-accents z-[100]" />
+        <div className="fixed top-0 left-0 w-full h-1 gold-accents z-[55]" />
         <ThemeProvider>
           <AuthProvider>
             <PresenceProvider>

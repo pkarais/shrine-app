@@ -451,7 +451,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: any; onClose: () => void 
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="card-surface max-w-md w-full p-6 sm:p-8 relative shadow-2xl border border-[var(--outline-variant)]/30" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-[var(--surface-container)] transition-colors">
           <X className="w-5 h-5" />
@@ -689,7 +689,7 @@ function ManagerBadgeAwardPanel({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="card-surface max-w-md w-full p-6 sm:p-8 relative shadow-2xl border border-[var(--outline-variant)]/30 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-[var(--surface-container)] transition-colors">
           <X className="w-5 h-5" />

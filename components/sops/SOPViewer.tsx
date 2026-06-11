@@ -338,7 +338,7 @@ export function SOPViewer({ isManager = false }: SOPViewerProps) {
 
       {/* PDF Viewer Modal */}
       {viewingSop && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
           <div className="bg-surface w-full max-w-5xl rounded-2xl overflow-hidden flex flex-col" style={{ height: "90vh" }}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/30 shrink-0">

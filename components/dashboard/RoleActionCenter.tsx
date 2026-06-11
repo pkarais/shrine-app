@@ -319,7 +319,7 @@ export function RoleActionCenter({ role, profile, event, staffAssignments, summa
       {/* Form Modals */}
       {isWalkthroughOpen && (
         <div 
-          className="fixed inset-0 z-[99999] bg-surface overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-surface overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) setIsWalkthroughOpen(false); }}
         >
           <div className="min-h-full flex items-center justify-center p-6">
@@ -339,7 +339,7 @@ export function RoleActionCenter({ role, profile, event, staffAssignments, summa
 
       {isIncidentOpen && (
         <div 
-          className="fixed inset-0 z-[99999] bg-surface overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-surface overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) setIsIncidentOpen(false); }}
         >
           <div className="min-h-full flex items-center justify-center p-6">

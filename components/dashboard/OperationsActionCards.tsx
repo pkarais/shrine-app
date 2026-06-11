@@ -116,7 +116,7 @@ export function OperationsActionCards({
       </div>
 
       {activeModal && (
-        <div className="fixed inset-0 z-[99999] bg-surface overflow-y-auto">
+        <div className="fixed inset-0 z-[100] bg-surface overflow-y-auto">
           <div className="min-h-full flex items-center justify-center p-6">
             <div className="w-full max-w-4xl bg-surface-container-lowest dark:bg-surface-container rounded-[2rem] p-8 shadow-2xl relative my-8">
             <button
@@ -143,7 +143,7 @@ export function OperationsActionCards({
 
       {selectedWalkthrough && (
         <div
-          className="fixed inset-0 z-[99999] bg-surface overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-surface overflow-y-auto"
           onClick={() => setSelectedWalkthrough(null)}
         >
           <div className="min-h-full flex items-center justify-center p-6">

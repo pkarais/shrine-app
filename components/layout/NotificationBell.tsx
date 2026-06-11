@@ -243,7 +243,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 sm:inset-x-auto sm:w-96 bg-[var(--surface-container-high)] dark:bg-slate-800/95 rounded-2xl shadow-2xl border border-[var(--outline-variant)]/30 overflow-hidden z-[200]" style={{ top: "calc(env(safe-area-inset-top, 0px) + 72px)", maxWidth: "calc(100vw - 16px)" }}>
+        <div className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 sm:inset-x-auto sm:w-96 bg-[var(--surface-container-high)] dark:bg-slate-800/95 rounded-2xl shadow-2xl border border-[var(--outline-variant)]/30 overflow-hidden z-[60]" style={{ top: "calc(env(safe-area-inset-top, 0px) + 72px)", maxWidth: "calc(100vw - 16px)" }}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--outline-variant)]/30">
             <h3 className="font-bold text-sm text-[var(--on-surface)]">Notifications</h3>
             <div className="flex items-center gap-2">
