@@ -1,0 +1,988 @@
+{
+  "shifts": [
+    {
+      "date": "2026-06-01",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "10:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-07",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "11:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "11:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "11:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-07",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "12:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "14:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "14:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "10:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "10:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-07",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "09:00",
+      "shiftEnd": "14:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "12:30",
+      "shiftEnd": "20:30",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "12:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-07",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "12:30",
+      "shiftEnd": "20:30",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "12:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-07",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-01",
+      "staffName": "Ryan",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "10:00",
+      "shiftEnd": "15:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Ryan",
+      "scheduleRole": "SECURITY",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Ryan",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-02",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "15:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-03",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-04",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-05",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-06",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-07",
+      "staffName": "Jose",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Paul",
+      "scheduleRole": "DIRECTOR",
+      "shiftStart": "09:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": "08:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Fabio",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "14:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "12:00",
+      "shiftEnd": "12:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "11:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "11:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Josh",
+      "scheduleRole": "PORTER",
+      "shiftStart": "12:00",
+      "shiftEnd": "18:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "14:00",
+      "shiftEnd": "18:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "10:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "10:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "10:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Paulin",
+      "scheduleRole": "PORTER",
+      "shiftStart": "09:00",
+      "shiftEnd": "14:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "12:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "12:30",
+      "shiftEnd": "20:30",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "15:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "11:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Demetri",
+      "scheduleRole": "GREETER",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Marcus",
+      "scheduleRole": "GREETER",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "12:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "12:30",
+      "shiftEnd": "20:30",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Teresa",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Ryan",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Ryan",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-09",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "16:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-11",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "10:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-12",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": null,
+      "shiftEnd": null,
+      "isLate": false
+    },
+    {
+      "date": "2026-06-13",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "09:00",
+      "shiftEnd": "17:00",
+      "isLate": false
+    },
+    {
+      "date": "2026-06-14",
+      "staffName": "Ken",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "15:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-08",
+      "staffName": "Jose",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "16:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    },
+    {
+      "date": "2026-06-10",
+      "staffName": "Jose",
+      "scheduleRole": "SECURITY",
+      "shiftStart": "16:00",
+      "shiftEnd": "20:00",
+      "isLate": true
+    }
+  ],
+  "dayHeaders": [
+    {
+      "date": "2026-06-01",
+      "dayTitle": "MONDAY OF THE HOLY SPIRIT"
+    },
+    {
+      "date": "2026-06-02",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-03",
+      "dayTitle": "- BIBLE STUDY/ DRESS REHEARSAL"
+    },
+    {
+      "date": "2026-06-04",
+      "dayTitle": "ST IAKOVOS OF EVIA CONCERT"
+    },
+    {
+      "date": "2026-06-05",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-06",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-07",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-08",
+      "dayTitle": "AHEPA MEETING"
+    },
+    {
+      "date": "2026-06-09",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-10",
+      "dayTitle": "BIBLE STUDY/ CONCERT"
+    },
+    {
+      "date": "2026-06-11",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-12",
+      "dayTitle": ""
+    },
+    {
+      "date": "2026-06-13",
+      "dayTitle": "-BAPTISM"
+    },
+    {
+      "date": "2026-06-14",
+      "dayTitle": "MIDNIGHT RUN"
+    }
+  ],
+  "warnings": [
+    "[debug] day anchors: MON@130, TUE@196, WED@259, THU@326, FRI@394, SAT@457, SUN@524",
+    "[debug] week band y=704 dates: MON=06-01 TUE=06-02 WED=06-03 THU=06-04 FRI=06-05 SAT=06-06 SUN=06-07",
+    "[debug] week band y=637 dates: MON=06-08 TUE=06-09 WED=06-10 THU=06-11 FRI=06-12 SAT=06-13 SUN=06-14"
+  ],
+  "rawText": "Staff Name Role Monday Tuesday Wednesday Thursday Friday Saturday Sunday AM PM LATE AM PM LATE AM PM LATE AM PM LATE AM Midday PM AM Midday PM AM Midday PM LATE SERVICE OR EVENT UNAVAILABLE OPENER 8:00 AM CLOSER 8:00 PM 6/1/26 MONDAY OF THE HOLY SPIRIT 6/2/26 6/3/26 - BIBLE STUDY/ DRESS REHEARSAL 6/4/2026 ST IAKOVOS OF EVIA CONCERT 6/5/26 6/6/2026 6/7/26 PAUL DIRECTOR --- OFF --- --- OFF --- 9:00 AM 5:00 PM 10:00 AM 8:00 PM 9:00 AM 5:00 PM 9:00 AM 5:00 PM 9:00 AM 5:00 PM FABIO PORTER 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM --- OFF --- JOSH PORTER --- OFF --- --- OFF --- 11:00 AM 5:00 PM 10:00 AM 5:00 PM 11:00 AM 5:00 PM 11:00 AM 5:00 PM 12:00 PM 5:00 PM PAULIN PORTER --- OFF --- --- OFF --- 2:00 PM 8:00 PM 2:00 PM 8:00 PM 10:00 AM 4:00 PM 10:00 AM 4:00 PM 9:00 AM 2:00 PM DEMETRI GREETER 9:00 AM 5:00 PM 9:00 AM 5:00 PM 12:30 PM 8:30 PM 12:00 PM 8:00 PM --- OFF --- --- OFF --- 9:00 AM 5:00 PM MARCUS GREETER --- OFF --- 10:00 AM 5:00 PM 10:00 AM 5:00 PM 10:00 AM 5:00 PM --- OFF --- 10:00 AM 5:00 PM TERESA SECURITY 9:00 AM 5:00 PM 9:00 AM 5:00 PM 12:30 PM 8:30 PM 12:00 PM 8:00 PM --- OFF --- 10:00 AM 5:00 PM 9:00 AM 5:00 PM RYAN SECURITY 10:00 AM 3:00 PM --- OFF --- 9:00 AM 4:00 PM KEN SECURITY 9:00 AM 3:00 PM 9:00 AM 5:00 PM 9:00 AM 5:00 PM 10:00 AM 5:00 PM 9:00 AM 5:00 PM JOSE SECURITY 9:00 AM 5:00 PM 6/8/2026 AHEPA MEETING 6/9/26 6/10/26 BIBLE STUDY/ CONCERT 6/11/2026 6/12/2026 6/13/2026 -BAPTISM 6/14/2026 MIDNIGHT RUN PAUL DIRECTOR --- OFF --- --- OFF --- 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM 9:00 AM 5:00 PM 9:00 AM 8:00 PM FABIO PORTER 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM 8:00 AM 4:00 PM --- OFF --- JOSH PORTER 2:00 PM 8:00 PM --- OFF --- 12:00 PM --- OFF --- 11:00 AM 5:00 PM 11:00 AM 5:00 PM 12:00 PM 6:00 PM PAULIN PORTER --- OFF --- OFF --- 2:00 PM 6:00 PM 10:00 AM 4:00 PM 10:00 AM 4:00 PM 10:00 AM 4:00 PM 9:00 AM 2:00 PM DEMETRI GREETER 12:00 PM 8:00 PM 9:00 AM 5:00 PM 12:30 PM 8:30 PM 10:00 AM 3:00 PM --- OFF --- 11:00 AM 5:00 PM 9:00 AM 5:00 PM MARCUS GREETER --- OFF --- 10:00 AM 5:00 PM 10:00 AM 5:00 PM 10:00 AM 5:00 PM 10:00 AM 5:00 PM 10:00 AM 5:00 PM --- OFF --- TERESA SECURITY 12:00 PM 8:00 PM --- OFF --- 12:30 PM 8:30 PM --- OFF --- 10:00 AM 5:00 PM --- 10:00 AM 5:00 PM 9:00 AM 5:00 PM RYAN SECURITY 9:00 AM 4:00 PM 9:00 AM 4:00 PM KEN SECURITY 9:00 AM 4:00 PM 9:00 AM 5:00 PM 9:00 AM 4:00 PM 10:00 AM 5:00 PM --- OFF --- 9:00 AM 5:00 PM 3:00 PM 8:00 PM JOSE SECURITY 4:00 PM 8:00 PM 4:00 PM 8:00 PM \nDate: (enter) Day: (enter) Staff Name Role 6–9 9–12 12–3 3–6 6–9 9–12 Notes \n"
+}
