@@ -3,7 +3,7 @@
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { requireAuth, requireManager } from "./auth-helpers"
-import { toEasternIso, easternToday } from "@/lib/eastern-time"
+import { toEasternIso, easternToday, easternDate } from "@/lib/eastern-time"
 
 export const submitWalkthrough = async (
   eventId: number | null,
@@ -79,33 +79,30 @@ export async function clearAllWalkthroughs() {
   await requireManager()
   const admin = createAdminClient()
 
-  const todayEt = easternToday()
-  const todayStart = new Date(toEasternIso(todayEt, "00:00")).toISOString()
-  const todayEnd   = new Date(toEasternIso(todayEt, "23:59")).toISOString()
-
-  // 1. Fetch today's walkthroughs to archive
-  const { data: todayRows, error: fetchError } = await admin
+  // 1. Fetch ALL walkthroughs from the live table to archive
+  const { data: allRows, error: fetchError } = await admin
     .from("walkthroughs")
     .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at")
-    .gte("completed_at", todayStart)
-    .lte("completed_at", todayEnd)
     .order("completed_at", { ascending: true })
 
   if (fetchError) throw new Error(fetchError.message)
 
-  // 2. Archive today's walkthroughs
-  const archiveRows = (todayRows || []).map((row) => ({
-    original_id: row.id,
-    user_id: row.user_id,
-    event_id: row.event_id,
-    category: row.category,
-    walkthrough_type: row.walkthrough_type,
-    checks: row.checks,
-    notes: row.notes,
-    media_urls: row.media_urls,
-    completed_at: row.completed_at,
-    archive_date: todayEt,
-  }))
+  // 2. Archive every walkthrough using its own Eastern Time date
+  const archiveRows = (allRows || []).map((row) => {
+    const archiveDate = easternDate(row.completed_at)
+    return {
+      original_id: row.id,
+      user_id: row.user_id,
+      event_id: row.event_id,
+      category: row.category,
+      walkthrough_type: row.walkthrough_type,
+      checks: row.checks,
+      notes: row.notes,
+      media_urls: row.media_urls,
+      completed_at: row.completed_at,
+      archive_date: archiveDate,
+    }
+  })
 
   if (archiveRows.length > 0) {
     const { error: archiveError } = await admin
@@ -114,12 +111,11 @@ export async function clearAllWalkthroughs() {
     if (archiveError) throw new Error(archiveError.message)
   }
 
-  // 3. Delete only today's live rows
+  // 3. Delete ALL live rows (everything is now safely archived)
   const { error: deleteError } = await admin
     .from("walkthroughs")
     .delete()
-    .gte("completed_at", todayStart)
-    .lte("completed_at", todayEnd)
+    .not("id", "is", null)
 
   if (deleteError) throw new Error(deleteError.message)
   return { success: true, archived: archiveRows.length }
@@ -158,6 +154,47 @@ export async function getArchivedWalkthroughs(
     ...w,
     user_name: profileMap.get(w.user_id) || null,
   }))
+}
+
+/**
+ * One-time backfill: archive all walkthroughs currently in the live table
+ * without deleting them. Use this if historical data was never archived.
+ */
+export async function backfillWalkthroughArchive() {
+  await requireManager()
+  const admin = createAdminClient()
+
+  const { data: allRows, error: fetchError } = await admin
+    .from("walkthroughs")
+    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at")
+    .order("completed_at", { ascending: true })
+
+  if (fetchError) throw new Error(fetchError.message)
+
+  const archiveRows = (allRows || []).map((row) => {
+    const archiveDate = easternDate(row.completed_at)
+    return {
+      original_id: row.id,
+      user_id: row.user_id,
+      event_id: row.event_id,
+      category: row.category,
+      walkthrough_type: row.walkthrough_type,
+      checks: row.checks,
+      notes: row.notes,
+      media_urls: row.media_urls,
+      completed_at: row.completed_at,
+      archive_date: archiveDate,
+    }
+  })
+
+  if (archiveRows.length === 0) return { backfilled: 0 }
+
+  const { error: archiveError } = await admin
+    .from("walkthrough_archive")
+    .upsert(archiveRows, { onConflict: "original_id" })
+
+  if (archiveError) throw new Error(archiveError.message)
+  return { backfilled: archiveRows.length }
 }
 
 export async function getArchivedWalkthroughDates(limit = 30) {
