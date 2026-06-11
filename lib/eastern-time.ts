@@ -212,3 +212,66 @@ export function easternMonthBounds(yearMonth: string): { start: string; end: str
   const end = `${m[1]}-${m[2]}-${String(lastDay).padStart(2, "0")}`
   return { start, end }
 }
+
+/**
+ * Parse a "YYYY-W##" ISO week string and return {start, end} as YYYY-MM-DD.
+ * Week starts on Sunday (consistent with Sunday-Saturday American convention).
+ */
+export function easternWeekBounds(weekStr: string): { start: string; end: string } {
+  const m = /^(\d{4})-W(\d{2})$/.exec(weekStr)
+  if (!m) return { start: weekStr, end: weekStr }
+  const year = Number(m[1])
+  const week = Number(m[2])
+  // ISO 8601 week 1 = first week with Thursday in the new year.
+  // Jan 4 is always in week 1.
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  // Day of week for Jan 4 (0=Sun, 1=Mon...)
+  const jan4Day = jan4.getUTCDay()
+  // Monday of week 1
+  const monW1 = new Date(jan4.getTime() - ((jan4Day + 6) % 7) * 86400000)
+  // Start of target week (Sunday = Monday - 1 day)
+  const start = new Date(monW1.getTime() + (week - 1) * 7 * 86400000 - 86400000)
+  const end = new Date(start.getTime() + 6 * 86400000)
+  const fmt = (d: Date) =>
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`
+  return { start: fmt(start), end: fmt(end) }
+}
+
+/**
+ * Compute a 14-day (biweekly) period starting from a given date.
+ */
+export function easternBiweekBounds(startDate: string): { start: string; end: string } {
+  const start = easternDate(startDate)
+  const d = new Date(toEasternIso(start, "12:00"))
+  const end = new Date(d.getTime() + 13 * 86400000)
+  return { start, end: easternDate(end.toISOString()) }
+}
+
+/**
+ * Format a "YYYY-MM-DD" as "Month D, YYYY" in ET.
+ */
+export function easternDateLabel(date: string): string {
+  const d = new Date(toEasternIso(date, "12:00"))
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: ET,
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(d)
+}
+
+/**
+ * Format a "YYYY-MM-DD" range as "Month D – Month D, YYYY" in ET.
+ */
+export function easternRangeLabel(start: string, end: string): string {
+  const startYear = start.slice(0, 4)
+  const endYear = end.slice(0, 4)
+  const s = easternDateLabel(start)
+  const e = easternDateLabel(end)
+  if (startYear === endYear) {
+    // If same year, strip the year from the start label (e.g., "June 1 – June 14, 2026")
+    const sNoYear = s.replace(`, ${startYear}`, "")
+    return `${sNoYear} – ${e}`
+  }
+  return `${s} – ${e}`
+}

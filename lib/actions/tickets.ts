@@ -2,7 +2,7 @@
 
 import { createServerClient, createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
-import { easternDate } from "@/lib/eastern-time"
+import { easternDate, easternWeekBounds, easternBiweekBounds } from "@/lib/eastern-time"
 
 export const createTicket = async (
   eventId: number | null,
@@ -745,4 +745,126 @@ export async function getArchivedTicketMonths(limit = 12) {
 
   const months = Array.from(new Set((data || []).map((d: any) => d.archive_date.slice(0, 7))))
   return months.slice(0, limit)
+}
+
+export async function getArchivedTicketsByWeek(
+  week: string,
+  status?: string,
+  priority?: string
+) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
+  const { start, end } = easternWeekBounds(week)
+
+  let query = admin
+    .from("ticket_archive")
+    .select("id, original_id, user_id, event_id, title, description, priority, status, media_urls, assigned_to, created_at, resolved_at, archive_date")
+    .gte("archive_date", start)
+    .lte("archive_date", end)
+    .order("created_at", { ascending: true })
+
+  if (status) query = query.eq("status", status)
+  if (priority) query = query.eq("priority", priority)
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  const userIds = Array.from(new Set((data || []).flatMap((t: any) => [t.user_id, t.assigned_to]).filter(Boolean)))
+  const eventIds = Array.from(new Set((data || []).map((t: any) => t.event_id).filter(Boolean)))
+
+  const [{ data: profiles }, { data: events }] = await Promise.all([
+    userIds.length > 0 ? admin.from("profiles").select("id, full_name, email").in("id", userIds) : Promise.resolve({ data: [] }),
+    eventIds.length > 0 ? admin.from("events").select("id, title").in("id", eventIds) : Promise.resolve({ data: [] }),
+  ])
+
+  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+  const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
+
+  return (data || []).map((t: any) => ({
+    ...t,
+    reporter_name: profileMap.get(t.user_id)?.full_name || null,
+    assigned_name: t.assigned_to ? profileMap.get(t.assigned_to)?.full_name || null : null,
+    event_title: eventMap.get(t.event_id)?.title || null,
+  }))
+}
+
+export async function getArchivedTicketsByBiweek(
+  startDate: string,
+  status?: string,
+  priority?: string
+) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
+  const { start, end } = easternBiweekBounds(startDate)
+
+  let query = admin
+    .from("ticket_archive")
+    .select("id, original_id, user_id, event_id, title, description, priority, status, media_urls, assigned_to, created_at, resolved_at, archive_date")
+    .gte("archive_date", start)
+    .lte("archive_date", end)
+    .order("created_at", { ascending: true })
+
+  if (status) query = query.eq("status", status)
+  if (priority) query = query.eq("priority", priority)
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  const userIds = Array.from(new Set((data || []).flatMap((t: any) => [t.user_id, t.assigned_to]).filter(Boolean)))
+  const eventIds = Array.from(new Set((data || []).map((t: any) => t.event_id).filter(Boolean)))
+
+  const [{ data: profiles }, { data: events }] = await Promise.all([
+    userIds.length > 0 ? admin.from("profiles").select("id, full_name, email").in("id", userIds) : Promise.resolve({ data: [] }),
+    eventIds.length > 0 ? admin.from("events").select("id, title").in("id", eventIds) : Promise.resolve({ data: [] }),
+  ])
+
+  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+  const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
+
+  return (data || []).map((t: any) => ({
+    ...t,
+    reporter_name: profileMap.get(t.user_id)?.full_name || null,
+    assigned_name: t.assigned_to ? profileMap.get(t.assigned_to)?.full_name || null : null,
+    event_title: eventMap.get(t.event_id)?.title || null,
+  }))
+}
+
+export async function getArchivedTicketWeeks(limit = 12) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
+  const { data, error } = await admin
+    .from("ticket_archive")
+    .select("archive_date")
+    .order("archive_date", { ascending: false })
+    .limit(limit * 7)
+
+  if (error) throw new Error(error.message)
+
+  const weeks = Array.from(new Set((data || []).map((d: any) => {
+    const dt = new Date(d.archive_date)
+    const jan4 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 4))
+    const jan4Day = jan4.getUTCDay()
+    const monW1 = new Date(jan4.getTime() - ((jan4Day + 6) % 7) * 86400000)
+    const weekNum = Math.floor((dt.getTime() - monW1.getTime()) / (7 * 86400000)) + 1
+    return `${dt.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`
+  })))
+  return weeks.slice(0, limit)
 }
