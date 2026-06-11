@@ -55,14 +55,23 @@ export async function getVisitorTotals(scope: RollupScope): Promise<VisitorRollu
   const startUtc = new Date(toEasternIso(shiftDays(start, -1), "00:00")).toISOString()
   const endUtc = new Date(toEasternIso(shiftDays(end, 1), "23:59")).toISOString()
 
-  const { data, error } = await admin
+  // Pull live rows for the current period
+  const { data: liveRows, error: liveError } = await admin
     .from("visitor_volume")
     .select("count, recorded_at")
     .gte("recorded_at", startUtc)
     .lte("recorded_at", endUtc)
     .order("recorded_at", { ascending: true })
 
-  if (error) {
+  // Pull archived daily snapshots for the same period
+  const { data: archiveRows, error: archiveError } = await admin
+    .from("visitor_volume_archive")
+    .select("count, archive_date, recorded_at")
+    .gte("archive_date", start)
+    .lte("archive_date", end)
+    .order("archive_date", { ascending: true })
+
+  if (liveError || archiveError) {
     return {
       scope,
       label,
@@ -87,13 +96,23 @@ export async function getVisitorTotals(scope: RollupScope): Promise<VisitorRollu
   //   • Total    → sum of the last-snapshot-per-day values
   //   • Peak hour → the hour of the single highest last-snapshot of each day
   //
-  // Rows are already ordered ascending by recorded_at, so iterating forward
-  // and overwriting byDay[day] gives us the last value naturally.
+  // Live rows overwrite archive rows for the same day (live data is newer).
 
   // Track last snapshot per day (overwrite on each newer row)
   const lastSnapshotByDay = new Map<string, { count: number; recorded_at: string }>()
 
-  for (const row of data || []) {
+  // First seed from archive (historical data already cleared from live table)
+  for (const row of archiveRows || []) {
+    const day = row.archive_date as string
+    if (day < start || day > end) continue
+    lastSnapshotByDay.set(day, {
+      count: Number(row.count) || 0,
+      recorded_at: row.recorded_at as string,
+    })
+  }
+
+  // Then overlay with live rows (these take precedence for current days)
+  for (const row of liveRows || []) {
     const day = easternDate(row.recorded_at as string)
     if (day < start || day > end) continue
     // Later rows overwrite earlier ones — we end up with the final snapshot

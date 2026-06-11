@@ -59,17 +59,24 @@ export async function generateDailyBriefDraft(briefDate?: string) {
 
   // Visitor totals for the day (so dailies can later be rolled up into
   // bi-weekly / monthly reports without re-querying visitor_volume).
-  const visitorsTotal = (visitorRows || []).reduce((sum: number, r: any) => sum + (Number(r.count) || 0), 0)
-  const hourBuckets = new Map<number, number>()
-  for (const r of visitorRows || []) {
-    const hour = Number(
-      new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", hour12: false }).format(new Date(r.recorded_at as string)),
-    ) % 24
-    hourBuckets.set(hour, (hourBuckets.get(hour) || 0) + (Number(r.count) || 0))
-  }
-  const peakHourEntry = Array.from(hourBuckets.entries()).sort((a, b) => b[1] - a[1])[0]
-  const visitorsPeakHour = peakHourEntry ? peakHourEntry[0] : null
-  const visitorsPeakHourCount = peakHourEntry ? peakHourEntry[1] : 0
+  //
+  // Visitor counts are SNAPSHOTS — "there are N visitors right now".
+  // We must use the LAST snapshot of the day, not sum all snapshots.
+  const lastSnapshot = (visitorRows || []).length > 0
+    ? (visitorRows || []).sort((a: any, b: any) =>
+        new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+      ).at(-1)
+    : null
+
+  const visitorsTotal = lastSnapshot ? Number(lastSnapshot.count) || 0 : 0
+  const visitorsPeakHour = lastSnapshot
+    ? Number(
+        new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", hour12: false }).format(
+          new Date(lastSnapshot.recorded_at as string)
+        ),
+      ) % 24
+    : null
+  const visitorsPeakHourCount = visitorsTotal
 
   // Upsert the brief issue
   const { data: issue, error: issueError } = await admin

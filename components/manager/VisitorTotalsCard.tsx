@@ -127,8 +127,8 @@ export default function VisitorTotalsCard({ initial }: { initial: VisitorRollup 
           )}
 
           <p className="text-[11px] text-on-surface-variant pt-1">
-            Totals use Eastern Time day boundaries. Visitor counts persist; the chart Reset button only clears live
-            rows after the daily brief has been generated.
+            Totals use Eastern Time day boundaries. The chart Reset button archives today&apos;s final snapshot
+            then clears only today&apos;s live rows. Historical data is preserved for week / bi-week / month rollups.
           </p>
         </>
       )}

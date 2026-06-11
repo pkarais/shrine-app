@@ -92,7 +92,10 @@ export function VisitorVolumeChart({ initialRows }: { initialRows: VisitorRow[] 
 
       <div className="flex justify-end gap-2">
         {confirmingReset ? (
-          <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-on-surface-variant">
+              Archive today&apos;s data then clear?
+            </span>
             <button
               onClick={handleReset}
               disabled={pendingReset}
@@ -107,13 +110,13 @@ export function VisitorVolumeChart({ initialRows }: { initialRows: VisitorRow[] 
             >
               Cancel
             </button>
-          </>
+          </div>
         ) : (
           <button
             onClick={() => setConfirmingReset(true)}
             disabled={rows.length === 0 || pendingReset}
             className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
-            title="Delete all visitor counts so the chart starts fresh"
+            title="Archive today's final snapshot, then clear only today's live chart. Prior days are preserved."
           >
             Reset chart
           </button>
