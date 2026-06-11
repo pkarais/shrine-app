@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Wrench, Clock, CheckCircle2, RefreshCw, Users, AlertTriangle, ChevronDown, ChevronUp, Trash2 } from "lucide-react"
-import { getManagerTickets, getOperationsStaff, assignTicket, unassignTicket, deleteTicket } from "@/lib/actions/tickets"
+import { Wrench, Clock, CheckCircle2, RefreshCw, Users, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Printer } from "lucide-react"
+import { getManagerTickets, getOperationsStaff, assignTicket, unassignTicket, deleteTicket, clearAllTickets } from "@/lib/actions/tickets"
+import { TicketArchiveViewer } from "@/components/manager/TicketArchiveViewer"
 import { TicketCard } from "@/components/shared/TicketCard"
 
 type Ticket = {
@@ -38,6 +39,8 @@ export function ManagerTicketCommand() {
   const [filter, setFilter] = useState<FilterTab>("all")
   const [isPending, setIsPending] = useState(false)
   const [assigningId, setAssigningId] = useState<string | null>(null)
+  const [showArchive, setShowArchive] = useState(false)
+  const [clearPending, setClearPending] = useState(false)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -100,6 +103,21 @@ export function ManagerTicketCommand() {
     }
   }
 
+  const handleClearAll = async () => {
+    if (!confirm("Clear all tickets?\n\nAll tickets will be archived and removed from the live list. This action is permanent.")) return
+    setClearPending(true)
+    setError(null)
+    try {
+      const result = await clearAllTickets()
+      alert(`Archived ${result.archived} tickets successfully.`)
+      await fetchAll()
+    } catch (err: any) {
+      setError(err.message || "Failed to clear tickets")
+    } finally {
+      setClearPending(false)
+    }
+  }
+
   const stats = {
     open: tickets.filter((t) => t.status === "open" && !t.assigned_to).length,
     unassigned: tickets.filter((t) => t.status === "open" && !t.assigned_to).length,
@@ -138,15 +156,38 @@ export function ManagerTicketCommand() {
             Route and assign tickets to operations staff
           </p>
         </div>
-        <button
-          onClick={fetchAll}
-          disabled={isPending}
-          className="p-3 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors"
-          title="Refresh"
-        >
-          <RefreshCw className={`w-5 h-5 text-primary ${isPending ? "animate-spin" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowArchive(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors text-xs font-bold"
+            title="View archived tickets"
+          >
+            <Archive className="w-4 h-4" />
+            Archive
+          </button>
+          <button
+            onClick={handleClearAll}
+            disabled={clearPending || isPending}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-container text-on-surface hover:bg-red-900/20 hover:text-red-400 transition-colors text-xs font-bold disabled:opacity-50"
+            title="Archive and clear all tickets"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clear All
+          </button>
+          <button
+            onClick={fetchAll}
+            disabled={isPending}
+            className="p-3 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 text-primary ${isPending ? "animate-spin" : ""}`} />
+          </button>
+        </div>
       </div>
+
+      {showArchive && (
+        <TicketArchiveViewer onClose={() => setShowArchive(false)} />
+      )}
 
       {error && (
         <div className="p-4 bg-red-900/20 text-red-400 rounded-xl text-sm flex items-center gap-2">
