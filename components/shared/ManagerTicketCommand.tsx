@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Wrench, Clock, CheckCircle2, RefreshCw, Users, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Printer } from "lucide-react"
+import { Wrench, Clock, CheckCircle2, RefreshCw, Users, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Printer, FileText } from "lucide-react"
 import { getManagerTickets, getOperationsStaff, assignTicket, unassignTicket, deleteTicket, clearAllTickets } from "@/lib/actions/tickets"
 import { TicketArchiveViewer } from "@/components/manager/TicketArchiveViewer"
 import { TicketCard } from "@/components/shared/TicketCard"
@@ -316,6 +316,118 @@ function ManagerTicketRow({
     })
   }
 
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+    })
+
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString("en-US", {
+      timeZone: "America/New_York", hour: "2-digit", minute: "2-digit",
+    })
+
+  const printTicket = () => {
+    const priorityColor = {
+      low: "#155724", medium: "#735c00", high: "#8d0201", urgent: "#721c24",
+    }[ticket.priority] || "#555"
+
+    const statusColor = {
+      open: "#002c5e", in_progress: "#735c00", resolved: "#155724", closed: "#555",
+    }[ticket.status] || "#555"
+
+    const printedAt = `${fmtDate(new Date().toISOString())} at ${fmtTime(new Date().toISOString())} ET`
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Maintenance Ticket — ${ticket.title}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui,-apple-system,Arial,sans-serif; color: #111; background:#fff; padding:32px; font-size:13px; }
+    header { border-bottom:3px solid #002c5e; padding-bottom:16px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-end; }
+    .org { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.14em; color:#735c00; margin-bottom:4px; }
+    .title { font-size:22px; font-weight:900; color:#002c5e; }
+    .ref { font-size:11px; color:#555; text-align:right; line-height:1.7; }
+    .badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-left:8px; color:#fff; }
+    .summary { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px; }
+    .summary-box { background:#f8f9fa; border:1px solid #e8e8e8; border-radius:8px; padding:10px 14px; }
+    .summary-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#555; margin-bottom:3px; }
+    .summary-value { font-size:13px; color:#111; font-weight:600; }
+    .desc { background:#f8f9fa; border-left:3px solid #002c5e; padding:12px 16px; border-radius:0 8px 8px 0; font-size:13px; line-height:1.6; white-space:pre-wrap; }
+    footer { margin-top:32px; border-top:1px solid #ccc; padding-top:10px; font-size:10px; color:#888; display:flex; justify-content:space-between; }
+    @media print { body { padding:16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="org">Saint Nicholas National Shrine — Operations</p>
+      <p class="title">Maintenance Ticket
+        <span class="badge" style="background:${priorityColor}">${ticket.priority}</span>
+        <span class="badge" style="background:${statusColor}">${ticket.status.replace(/_/g, " ")}</span>
+      </p>
+    </div>
+    <div class="ref">
+      Ticket ID: ${ticket.id.slice(0,8).toUpperCase()}<br/>
+      Date: ${fmtDate(ticket.created_at)}<br/>
+      Time: ${fmtTime(ticket.created_at)} ET<br/>
+      ${ticket.resolved_at ? `Resolved: ${fmtDate(ticket.resolved_at)} ${fmtTime(ticket.resolved_at)} ET<br/>` : ""}
+      ${ticket.profiles?.full_name ? `Reported by: ${ticket.profiles.full_name}<br/>` : ""}
+      ${ticket.assigned_profile?.full_name ? `Assigned to: ${ticket.assigned_profile.full_name}<br/>` : ""}
+      ${ticket.events?.title ? `Event: ${ticket.events.title}<br/>` : ""}
+      Printed: ${printedAt}<br/>
+      CONFIDENTIAL — INTERNAL USE ONLY
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="summary-box">
+      <div class="summary-label">Priority</div>
+      <div class="summary-value" style="text-transform:capitalize;color:${priorityColor}">${ticket.priority}</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">Status</div>
+      <div class="summary-value" style="text-transform:capitalize;">${ticket.status.replace(/_/g, " ")}</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">Created</div>
+      <div class="summary-value">${fmtDate(ticket.created_at)} ${fmtTime(ticket.created_at)} ET</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">Ticket ID</div>
+      <div class="summary-value">#${ticket.id.slice(0,8).toUpperCase()}</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#002c5e;border-bottom:1px solid #c0c8d8;padding-bottom:6px;margin-bottom:12px;">Title</p>
+    <p style="font-size:15px;font-weight:700;color:#111;">${ticket.title}</p>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#002c5e;border-bottom:1px solid #c0c8d8;padding-bottom:6px;margin-bottom:12px;">Description</p>
+    <div class="desc">${ticket.description}</div>
+  </div>
+
+  <footer>
+    <span>Saint Nicholas National Shrine — Operations Ticket</span>
+    <span>Printed ${printedAt}</span>
+  </footer>
+  <script>window.onload = () => window.print()</script>
+</body>
+</html>`
+
+    const win = window.open("", "_blank", "width=900,height=700")
+    if (!win) {
+      alert("Pop-up blocked. Please allow pop-ups for this site and try again.")
+      return
+    }
+    win.document.write(html)
+    win.document.close()
+  }
+
   return (
     <div className="bg-[var(--surface-container)] rounded-2xl overflow-hidden">
       <button
@@ -425,15 +537,24 @@ function ManagerTicketRow({
             <span className="text-[10px] text-[var(--on-surface-variant)] opacity-50">
               ID: {ticket.id.slice(0, 8)}
             </span>
-            <button
-              onClick={() => {
-                if (confirm("Delete this ticket permanently?")) onDelete(ticket.id)
-              }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Delete
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={printTicket}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm("Delete this ticket permanently?")) onDelete(ticket.id)
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -57,6 +57,24 @@ export const createTicket = async (
   }).select("*").single()
 
   if (error) throw new Error(error.message)
+
+  // Archive on creation so every ticket is permanently preserved
+  const archiveRow = {
+    original_id: data.id,
+    user_id: data.user_id,
+    event_id: data.event_id,
+    title: data.title,
+    description: data.description,
+    priority: data.priority,
+    status: data.status,
+    media_urls: data.media_urls,
+    assigned_to: data.assigned_to,
+    created_at: data.created_at,
+    resolved_at: data.resolved_at,
+    archive_date: easternDate(data.created_at),
+  }
+  await admin.from("ticket_archive").upsert(archiveRow, { onConflict: "original_id" })
+
   return { success: true, ticket: await enrichWithEvents(admin, data) }
 }
 
@@ -660,4 +678,71 @@ export async function getArchivedTicketDates(limit = 30) {
 
   if (error) throw new Error(error.message)
   return Array.from(new Set((data || []).map((d: any) => d.archive_date)))
+}
+
+export async function getArchivedTicketsByMonth(
+  yearMonth: string,
+  status?: string,
+  priority?: string
+) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
+  let query = admin
+    .from("ticket_archive")
+    .select("id, original_id, user_id, event_id, title, description, priority, status, media_urls, assigned_to, created_at, resolved_at, archive_date")
+    .gte("archive_date", `${yearMonth}-01`)
+    .lte("archive_date", `${yearMonth}-31`)
+    .order("created_at", { ascending: true })
+
+  if (status) query = query.eq("status", status)
+  if (priority) query = query.eq("priority", priority)
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  // Enrich with user names and event titles
+  const userIds = Array.from(new Set((data || []).flatMap((t: any) => [t.user_id, t.assigned_to]).filter(Boolean)))
+  const eventIds = Array.from(new Set((data || []).map((t: any) => t.event_id).filter(Boolean)))
+
+  const [{ data: profiles }, { data: events }] = await Promise.all([
+    userIds.length > 0 ? admin.from("profiles").select("id, full_name, email").in("id", userIds) : Promise.resolve({ data: [] }),
+    eventIds.length > 0 ? admin.from("events").select("id, title").in("id", eventIds) : Promise.resolve({ data: [] }),
+  ])
+
+  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
+  const eventMap = new Map((events || []).map((e: any) => [e.id, e]))
+
+  return (data || []).map((t: any) => ({
+    ...t,
+    reporter_name: profileMap.get(t.user_id)?.full_name || null,
+    assigned_name: t.assigned_to ? profileMap.get(t.assigned_to)?.full_name || null : null,
+    event_title: eventMap.get(t.event_id)?.title || null,
+  }))
+}
+
+export async function getArchivedTicketMonths(limit = 12) {
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).single()
+  if (profile?.role !== "manager") return []
+
+  const { data, error } = await admin
+    .from("ticket_archive")
+    .select("archive_date")
+    .order("archive_date", { ascending: false })
+    .limit(limit * 31)
+
+  if (error) throw new Error(error.message)
+
+  const months = Array.from(new Set((data || []).map((d: any) => d.archive_date.slice(0, 7))))
+  return months.slice(0, limit)
 }
