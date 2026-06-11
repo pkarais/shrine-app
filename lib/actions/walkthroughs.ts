@@ -62,6 +62,32 @@ export async function deleteWalkthrough(id: string) {
     if (wt?.user_id !== user.id) throw new Error("Unauthorized")
   }
 
+  // ─── Archive before deleting (duplicate-safe via ON CONFLICT original_id) ───
+  const { data: row } = await admin
+    .from("walkthroughs")
+    .select("id, user_id, event_id, category, walkthrough_type, checks, notes, media_urls, completed_at")
+    .eq("id", id)
+    .single()
+
+  if (row) {
+    const archiveRow = {
+      original_id: row.id,
+      user_id: row.user_id,
+      event_id: row.event_id,
+      category: row.category,
+      walkthrough_type: row.walkthrough_type,
+      checks: row.checks,
+      notes: row.notes,
+      media_urls: row.media_urls,
+      completed_at: row.completed_at,
+      archive_date: easternDate(row.completed_at),
+    }
+    const { error: archiveErr } = await admin
+      .from("walkthrough_archive")
+      .upsert(archiveRow, { onConflict: "original_id" })
+    if (archiveErr) throw new Error(archiveErr.message)
+  }
+
   const { error } = await admin.from("walkthroughs").delete().eq("id", id)
   if (error) throw new Error(error.message)
   return { success: true }
