@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { deleteWalkthrough, clearAllWalkthroughs, getWalkthroughDetail } from "@/lib/actions/walkthroughs"
-import { Trash2, AlertTriangle, X, CheckCircle2, XCircle } from "lucide-react"
+import { WalkthroughArchiveViewer } from "./WalkthroughArchiveViewer"
+import { Trash2, AlertTriangle, X, CheckCircle2, XCircle, Archive, Calendar } from "lucide-react"
 
 interface WalkthroughItem {
   id: string
@@ -19,6 +20,7 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
   const [confirmClearAll, setConfirmClearAll] = useState(false)
   const [viewDetail, setViewDetail] = useState<any | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [showArchive, setShowArchive] = useState(false)
 
   async function handleViewDetail(id: string) {
     setLoadingId(id)
@@ -54,7 +56,18 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
 
   if (items.length === 0) {
     return (
-      <p className="text-sm text-on-surface-variant">No walkthroughs completed yet today.</p>
+      <div className="space-y-3">
+        <p className="text-sm text-on-surface-variant">No walkthroughs completed yet today.</p>
+        <button
+          onClick={() => setShowArchive(true)}
+          className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 font-medium"
+        >
+          <Archive className="w-3.5 h-3.5" /> View Archive History
+        </button>
+        {showArchive && (
+          <WalkthroughArchiveViewer onClose={() => setShowArchive(false)} />
+        )}
+      </div>
     )
   }
 
@@ -109,11 +122,18 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
           </div>
         ))}
       </div>
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-between items-center">
+        <button
+          onClick={() => setShowArchive(true)}
+          className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 font-medium"
+        >
+          <Archive className="w-3.5 h-3.5" /> Archive History
+        </button>
+
         {confirmClearAll ? (
           <div className="flex items-center gap-2 p-3 bg-red-900/20 rounded-xl">
             <AlertTriangle className="w-4 h-4 text-red-400" />
-            <span className="text-xs text-red-400 font-bold">Delete all walkthroughs?</span>
+            <span className="text-xs text-red-400 font-bold">Archive today, then clear?</span>
             <button
               onClick={handleClearAll}
               className="text-xs px-3 py-1.5 rounded bg-red-600 text-white font-bold"
@@ -132,10 +152,15 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
             onClick={() => setConfirmClearAll(true)}
             className="text-xs text-on-surface-variant hover:text-red-400 transition-colors flex items-center gap-1"
           >
-            <Trash2 className="w-3 h-3" /> Clear all test data
+            <Trash2 className="w-3 h-3" /> Clear all
           </button>
         )}
       </div>
+
+      {/* Archive viewer modal */}
+      {showArchive && (
+        <WalkthroughArchiveViewer onClose={() => setShowArchive(false)} />
+      )}
     </div>
 
     {/* Detail modal */}
