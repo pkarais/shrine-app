@@ -148,10 +148,44 @@ CREATE TABLE IF NOT EXISTS notifications (
   user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title         TEXT NOT NULL,
   body          TEXT NOT NULL,
-  type          TEXT NOT NULL DEFAULT 'info' CHECK (type IN ('info', 'warning', 'shift_reminder', 'staffing_gap', 'ticket_assigned')),
+  type          TEXT NOT NULL DEFAULT 'info' CHECK (type IN ('info', 'warning', 'shift_reminder', 'staffing_gap', 'ticket_assigned', 'message', 'badge_awarded', 'points_deducted', 'eom_nomination')),
   read_at       TIMESTAMPTZ,
   reference_id  TEXT,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Group Conversations (manager group messaging + staff→managers)
+CREATE TABLE IF NOT EXISTS group_conversations (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name               TEXT NOT NULL,
+  created_by         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_manager_group   BOOLEAN NOT NULL DEFAULT false,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversation_participants (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id   UUID NOT NULL REFERENCES group_conversations(id) ON DELETE CASCADE,
+  user_id           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  joined_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(conversation_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS group_messages (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id   UUID NOT NULL REFERENCES group_conversations(id) ON DELETE CASCADE,
+  sender_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content           TEXT NOT NULL,
+  media_urls        JSONB DEFAULT '[]',
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS group_message_reads (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id        UUID NOT NULL REFERENCES group_messages(id) ON DELETE CASCADE,
+  user_id           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  read_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(message_id, user_id)
 );
 
 -- Staff Directory (external directory merged with profiles in Calendar)
@@ -209,6 +243,9 @@ CREATE INDEX IF NOT EXISTS idx_staff_directory_email ON staff_directory (email);
 CREATE INDEX IF NOT EXISTS idx_staff_directory_role ON staff_directory (role);
 CREATE INDEX IF NOT EXISTS idx_visitor_volume_event ON visitor_volume (event_id);
 CREATE INDEX IF NOT EXISTS idx_visitor_volume_recorded ON visitor_volume (recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_group_conversations_participant ON conversation_participants (user_id);
+CREATE INDEX IF NOT EXISTS idx_group_messages_conversation ON group_messages (conversation_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_group_messages_sender ON group_messages (sender_id);
 
 -- ────────────────────────────────────────────────────────────
 -- ROW LEVEL SECURITY
@@ -374,6 +411,56 @@ DO $$ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'notifications_update_own' AND tablename = 'notifications') THEN
     CREATE POLICY notifications_update_own ON notifications FOR UPDATE TO authenticated USING (user_id = auth.uid());
+  END IF;
+END $$;
+
+-- Group Conversations
+ALTER TABLE group_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversation_participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE group_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE group_message_reads ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'gc_select_participant' AND tablename = 'group_conversations') THEN
+    CREATE POLICY gc_select_participant ON group_conversations FOR SELECT TO authenticated USING (
+      id IN (SELECT conversation_id FROM conversation_participants WHERE user_id = auth.uid())
+      OR (is_manager_group AND public.get_user_role() = 'manager')
+    );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'gc_insert_manager' AND tablename = 'group_conversations') THEN
+    CREATE POLICY gc_insert_manager ON group_conversations FOR INSERT TO authenticated WITH CHECK (public.get_user_role() = 'manager');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'cp_select_own' AND tablename = 'conversation_participants') THEN
+    CREATE POLICY cp_select_own ON conversation_participants FOR SELECT TO authenticated USING (
+      user_id = auth.uid()
+      OR conversation_id IN (SELECT id FROM group_conversations WHERE is_manager_group = true AND public.get_user_role() = 'manager')
+    );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'cp_insert_manager' AND tablename = 'conversation_participants') THEN
+    CREATE POLICY cp_insert_manager ON conversation_participants FOR INSERT TO authenticated WITH CHECK (
+      conversation_id IN (SELECT id FROM group_conversations WHERE is_manager_group = true AND public.get_user_role() = 'manager')
+    );
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'gm_select_participant' AND tablename = 'group_messages') THEN
+    CREATE POLICY gm_select_participant ON group_messages FOR SELECT TO authenticated USING (
+      conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id = auth.uid())
+      OR conversation_id IN (SELECT id FROM group_conversations WHERE is_manager_group = true AND public.get_user_role() = 'manager')
+    );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'gm_insert_participant' AND tablename = 'group_messages') THEN
+    CREATE POLICY gm_insert_participant ON group_messages FOR INSERT TO authenticated WITH CHECK (
+      sender_id = auth.uid()
+      AND conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id = auth.uid())
+    );
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'gmr_select_own' AND tablename = 'group_message_reads') THEN
+    CREATE POLICY gmr_select_own ON group_message_reads FOR SELECT TO authenticated USING (user_id = auth.uid());
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'gmr_insert_own' AND tablename = 'group_message_reads') THEN
+    CREATE POLICY gmr_insert_own ON group_message_reads FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
   END IF;
 END $$;
 
