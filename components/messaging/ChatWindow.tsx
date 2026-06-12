@@ -25,7 +25,6 @@ export function ChatWindow({
   userName: string
   onBack: () => void
 }) {
-  const supabase = createClient()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
@@ -63,10 +62,16 @@ export function ChatWindow({
     }
   }, [input])
 
-  // Realtime subscription for instant message updates (like NotificationBell)
+  // Realtime subscription for instant message updates.
+  // The supabase client is created inside the effect so it is never a
+  // stale closure captured from the render scope, which would cause the
+  // react-hooks/exhaustive-deps warning.
   useEffect(() => {
     let isMounted = true
+    let cleanup: (() => void) | undefined
+
     const setupSubscription = async () => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !isMounted) return
 
@@ -89,16 +94,16 @@ export function ChatWindow({
         )
         .subscribe()
 
-      return () => {
-        supabase.removeChannel(channel)
-      }
+      cleanup = () => { supabase.removeChannel(channel) }
     }
 
     setupSubscription()
+
     return () => {
       isMounted = false
+      cleanup?.()
     }
-  }, [userId])
+  }, [userId]) // userId is the only external value the subscription depends on
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()

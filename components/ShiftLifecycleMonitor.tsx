@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { logAlertToManager } from "@/lib/actions/manager-alerts"
 import { LABOR, BREAKS } from "@/constants"
@@ -126,7 +126,10 @@ export function ShiftLifecycleMonitor() {
     insertNotification(userId, title, body, notifyType, `${alertId}_${getDateKey()}`)
   }
 
-  async function check() {
+  // Wrapped in useCallback with empty deps — all mutable state lives in stable
+  // refs so there are no stale-closure risks, and the stable identity satisfies
+  // the useEffect dependency array below without causing re-subscriptions.
+  const check = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -305,9 +308,8 @@ export function ShiftLifecycleMonitor() {
     } catch {
       // silent
     }
-  }
+  }, []) // All mutable state lives in stable refs — no render-scope values captured.
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const setup = setTimeout(() => {
       check()
@@ -318,7 +320,7 @@ export function ShiftLifecycleMonitor() {
       clearTimeout(setup)
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [])
+  }, [check])
 
   return null
 }

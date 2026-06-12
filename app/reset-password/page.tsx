@@ -17,10 +17,12 @@ export default function ResetPasswordPage() {
   const [sessionChecking, setSessionChecking] = useState(true)
   const [sessionValid, setSessionValid] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Create the client inside the effect so the linter doesn't flag a
+  // stale closure over the module-level `supabase` variable.
   useEffect(() => {
+    const supabase = createClient()
+
     const checkSession = async () => {
       const result = await supabase.auth.getSession()
       setSessionValid(!!result.data.session)
@@ -56,6 +58,7 @@ export default function ResetPasswordPage() {
     }
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
       setSuccess(true)
@@ -170,7 +173,7 @@ export default function ResetPasswordPage() {
         <div className="flex items-center gap-6">
           <span>© 2026 St. Nicholas Shrine</span>
           <span className="hidden md:inline w-1 h-1 rounded-full bg-white/20" />
-          <span>Operational Portal v0.1.0</span>
+          <span>Operational Portal v4.2.0</span>
         </div>
       </footer>
     </div>

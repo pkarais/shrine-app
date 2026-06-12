@@ -2,13 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import { TopAppBar } from "@/components/layout/TopAppBar"
 import { Wrench, Clock, CheckCircle2, RefreshCw, Inbox, User, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import { TicketCard, TicketCardGroup } from "@/components/shared/TicketCard"
+import { TicketCard } from "@/components/shared/TicketCard"
 import { MaintenanceTicketForm } from "@/components/forms/MaintenanceTicketForm"
 import { getUnassignedTickets, getAssignedTickets, getUserTickets, getOperationsStaff, assignTicket, unassignTicket, claimTicket, completeTicket } from "@/lib/actions/tickets"
 
@@ -60,7 +60,9 @@ export default function TicketsPage() {
   const filteredAssigned = filterTickets(assignedTickets)
   const filteredMy = filterTickets(myTickets)
 
-  const fetchData = async () => {
+  // Wrapped in useCallback so the dependency array in useEffect is stable
+  // and doesn't trigger an infinite fetch loop.
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const supabase = createClient()
@@ -100,12 +102,11 @@ export default function TicketsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
   const handleAssign = async (ticketId: string, assigneeId: string) => {
     try {

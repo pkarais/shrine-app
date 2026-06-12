@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/utils/supabase/client"
 import { playAlertSound, type AlertSoundKey } from "@/lib/audio/alert-sounds"
 
@@ -78,7 +78,10 @@ export function RecognitionMonitor() {
     } catch {}
   }
 
-  async function check() {
+  // Wrapped in useCallback with empty deps — all state is in stable refs so
+  // there are no stale-closure risks, and the identity stays constant across
+  // renders so the useEffect dependency array below is satisfied correctly.
+  const check = useCallback(async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -196,9 +199,8 @@ export function RecognitionMonitor() {
 
       lastPollRef.current = now
     } catch {}
-  }
+  }, []) // All mutable state lives in refs — no values from the render scope are captured.
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const setup = setTimeout(() => {
       check()
@@ -209,7 +211,7 @@ export function RecognitionMonitor() {
       clearTimeout(setup)
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [])
+  }, [check])
 
   return null
 }

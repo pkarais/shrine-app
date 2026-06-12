@@ -143,6 +143,8 @@ export function RecurringScheduleCalendar({
     })
   }, [staffNames, STAFF_ROLES])
 
+  // STAFF_ROLES added to deps — it is a useMemo value so it only changes
+  // when templateStaffRoles changes, keeping the callback stable in practice.
   const openEdit = useCallback((staffName: string, date: string) => {
     if (!canEdit) return
     const shift = mergedScheduleByDate[date]?.[staffName]
@@ -161,7 +163,7 @@ export function RecurringScheduleCalendar({
     setEditRole(role)
     setMessage(null)
     setError(null)
-  }, [canEdit, mergedScheduleByDate, weekAssignments])
+  }, [canEdit, mergedScheduleByDate, weekAssignments, STAFF_ROLES])
 
   const handleSave = async () => {
     if (!editingCell) return
