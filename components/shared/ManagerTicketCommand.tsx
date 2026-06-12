@@ -362,6 +362,7 @@ function ManagerTicketRow({
 </head>
 <body>
   <header>
+    <img src="/images/logo-color.jpg" alt="Saint Nicholas Shrine" style="display:block;height:56px;width:auto;margin:0 0 12px;" />
     <div>
       <p class="org">Saint Nicholas National Shrine — Operations</p>
       <p class="title">Maintenance Ticket

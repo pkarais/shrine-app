@@ -553,6 +553,7 @@ export async function generatePayrollHtml(data: PayrollReportData): Promise<stri
   @page { size: landscape; margin: 0.5in; }
   body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; color: #1a1a1a; line-height: 1.4; }
   h1 { font-size: 1.6rem; border-bottom: 3px solid #1a3a5c; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+  .report-logo { display: block; height: 56px; width: auto; margin-bottom: 0.75rem; }
   .meta { color: #666; font-size: 0.8rem; margin-bottom: 1rem; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -563,6 +564,7 @@ export async function generatePayrollHtml(data: PayrollReportData): Promise<stri
   footer { margin-top: 2rem; border-top: 1px solid #e0e0e0; padding-top: 1rem; font-size: 0.7rem; color: #666; text-align: center; }
 </style></head>
 <body>
+  <img class="report-logo" src="${process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')}/images/logo-color.jpg" alt="Saint Nicholas Shrine" />
   <div class="meta">${data.period.label} &bull; Generated ${new Date(data.generatedAt).toLocaleString()}</div>
   <h1>Payroll Report — ${data.period.label}</h1>
   <div class="summary">

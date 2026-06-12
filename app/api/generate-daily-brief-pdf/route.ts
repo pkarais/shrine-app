@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
 </head>
 <body>
   <header>
+    <img src="${process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')}/images/logo-color.jpg" alt="Saint Nicholas Shrine" style="display:block;height:56px;width:auto;margin:0 0 12px;" />
     <h1>${issue.title}</h1>
     <p class="meta">${dateLabel} &bull; Status: ${issue.status} &bull; Generated ${new Date().toLocaleString()}</p>
   </header>

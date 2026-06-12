@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
   footer { margin-top: 2rem; border-top: 1px solid #e0e0e0; padding-top: 1rem; font-size: 0.7rem; color: #666; text-align: center; }
 </style></head>
 <body>
+  <img src="${process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')}/images/logo-color.jpg" alt="Saint Nicholas Shrine" style="display:block;height:56px;width:auto;margin:0 0 12px;" />
   <div class="meta">${content.period?.label || ""} &bull; Generated ${new Date(content.generatedAt || report.created_at).toLocaleString()}</div>
   <h1>Payroll Report — ${content.period?.label || report.title}</h1>
   <div class="summary">

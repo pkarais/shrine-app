@@ -182,6 +182,7 @@ export async function POST(request: NextRequest) {
   .section-body li { margin: 0.15rem 0; }
 </style></head>
 <body>
+  <img src="${process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')}/images/logo-color.jpg" alt="Saint Nicholas Shrine" style="display:block;height:56px;width:auto;margin:0 0 12px;" />
   <div class="meta">${monthLabel}</div>
   <h1>${(issue as any).title}</h1>
   <div class="opening">${mdToHtml((issue as any).opening_message)}</div>

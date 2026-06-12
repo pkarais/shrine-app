@@ -130,6 +130,7 @@ export function WalkthroughActivity({ initial }: { initial: WalkthroughItem[] })
 </head>
 <body>
   <header>
+    <img src="/images/logo-color.jpg" alt="Saint Nicholas Shrine" style="display:block;height:56px;width:auto;margin:0 0 12px;" />
     <div>
       <p class="org">Saint Nicholas National Shrine — ${detail.category === "security" ? "Security" : "Operations"}</p>
       <p class="title">${detail.walkthrough_type === "opening" ? "Opening" : "Closing"} Walkthrough Report
