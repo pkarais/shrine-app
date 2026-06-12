@@ -75,25 +75,6 @@ export function ShiftLifecycleMonitor() {
   const firedRef = useRef<Set<string> | null>(null)
   const userIdRef = useRef<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  function getFiredSet(): Set<string> {
-    if (!firedRef.current) {
-      firedRef.current = userIdRef.current ? loadFiredSet(userIdRef.current) : new Set<string>()
-    }
-    return firedRef.current
-  }
-
-  function markFired(id: string) {
-    const key = `${id}:${getDateKey()}`
-    const set = getFiredSet()
-    set.add(key)
-    if (userIdRef.current) saveFiredSet(userIdRef.current, set)
-  }
-
-  function hasFired(id: string): boolean {
-    return getFiredSet().has(`${id}:${getDateKey()}`)
-  }
 
   function playSound(key: string) {
     try {
@@ -111,25 +92,42 @@ export function ShiftLifecycleMonitor() {
     } catch {}
   }
 
-  async function fireAlert(
-    alertId: string,
-    userId: string,
-    soundKey: string,
-    title: string,
-    body: string,
-    notifyType = "shift_reminder"
-  ) {
-    if (hasFired(alertId)) return
-    markFired(alertId)
-    playSound(soundKey)
-    // Use alertId+dateKey as referenceId — same as hasFired key, prevents DB duplicates across reloads
-    insertNotification(userId, title, body, notifyType, `${alertId}_${getDateKey()}`)
-  }
-
   // Wrapped in useCallback with empty deps — all mutable state lives in stable
   // refs so there are no stale-closure risks, and the stable identity satisfies
   // the useEffect dependency array below without causing re-subscriptions.
+  // The fired-set helpers and fireAlert are defined inside this callback (rather
+  // than the component body) so they are not flagged as missing dependencies.
   const check = useCallback(async () => {
+    // --- fired-set dedup helpers (closure over refs only) ---
+    const getFiredSet = (): Set<string> => {
+      if (!firedRef.current) {
+        firedRef.current = userIdRef.current ? loadFiredSet(userIdRef.current) : new Set<string>()
+      }
+      return firedRef.current
+    }
+    const markFired = (id: string) => {
+      const key = `${id}:${getDateKey()}`
+      const set = getFiredSet()
+      set.add(key)
+      if (userIdRef.current) saveFiredSet(userIdRef.current, set)
+    }
+    const hasFired = (id: string): boolean => getFiredSet().has(`${id}:${getDateKey()}`)
+
+    const fireAlert = async (
+      alertId: string,
+      userId: string,
+      soundKey: string,
+      title: string,
+      body: string,
+      notifyType = "shift_reminder"
+    ) => {
+      if (hasFired(alertId)) return
+      markFired(alertId)
+      playSound(soundKey)
+      // Use alertId+dateKey as referenceId — same as hasFired key, prevents DB duplicates across reloads
+      insertNotification(userId, title, body, notifyType, `${alertId}_${getDateKey()}`)
+    }
+
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()

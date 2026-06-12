@@ -47,24 +47,6 @@ export function RecognitionMonitor() {
   const lastPollRef = useRef<string>(new Date().toISOString())
   const previousRankRef = useRef<{ rank: number; dateKey: string } | null>(null)
 
-  function getFiredSet(): Set<string> {
-    if (!firedRef.current) {
-      firedRef.current = userIdRef.current ? loadFiredSet(userIdRef.current) : new Set<string>()
-    }
-    return firedRef.current
-  }
-
-  function markFired(id: string) {
-    const key = `${id}:${getDateKey()}`
-    const set = getFiredSet()
-    set.add(key)
-    if (userIdRef.current) saveFiredSet(userIdRef.current, set)
-  }
-
-  function hasFired(id: string): boolean {
-    return getFiredSet().has(`${id}:${getDateKey()}`)
-  }
-
   function playSound(key: AlertSoundKey) {
     try {
       playAlertSound(key)
@@ -81,7 +63,24 @@ export function RecognitionMonitor() {
   // Wrapped in useCallback with empty deps — all state is in stable refs so
   // there are no stale-closure risks, and the identity stays constant across
   // renders so the useEffect dependency array below is satisfied correctly.
+  // The fired-set helpers are defined inside this callback (rather than the
+  // component body) so they are not flagged as missing dependencies.
   const check = useCallback(async () => {
+    // --- fired-set dedup helpers (closure over refs only) ---
+    const getFiredSet = (): Set<string> => {
+      if (!firedRef.current) {
+        firedRef.current = userIdRef.current ? loadFiredSet(userIdRef.current) : new Set<string>()
+      }
+      return firedRef.current
+    }
+    const markFired = (id: string) => {
+      const key = `${id}:${getDateKey()}`
+      const set = getFiredSet()
+      set.add(key)
+      if (userIdRef.current) saveFiredSet(userIdRef.current, set)
+    }
+    const hasFired = (id: string): boolean => getFiredSet().has(`${id}:${getDateKey()}`)
+
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()

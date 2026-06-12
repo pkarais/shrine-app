@@ -54,27 +54,29 @@ export default function OperationsBriefGeneratorPage() {
   const [emailSending, setEmailSending] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    // Properly handle promise with .catch() to avoid unhandled rejections
-    supabase.auth.getUser()
-      .then((result: any) => {
-        const u = result?.data?.user ?? null
+    // Load the user and their profile. Wrapped in an async IIFE with try/catch
+    // because the Supabase query builder's .then() returns a PromiseLike<void>
+    // that does NOT support a chained .catch().
+    const loadUserAndProfile = async () => {
+      try {
+        const supabase = createClient()
+        const { data: userData } = await supabase.auth.getUser()
+        const u = userData?.user ?? null
         setUser(u)
         if (u) {
-          supabase
+          const { data: profileData } = await supabase
             .from("profiles")
             .select("id, role, full_name")
             .eq("id", u.id)
             .single()
-            .then((pResult: any) => setProfile(pResult?.data ?? null))
-            .catch((err: any) => {
-              console.error("Failed to load profile:", err)
-            })
+          setProfile(profileData ?? null)
         }
-      })
-      .catch((err: any) => {
-        console.error("Failed to get user:", err)
-      })
+      } catch (err: any) {
+        console.error("Failed to load user/profile:", err)
+      }
+    }
+
+    loadUserAndProfile()
   }, [])
 
   const monthDate = useMemo(() => `${issueMonth}-01`, [issueMonth])

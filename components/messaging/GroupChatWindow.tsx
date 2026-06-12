@@ -23,7 +23,6 @@ export function GroupChatWindow({
   conversationName: string
   onBack: () => void
 }) {
-  const supabase = createClient()
   const [messages, setMessages] = useState<GroupMessage[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(true)
@@ -64,8 +63,12 @@ export function GroupChatWindow({
     }
   }, [input])
 
-  // Realtime subscription for instant group message updates
+  // Realtime subscription for instant group message updates.
+  // createClient() is called inside the effect (not the component body) so the
+  // client is not a new value on every render — this avoids the missing-dep
+  // warning and prevents the channel from re-subscribing on unrelated renders.
   useEffect(() => {
+    const supabase = createClient()
     const channel = supabase
       .channel(`group:${conversationId}`)
       .on(
