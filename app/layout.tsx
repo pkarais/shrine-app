@@ -4,9 +4,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider"
 import { AuthProvider } from "@/components/layout/AuthProvider"
 import { PresenceProvider } from "@/components/presence/PresenceProvider"
 import { SessionHeartbeat } from "@/components/layout/SessionHeartbeat"
-import { WakeUpAlarmMonitor } from "@/components/WakeUpAlarmMonitor"
-import { ShiftLifecycleMonitor } from "@/components/ShiftLifecycleMonitor"
-import { RecognitionMonitor } from "@/components/RecognitionMonitor"
+import { AuthenticatedMonitors } from "@/components/layout/AuthenticatedMonitors"
 import "./globals.css"
 
 const manrope = Manrope({
@@ -54,9 +52,11 @@ export default function RootLayout({
             <PresenceProvider>
               <SessionHeartbeat />
               {children}
-              <WakeUpAlarmMonitor />
-              <ShiftLifecycleMonitor />
-              <RecognitionMonitor />
+              {/* FIX: Monitors are now wrapped in AuthenticatedMonitors which
+                  checks for a valid session before mounting. This prevents
+                  WakeUpAlarmMonitor, ShiftLifecycleMonitor, and RecognitionMonitor
+                  from polling Supabase every 30s on public/unauthenticated pages. */}
+              <AuthenticatedMonitors />
             </PresenceProvider>
           </AuthProvider>
         </ThemeProvider>

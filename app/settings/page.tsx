@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useCallback } from "react"
 import { TopAppBar } from "@/components/layout/TopAppBar"
-import { Bell, Volume2, VolumeX, Clock, Shield, AlertTriangle, Moon, Sun, Smartphone, AlarmClock, Check, User } from "lucide-react"
+import { Bell, Volume2, VolumeX, Clock, Shield, AlertTriangle, Moon, Sun, Smartphone, AlarmClock, Check, User, Info } from "lucide-react"
 import { Switch } from "@/components/ui/Switch"
 import { Button } from "@/components/ui/Button"
 import { useAlertAudio } from "@/hooks/useAlertAudio"
@@ -150,16 +150,12 @@ function ManagerAlertControls() {
     preloadAll()
   }, [preloadAll])
 
-  // saveSettings is not used directly — toggleAlert writes the latest state
-  // via the functional updater so there is no stale-closure risk.
-
   const toggleAlert = (alertId: string, type: "audio" | "text") => {
     setAlertSettings(prev => {
       const next = {
         ...prev,
         [alertId]: { ...prev[alertId], [type]: !prev[alertId]?.[type] }
       }
-      // Persist inside the updater so we always have the freshest value
       localStorage.setItem("shrine-alert-settings", JSON.stringify({
         alerts: next,
         globalAudio: globalAudioEnabled,
@@ -417,22 +413,30 @@ function ManagerAppSettings() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
+    // FIX: Use sessionStorage for the AI key so it is cleared when the tab/browser
+    // closes and is not accessible to persistent XSS payloads. The provider
+    // preference (non-sensitive) still uses localStorage so it survives reloads.
     const stored = localStorage.getItem("shrine_ai_provider") || "none"
-    const storedKey = localStorage.getItem("shrine_ai_key") || ""
+    const storedKey = sessionStorage.getItem("shrine_ai_key") || ""
     setAiProvider(stored)
     setAiKey(storedKey)
   }, [])
 
   const handleSaveAI = () => {
     localStorage.setItem("shrine_ai_provider", aiProvider)
-    if (aiKey) localStorage.setItem("shrine_ai_key", aiKey)
+    if (aiKey) {
+      // Store key in sessionStorage only — clears on tab/browser close
+      sessionStorage.setItem("shrine_ai_key", aiKey)
+    } else {
+      sessionStorage.removeItem("shrine_ai_key")
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   const handleClearAI = () => {
     localStorage.removeItem("shrine_ai_provider")
-    localStorage.removeItem("shrine_ai_key")
+    sessionStorage.removeItem("shrine_ai_key")
     setAiProvider("none")
     setAiKey("")
   }
@@ -448,6 +452,18 @@ function ManagerAppSettings() {
         <p className="text-sm text-on-surface-variant">
           Connect an AI service to enhance shift optimization and scheduling recommendations.
         </p>
+
+        {/* Security notice for API key */}
+        {aiProvider !== "none" && (
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Your API key is stored in session memory only and cleared when you close this tab.
+              You will need to re-enter it each session. Never share your API key with anyone.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-3">
           <label className="text-xs font-bold uppercase text-on-surface-variant tracking-wider block">Provider</label>
           <select
@@ -469,6 +485,7 @@ function ManagerAppSettings() {
               value={aiKey}
               onChange={(e) => setAiKey(e.target.value)}
               placeholder="sk-..."
+              autoComplete="off"
               className="w-full px-4 py-3 bg-surface-container-high rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>

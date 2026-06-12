@@ -36,7 +36,11 @@ function MessagesContent() {
         setIsManager(role === "manager")
         setIsCouncil(role === "council")
         if (role === "manager") {
-          const { data: staff } = await supabase.from("profiles").select("id, full_name, email, role").in("role", ["operations", "security", "council"])
+          // FIX: include "manager" so managers can message each other
+          const { data: staff } = await supabase
+            .from("profiles")
+            .select("id, full_name, email, role")
+            .in("role", ["operations", "security", "council", "manager"])
           setStaffList(staff || [])
         }
       }

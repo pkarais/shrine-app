@@ -19,6 +19,13 @@ const ALERT_LEAD_MINUTES = 30
 const LEAVE_NOW_MINUTES = 15
 const GRACE_MINUTES = 15
 
+// FIX: Widened break trigger window from 0.1 h (6 min) to 0.25 h (15 min).
+// The monitor polls every 30 s; a 6-min window was too narrow and could be
+// missed entirely if the tab was backgrounded and a poll cycle was delayed.
+// 15 min gives a safe catch window while still only firing once per shift
+// (the hasFired dedup guard prevents double-alerts within the window).
+const BREAK_TRIGGER_WINDOW_HOURS = 0.25
+
 function getDateKey(): string {
   // Use Eastern Time so the dedup key doesn't roll over at 8 PM ET
   // (midnight UTC) — which would cause alerts to re-fire in the evening.
@@ -211,18 +218,21 @@ export function ShiftLifecycleMonitor() {
       }
 
       // 5. BREAK REMINDERS: based on elapsed work time
+      // FIX: Use BREAK_TRIGGER_WINDOW_HOURS (0.25 h = 15 min) instead of 0.1 h (6 min).
+      // The hasFired guard ensures each alert only fires once even though the
+      // window is wider, so there is no risk of duplicate notifications.
       if (clockInTime) {
         const hoursWorked = (now.getTime() - clockInTime.getTime()) / (1000 * 60 * 60)
 
-        if (hoursWorked >= BREAKS.FIRST.TRIGGER_HOURS && hoursWorked < BREAKS.FIRST.TRIGGER_HOURS + 0.1) {
+        if (hoursWorked >= BREAKS.FIRST.TRIGGER_HOURS && hoursWorked < BREAKS.FIRST.TRIGGER_HOURS + BREAK_TRIGGER_WINDOW_HOURS) {
           await fireAlert("break_first", user.id, "break_reminder",
             "Break Time", `You've worked ${BREAKS.FIRST.TRIGGER_HOURS}h. Time for a ${BREAKS.FIRST.DURATION_MINUTES}-min paid break.`)
         }
-        if (hoursWorked >= BREAKS.LUNCH.TRIGGER_HOURS && hoursWorked < BREAKS.LUNCH.TRIGGER_HOURS + 0.1) {
+        if (hoursWorked >= BREAKS.LUNCH.TRIGGER_HOURS && hoursWorked < BREAKS.LUNCH.TRIGGER_HOURS + BREAK_TRIGGER_WINDOW_HOURS) {
           await fireAlert("break_lunch", user.id, "break_reminder",
             "Lunch Time", `You've worked ${BREAKS.LUNCH.TRIGGER_HOURS}h. Time for a ${BREAKS.LUNCH.DURATION_MINUTES}-min unpaid lunch.`)
         }
-        if (hoursWorked >= BREAKS.SECOND.TRIGGER_HOURS && hoursWorked < BREAKS.SECOND.TRIGGER_HOURS + 0.1) {
+        if (hoursWorked >= BREAKS.SECOND.TRIGGER_HOURS && hoursWorked < BREAKS.SECOND.TRIGGER_HOURS + BREAK_TRIGGER_WINDOW_HOURS) {
           await fireAlert("break_second", user.id, "break_reminder",
             "Break Time", `You've worked ${BREAKS.SECOND.TRIGGER_HOURS}h. Time for a ${BREAKS.SECOND.DURATION_MINUTES}-min paid break.`)
         }
@@ -283,10 +293,10 @@ export function ShiftLifecycleMonitor() {
         }
       }
 
-      // 9. ALL TASKS COMPLETE check — only fires if end_of_shift_auto already fired (avoids double-alert at shift boundary)
+      // 9. ALL TASKS COMPLETE check — only fires if end_of_shift_auto already fired
       if (activeShift && clockInTime && hasFired("end_of_shift_auto")) {
         const hoursWorked = (now.getTime() - clockInTime.getTime()) / (1000 * 60 * 60)
-        if (hoursWorked >= LABOR.SHIFT_LENGTH_HOURS && hoursWorked < LABOR.SHIFT_LENGTH_HOURS + 0.1) {
+        if (hoursWorked >= LABOR.SHIFT_LENGTH_HOURS && hoursWorked < LABOR.SHIFT_LENGTH_HOURS + BREAK_TRIGGER_WINDOW_HOURS) {
           await fireAlert("all_tasks_complete", user.id, "all_tasks_complete",
             "Shift Complete", "You have reached the end of your standard shift hours.")
         }
