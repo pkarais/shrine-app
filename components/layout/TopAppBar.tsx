@@ -32,6 +32,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/daily-brief", label: "Daily Brief", groups: ["manager"] },
   { href: "/calendar", label: "Calendar", groups: ["all", "council"] },
   { href: "/messages", label: "Chat", groups: ["all", "council"] },
+  { href: "/about", label: "About", groups: ["all", "council"] },
+  { href: "/about/archive", label: "Archive", groups: ["all", "council"] },
   { href: "/settings", label: "Settings", groups: ["staff", "operations", "manager"] },
   { href: "/profile", label: "Account", groups: ["all", "council"] },
 ]

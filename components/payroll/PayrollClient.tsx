@@ -11,6 +11,7 @@ import {
   type PayrollReportData,
   type BiWeeklyPayrollEstimate,
 } from "@/lib/actions/payroll"
+import { easternDate } from "@/lib/eastern-time"
 import {
   ChevronLeft,
   ChevronRight,
@@ -69,8 +70,12 @@ export function PayrollClient({
     try {
       setEstimating(true)
       setLocalError(null)
-      const start = formatDateKey(period.start)
-      const end = formatDateKey(period.end)
+      // Use Eastern-time date keys. period.end is 23:59 ET which, via
+      // toISOString(), rolls forward to the next UTC day (e.g. 06-15 -> 06-16),
+      // which would pull an extra day from the snapshot. easternDate() keeps
+      // the keys on the correct ET calendar day.
+      const start = easternDate(period.start.toISOString())
+      const end = easternDate(period.end.toISOString())
       const result = await estimateBiWeeklyPayroll(start, end)
       setEstimate(result)
       setMessage(
