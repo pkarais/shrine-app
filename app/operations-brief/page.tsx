@@ -55,13 +55,26 @@ export default function OperationsBriefGeneratorPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then((result: any) => {
-      const u = result?.data?.user ?? null
-      setUser(u)
-      if (u) {
-        supabase.from("profiles").select("id, role, full_name").eq("id", u.id).single().then((pResult: any) => setProfile(pResult?.data ?? null))
-      }
-    })
+    // Properly handle promise with .catch() to avoid unhandled rejections
+    supabase.auth.getUser()
+      .then((result: any) => {
+        const u = result?.data?.user ?? null
+        setUser(u)
+        if (u) {
+          supabase
+            .from("profiles")
+            .select("id, role, full_name")
+            .eq("id", u.id)
+            .single()
+            .then((pResult: any) => setProfile(pResult?.data ?? null))
+            .catch((err: any) => {
+              console.error("Failed to load profile:", err)
+            })
+        }
+      })
+      .catch((err: any) => {
+        console.error("Failed to get user:", err)
+      })
   }, [])
 
   const monthDate = useMemo(() => `${issueMonth}-01`, [issueMonth])

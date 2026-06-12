@@ -60,3 +60,6 @@ build-output.utf8.txt
 tsc-output.txt
 lint-output.txt
 lint-output.utf8.txt
+
+# SECURITY — never commit staff credentials
+staff-credentials.txt

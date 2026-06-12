@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation"
 import { Bell, CalendarDays, ClipboardCheck, Clock, Download, ExternalLink, FileText, Medal, ShieldAlert, Sparkles, Truck, Trophy, Wrench } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { createServerClient } from "@/utils/supabase/server"
 import { fetchDailyBriefBySlug } from "@/lib/actions/daily-brief"
 
 const SECTION_ACCENT: Record<string, string> = {
@@ -26,6 +28,11 @@ function SectionIcon({ sectionKey }: { sectionKey: string }) {
 }
 
 export default async function DailyBriefPublicPage({ params }: { params: { slug: string } }) {
+  // Auth guard — daily briefs contain operational data; require authentication
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
   const result = await fetchDailyBriefBySlug(params.slug)
   if (!result) notFound()
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createAdminClient } from "@/utils/supabase/server"
+import { createAdminClient, createServerClient } from "@/utils/supabase/server"
 import { getTemplateScheduleForRange } from "@/lib/actions/schedule-template-week"
 import {
   easternMonthBounds,
@@ -8,7 +8,30 @@ import {
   toEasternIso,
 } from "@/lib/eastern-time"
 
+// ── Auth guard ────────────────────────────────────────────────────────────────
+async function requireManager(): Promise<{ userId: string } | NextResponse> {
+  const supabase = createServerClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  if (!profile || (profile.role !== "manager" && profile.role !== "admin")) {
+    return NextResponse.json({ error: "Forbidden — manager role required" }, { status: 403 })
+  }
+  return { userId: user.id }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function POST(request: NextRequest) {
+  // Authenticate and require manager role before doing anything
+  const authResult = await requireManager()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const body = await request.json()
     let { issueMonth, preparedBy } = body
@@ -197,32 +220,10 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Estimated completed shifts ─────────────────────────────────────
-    // The shifts table only contains clock-in/out records, which are
-    // sparse during pilot rollout. The manager wants the brief to
-    // reflect coverage actually provided that month, derived from the
-    // latest uploaded schedule snapshot (which already canonicalizes
-    // names against staff_directory) plus calendar events.
-    //
-    // Formula:
-    //   base   = sum over each day in month of (# staff scheduled with
-    //            shiftStart && shiftEnd from the snapshot for that DOW).
-    //            If the snapshot yields 0 for a day, fall back to the
-    //            manager's baseline: Mon = 1 greeter + 1 porter + 1
-    //            security (3); Tue–Sat = 1 greeter + 2 porters + 2
-    //            security (5); Sun = 2 porters + 2 security (4).
-    //   extra  = for each event NOT during 09:00–17:00 ET, add 2
-    //            (1 porter + 1 security minimum to close the building)
-    //            unless required_ops/security/greeter sum is higher.
-    //   total  = base + extra
     let shiftDebug: any = null
     try {
-      // Month bounds in Eastern Time — the church operates in NYC, all
-      // dates the user sees on a wall calendar are ET. Never use UTC
-      // midnight as the boundary or you cut off late events on the last
-      // day and grab early events on the first day.
       const { start: monthStart, end: monthEnd } = easternMonthBounds(issueMonth)
       const monthStartUtc = toEasternIso(monthStart, "00:00")
-      // Exclusive upper bound = midnight ET on first of next month.
       const nextMonthDate = new Date(toEasternIso(monthStart, "00:00"))
       nextMonthDate.setUTCMonth(nextMonthDate.getUTCMonth() + 1)
       const nextMonthUtc = nextMonthDate.toISOString()
@@ -230,13 +231,8 @@ export async function POST(request: NextRequest) {
       const { shiftsByDate, staffRoleMap, source: snapshotSource } =
         await getTemplateScheduleForRange(monthStart, monthEnd)
 
-      // SALARIED STAFF — NOT counted in hourly payroll OR shift totals.
-      // Paul (Director) and Marcus (Greeter) are both paid via salary,
-      // not by the hour. They appear on the schedule so the team can
-      // see when they're at the church, but they must not inflate the
-      // "completed shifts" stat OR the bi-weekly payroll estimate.
       const SALARIED_FIRST_NAMES = new Set<string>(["paul", "marcus"])
-      const DIRECTOR_NAMES = new Set<string>() // kept for footer label
+      const DIRECTOR_NAMES = new Set<string>()
       for (const [name, role] of Object.entries(staffRoleMap || {})) {
         if (String(role).toLowerCase() === "director") {
           DIRECTOR_NAMES.add(String(name).trim().toLowerCase())
@@ -248,15 +244,8 @@ export async function POST(request: NextRequest) {
         const first = nm.split(/\s+/)[0]
         return SALARIED_FIRST_NAMES.has(nm) || SALARIED_FIRST_NAMES.has(first)
       }
-      const isDirector = isSalaried // legacy alias used below
+      const isDirector = isSalaried
 
-      // No baseline floor. If the snapshot has zero people on a day,
-      // the count is genuinely zero — we don't manufacture phantom
-      // coverage. (Old BASELINE_PER_DOW removed at user request.)
-
-      // Pay-rate lookup: name → hourly rate. Query staff_directory + the
-      // most-recent staff_pay_rates row per person so we can attach a
-      // dollar estimate to each projected shift.
       const nameToRate = new Map<string, number>()
       let avgRate = 0
       try {
@@ -292,9 +281,6 @@ export async function POST(request: NextRequest) {
           if (rate > 0) {
             collectedRates.push(rate)
             if (!nameToRate.has(nm)) nameToRate.set(nm, rate)
-            // Snapshot uses FIRST names ("Josh", "Demetri"). Directory
-            // stores full names. Key by first-name token too so snapshot
-            // hours actually find a rate.
             const first = nm.split(/\s+/)[0]
             if (first && first !== nm && !nameToRate.has(first)) {
               nameToRate.set(first, rate)
@@ -314,22 +300,11 @@ export async function POST(request: NextRequest) {
         const [eh, em] = endHHMM.split(":").map(Number)
         if ([sh, sm, eh, em].some((n) => isNaN(n))) return 0
         let mins = eh * 60 + em - (sh * 60 + sm)
-        if (mins < 0) mins += 24 * 60 // overnight
+        if (mins < 0) mins += 24 * 60
         return mins / 60
       }
 
-      // Per-staff, per-workweek hour ledger. Workweek = Sunday→Saturday
-      // (US standard). Overtime is calculated PER WEEK at 1.5× for any
-      // hours over 40, then summed across the month. Bi-weekly payroll
-      // still computes OT week-by-week (a 38h + 46h pay period owes 6h
-      // of OT — the 6 hours over 40 in the 46h week).
-      // staffName(lowercase) → weekStart → hours
-      // The Director (Paul) IS counted in shift counts because he's
-      // scheduled and present at the church those days, but his hours
-      // are NOT added to this ledger — he's salaried separately and
-      // does not factor into hourly payroll cost estimates.
       const weekStartFor = (dateISO: string): string => {
-        // Workweek = Sunday→Saturday in Eastern Time.
         const dow = easternDayOfWeek(dateISO)
         const d = new Date(toEasternIso(dateISO, "12:00"))
         d.setUTCDate(d.getUTCDate() - dow)
@@ -339,7 +314,7 @@ export async function POST(request: NextRequest) {
       const addStaffHours = (rawName: string, date: string, hrs: number) => {
         const key = String(rawName || "").trim().toLowerCase()
         if (!key || hrs <= 0) return
-        if (isDirector(rawName)) return // salaried — excluded from hourly payroll
+        if (isDirector(rawName)) return
         const wk = weekStartFor(date)
         let weeks = staffWeekHours.get(key)
         if (!weeks) {
@@ -351,11 +326,7 @@ export async function POST(request: NextRequest) {
 
       let base = 0
       let daysWithoutCoverage = 0
-      let unassignedHours = 0 // kept for type-stability; always 0 now
-      // Iterate every calendar day in ET. We count ONLY actual scheduled
-      // billable bodies — no baseline floor, no after-hours doubling.
-      // Salaried staff (Paul, Marcus) are filtered out so they don't
-      // inflate shift counts or hours.
+      let unassignedHours = 0
       const dates: string[] = easternDateRange(monthStart, monthEnd)
       for (const date of dates) {
         const shifted = (shiftsByDate[date] || []).filter(
@@ -373,9 +344,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // After-hours events — informational count only. Whoever is
-      // already on the schedule covers the event as part of their
-      // normal shift; we do NOT add extra slots or extra hours.
       const { data: monthEvents } = await admin
         .from("events")
         .select("title, start_time, end_time, required_ops, required_security, required_greeter")
@@ -403,12 +371,6 @@ export async function POST(request: NextRequest) {
       const extrapolatedShifts = base + extra
       const baselineDaysUsed = 0
 
-      // ── Per-week OT calculation ──
-      // For each named staff member, sum their hours per workweek.
-      // Anything ≤40h is straight time, anything over is 1.5× their rate.
-      // Workweeks that fall partly outside the month still count their
-      // in-month hours toward that week's bucket (this slightly under-
-      // counts OT at month boundaries but is a reasonable estimate).
       let regHours = 0
       let otHours = 0
       let staffCost = 0
@@ -442,8 +404,6 @@ export async function POST(request: NextRequest) {
           cost: Math.round(personCost * 100) / 100,
         })
       }
-      // Unassigned (baseline + after-hours coverage) — straight time at
-      // workforce avg rate, since we don't know who works those slots.
       const unassignedCost = unassignedHours * avgRate
 
       const totalHours = regHours + otHours + unassignedHours
@@ -451,12 +411,6 @@ export async function POST(request: NextRequest) {
       const estimatedPayrollCost = Math.round(totalCost * 100) / 100
       const estimatedHours = Math.round(totalHours * 10) / 10
 
-      // The shifts table only contains clock-in/out records during pilot
-      // rollout — it is intentionally sparse and unreliable. The manager
-      // wants the brief to reflect the projected coverage (snapshot
-      // repeated across the month + after-hours event extras), with
-      // actuals shown only as supplemental info. We always use the
-      // extrapolated total unless the snapshot path produced zero.
       const { count: actualShiftCount } = await admin
         .from("shifts")
         .select("id", { count: "exact", head: true })
@@ -492,7 +446,6 @@ export async function POST(request: NextRequest) {
         per_staff: perStaffSummary,
       }
 
-      // Patch the at_a_glance section
       const { data: glanceSection, error: glanceErr } = await admin
         .from("operations_brief_sections")
         .select("id, content, markdown_body")
@@ -534,8 +487,6 @@ export async function POST(request: NextRequest) {
         shiftDebug.glance_section_missing = true
       }
 
-      // Patch the issue.content.metrics.completed_shifts as well so the
-      // hero stat cards reflect the same estimate.
       const { data: issueRow, error: issueErr } = await admin
         .from("operations_brief_issues")
         .select("content")
@@ -569,11 +520,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Generate readable prose for content-driven sections ──
-    // The SQL stored proc seeds each section with placeholder copy and a
-    // structured `content` JSON. Until now the brief rendered that JSON
-    // as a raw <pre> block. Here we walk the content for each known
-    // section and produce real markdown_body summaries so the published
-    // brief reads like a narrative report instead of a debug dump.
     try {
       const { data: enrichableSections } = await admin
         .from("operations_brief_sections")

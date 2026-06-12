@@ -1,14 +1,16 @@
 import { createBrowserClient } from "@supabase/ssr"
 
-let client: ReturnType<typeof createBrowserClient> | null = null
-
+// We intentionally do NOT cache a module-level singleton here.
+// A cached singleton causes session bleed: if user A signs out and user B
+// signs in on the same tab, the old client's auth state lingers and
+// subsequent queries execute with the wrong identity.
+// Instead we create a new client per call. The underlying @supabase/ssr
+// implementation is lightweight enough that this has no meaningful perf cost.
 export const createClient = () => {
-  if (client) return client
-  client = createBrowserClient(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
-  return client
 }
 
 export const fetchWithRetry = async (
