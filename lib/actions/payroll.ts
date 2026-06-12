@@ -110,17 +110,45 @@ export async function getStaffPayRates() {
       latestRates.push(rate)
     }
   }
-  
+
+  // Some pay-rate rows were saved against a staff_id that is NOT a
+  // staff_directory id/profile_id — most often a profiles.id (auth user)
+  // or a deterministic UUID from the schedule-upload fallback. Resolve
+  // those against the profiles table so the editor shows the real name
+  // instead of "Unknown staff (<id>)".
+  const unmatchedIds = latestRates
+    .map((r: any) => r.staff_id)
+    .filter((id: string) => id && !staffById.has(id) && !staffByProfileId.has(id))
+  let profileById = new Map<string, { id: string; full_name: string | null; role: string | null }>()
+  if (unmatchedIds.length > 0) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, full_name, role")
+      .in("id", Array.from(new Set(unmatchedIds)))
+    profileById = new Map((profiles || []).map((p: any) => [p.id, p]))
+  }
+
   return latestRates.map((r: any) => {
     const directoryMatch = staffById.get(r.staff_id) || staffByProfileId.get(r.staff_id)
+    if (directoryMatch) {
+      return { ...r, staff_directory: directoryMatch }
+    }
+    const profileMatch = profileById.get(r.staff_id)
     return {
       ...r,
-      staff_directory: directoryMatch || {
-        id: r.staff_id,
-        profile_id: r.staff_id,
-        name: `Unknown staff (${String(r.staff_id).slice(0, 8)})`,
-        role: r.role || "staff",
-      },
+      staff_directory: profileMatch?.full_name
+        ? {
+            id: r.staff_id,
+            profile_id: profileMatch.id,
+            name: profileMatch.full_name,
+            role: profileMatch.role || r.role || "staff",
+          }
+        : {
+            id: r.staff_id,
+            profile_id: r.staff_id,
+            name: `Unknown staff (${String(r.staff_id).slice(0, 8)})`,
+            role: r.role || "staff",
+          },
     }
   })
 }

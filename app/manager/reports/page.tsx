@@ -77,7 +77,7 @@ export default async function ManagerReportsPage() {
     admin.from("shifts").select("id, user_id, event_id, clock_in, clock_out, created_at").gte("clock_in", startOfLastMonth).order("clock_in", { ascending: false }).limit(200),
     admin.from("incidents").select("id, user_id, severity, description, location, shift, created_at").order("created_at", { ascending: false }).limit(200),
     admin.from("walkthroughs").select("id, user_id, walkthrough_type, category, completed_at").order("completed_at", { ascending: false }).limit(100),
-    admin.from("tickets").select("id, user_id, title, description, priority, status, created_at, resolved_at").order("created_at", { ascending: false }).limit(200),
+    admin.from("maintenance_tickets").select("id, user_id, title, description, priority, status, created_at, resolved_at").order("created_at", { ascending: false }).limit(200),
     admin.from("visitor_volume").select("id, count, recorded_at").order("recorded_at", { ascending: false }).limit(30),
     admin.from("profiles").select("id, full_name, email, role"),
   ])

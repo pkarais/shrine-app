@@ -189,15 +189,26 @@ CREATE TABLE IF NOT EXISTS group_message_reads (
 );
 
 -- Staff Directory (external directory merged with profiles in Calendar)
+-- NOTE: The live column is `name` (not `full_name`). All app code reads/writes
+-- staff_directory.name (event-context, recognition, staffing, payroll,
+-- live-schedule, schedule-upload, etc.). Keep this aligned with the live DB.
 CREATE TABLE IF NOT EXISTS staff_directory (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  full_name     TEXT,
+  name          TEXT,
   email         TEXT,
   role          TEXT,
+  status        TEXT,
   department    TEXT,
   profile_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Backfill for older databases that were created with the legacy `full_name`
+-- column: add `name`/`status` if missing so the canonical schema is safe to
+-- re-run against any existing environment.
+ALTER TABLE staff_directory ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE staff_directory ADD COLUMN IF NOT EXISTS status TEXT;
+ALTER TABLE staff_directory ADD COLUMN IF NOT EXISTS department TEXT;
+ALTER TABLE staff_directory ADD COLUMN IF NOT EXISTS email TEXT;
 
 -- Visitor Volume
 CREATE TABLE IF NOT EXISTS visitor_volume (

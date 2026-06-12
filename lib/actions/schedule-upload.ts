@@ -193,7 +193,6 @@ export async function commitUploadedSchedule(
     const dirRows = Array.from(fallbackNameById.entries()).map(([id, name]) => ({
       profile_id: id,
       name,
-      full_name: name,
     }))
     // onConflict: profile_id (assumes unique constraint). If schema lacks
     // the constraint we still get a normal insert that may collide — swallow
