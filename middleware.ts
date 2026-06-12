@@ -39,7 +39,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const hasDevBypass = request.cookies.get('shrine_dev_session')?.value === 'true'
+  // Dev bypass is ONLY honoured in local development — never on production/Vercel.
+  const isDev = process.env.NODE_ENV === 'development'
+  const hasDevBypass = isDev && request.cookies.get('shrine_dev_session')?.value === 'true'
 
   // getUser() validates the JWT server-side — more secure than getSession()
   // which reads from an unverified cookie (Supabase docs recommendation).
@@ -48,7 +50,24 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  const authRequiredPaths = ['/dashboard', '/manager', '/profile', '/messages', '/tickets', '/recognition', '/calendar', '/operations-brief', '/daily-brief', '/council', '/brief', '/audio-test', '/sops']
+  const authRequiredPaths = [
+    '/dashboard',
+    '/manager',
+    '/profile',
+    '/messages',
+    '/tickets',
+    '/recognition',
+    '/calendar',
+    '/operations-brief',
+    '/daily-brief',
+    '/council',
+    '/brief',
+    '/audio-test',
+    '/sops',
+    '/settings',
+    '/payroll',
+    '/inventory',
+  ]
   const managerOnlyPaths = ['/manager', '/audio-test']
 
   const needsAuth = authRequiredPaths.some(p => path === p || path.startsWith(p + '/'))

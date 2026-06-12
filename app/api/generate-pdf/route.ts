@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createAdminClient } from "@/utils/supabase/server"
+import { createAdminClient, createServerClient } from "@/utils/supabase/server"
 import puppeteer from "puppeteer-core"
 import fs from "fs"
 import os from "os"
 import path from "path"
+
+// ── Auth guard ────────────────────────────────────────────────────────────────
+async function requireManager(): Promise<{ userId: string } | NextResponse> {
+  const supabase = createServerClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  if (!profile || (profile.role !== "manager" && profile.role !== "admin")) {
+    return NextResponse.json({ error: "Forbidden — manager role required" }, { status: 403 })
+  }
+  return { userId: user.id }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function getBrowser() {
   if (process.env.VERCEL) {
@@ -135,6 +154,10 @@ function contentToHtml(content: Record<string, any>): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Authenticate and require manager role before doing anything
+  const authResult = await requireManager()
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const body = await request.json()
     const { issueId } = body

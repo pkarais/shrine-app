@@ -1,9 +1,26 @@
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { createServerClient } from "@/utils/supabase/server"
 import { getPayrollReportBySlug } from "@/lib/actions/payroll"
 import { CalendarDays, Download, FileText, DollarSign, Clock, Users } from "lucide-react"
 
 export default async function PayrollPublicPage({ params }: { params: { slug: string } }) {
+  // Auth guard — payroll data is sensitive; require authenticated manager
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile || (profile.role !== "manager" && profile.role !== "admin")) {
+    redirect("/dashboard")
+  }
+
   const report = await getPayrollReportBySlug(params.slug)
   if (!report) notFound()
 

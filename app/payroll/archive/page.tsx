@@ -1,8 +1,25 @@
+import { redirect } from "next/navigation"
 import Link from "next/link"
+import { createServerClient } from "@/utils/supabase/server"
 import { getArchivedPayrollReports } from "@/lib/actions/payroll"
 import { CalendarDays, DollarSign, FileText, ArrowLeft } from "lucide-react"
 
 export default async function PayrollArchivePage() {
+  // Auth guard — payroll data is sensitive; require authenticated manager
+  const supabase = createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile || (profile.role !== "manager" && profile.role !== "admin")) {
+    redirect("/dashboard")
+  }
+
   const reports = await getArchivedPayrollReports()
 
   return (
