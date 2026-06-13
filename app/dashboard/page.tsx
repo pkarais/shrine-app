@@ -63,7 +63,7 @@ export default async function DashboardPage() {
   const staffAssignments = currentEvent ? await getStaffForEvent(currentEvent.id) : []
   const role = (profile?.role || "").toLowerCase()
   const showVisitorTally = role !== "council"
-  const canUpdateVisitorTally = role === "security" || role === "manager"
+  const canUpdateVisitorTally = role === "security" || role === "manager" || role === "operations"
 
   return (
     <>
